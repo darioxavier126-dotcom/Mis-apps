@@ -110,7 +110,12 @@
 
   @media (max-width:560px){
     .form-row, .overview{grid-template-columns:1fr;}
-  }
+  }  .btn, button{transition:transform 0.12s ease, box-shadow 0.12s ease;}
+  .btn:active, button:active{transform:scale(0.94);}
+  .goal, .panel{transition:transform 0.18s ease;}
+  .goal:hover{transform:translateY(-2px);}
+  .typewriter-title span{display:inline-block; opacity:0; animation:letterPop 0.32s ease forwards;}
+  @keyframes letterPop{0%{opacity:0; transform:translateY(8px) scale(0.85);}60%{opacity:1; transform:translateY(-2px) scale(1.04);}100%{opacity:1; transform:translateY(0) scale(1);}}
 </style>
 </head>
 <body>
@@ -152,10 +157,14 @@
   <header>
     <div>
       <div class="eyebrow">Fase 0 · Sistema 2</div>
-      <h1>Panel de metas</h1>
+      <h1 class="typewriter-title" id="main-title">Panel de metas</h1>
       <p class="sub">Cada meta es una ruta. Los checkpoints son el camino — no la revisas a diario, la revisas cuando toca avanzar.</p>
     </div>
-    <a class="back-link" href="index.html">← Hábitos</a>
+    <div style="display:flex; gap:8px;">
+      <a class="back-link" href="index.html">Hábitos</a>
+      <a class="back-link" href="errores.html">Errores</a>
+      <a class="back-link" href="sesgos.html">Sesgos</a>
+    </div>
   </header>
 
   <div class="overview">
@@ -181,6 +190,16 @@
   <div id="goals-list"></div>
   <div class="empty" id="empty-state" style="display:none;">Aún no hay rutas trazadas. Agrega la primera arriba.</div>
 </div>
+
+<script>
+  (function(){
+    const el = document.getElementById('main-title');
+    const text = el.textContent;
+    el.innerHTML = text.split('').map((ch,i)=>
+      `<span style="animation-delay:${i*0.03}s">${ch===' '?'&nbsp;':ch}</span>`
+    ).join('');
+  })();
+</script>
 
 <script>
   const horizonColor = {'1 año':'var(--h1y)', '3 años':'var(--h3y)', '5 años':'var(--h5y)'};

@@ -50,7 +50,14 @@
   .stepper{display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.7); border:1px solid var(--line); border-radius:10px; padding:6px 10px;}
   .stepper button{width:30px; height:30px; border-radius:8px; border:none; background:var(--navy); color:#fff; font-size:16px; cursor:pointer; line-height:1;}
   .stepper button:hover{background:#0F1930;}
-  .stepper .val{flex:1; text-align:center; font-family:'Fraunces',serif; font-size:18px; color:var(--navy);}
+  .stepper .val{flex:1; text-align:center; font-family:'Fraunces',serif; font-size:18px; color:var(--navy); border:none; background:transparent; padding:4px; width:100%; -moz-appearance:textfield;}
+  .stepper .val:focus{outline:none; background:rgba(20,33,61,0.05); border-radius:6px;}
+  button.primary, .btn-add, .pill, button{transition:transform 0.12s ease, box-shadow 0.12s ease;}
+  button.primary:active, .btn-add:active, .pill:active, button:active{transform:scale(0.94);}
+  .glass{transition:transform 0.18s ease, box-shadow 0.18s ease;}
+  .glass:hover{transform:translateY(-2px);}
+  .typewriter-title span{display:inline-block; opacity:0; animation:letterPop 0.32s ease forwards;}
+  @keyframes letterPop{0%{opacity:0; transform:translateY(8px) scale(0.85);}60%{opacity:1; transform:translateY(-2px) scale(1.04);}100%{opacity:1; transform:translateY(0) scale(1);}}
   .stepper.sm{padding:4px 8px;}
   .stepper.sm button{width:26px; height:26px; font-size:14px;}
   .stepper.sm .val{font-size:15px;}
@@ -175,10 +182,14 @@
   <header style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
     <div>
       <div class="eyebrow">Fase 0 · Sistema 1</div>
-      <h1>Rastreador de hábitos</h1>
+      <h1 class="typewriter-title" id="main-title">Rastreador de hábitos</h1>
       <p class="sub">Registro visual, no cuestionario. Abre solo lo que vas a llenar hoy.</p>
     </div>
-    <a href="metas.html" style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:8px 14px; border-radius:8px; background:rgba(255,255,255,0.5); white-space:nowrap;">Metas →</a>
+    <div style="display:flex; gap:8px;">
+      <a href="metas.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Metas</a>
+      <a href="errores.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Errores</a>
+      <a href="sesgos.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Sesgos</a>
+    </div>
   </header>
 
   <div class="glass">
@@ -186,7 +197,7 @@
     <div class="quick-row">
       <div class="field"><label>Fecha</label><input type="date" id="f-date"></div>
       <div class="field"><label>Horas de sueño</label>
-        <div class="stepper"><button type="button" id="sleep-minus">−</button><span class="val" id="sleep-val">7.5</span><button type="button" id="sleep-plus">+</button></div>
+        <div class="stepper"><button type="button" id="sleep-minus">−</button><input type="text" inputmode="decimal" class="val" id="sleep-val" value="7.5"><button type="button" id="sleep-plus">+</button></div>
       </div>
     </div>
 
@@ -219,7 +230,7 @@
       <div class="acc-body">
         <div class="field" style="margin-bottom:14px;">
           <label>Horas trabajadas</label>
-          <div class="stepper sm" style="max-width:160px;"><button type="button" id="work-minus">−</button><span class="val" id="work-val">0</span><button type="button" id="work-plus">+</button></div>
+          <div class="stepper sm" style="max-width:160px;"><button type="button" id="work-minus">−</button><input type="text" inputmode="decimal" class="val" id="work-val" value="0"><button type="button" id="work-plus">+</button></div>
         </div>
         <div class="field" style="margin-bottom:14px;">
           <label>Tipo</label>
@@ -231,7 +242,7 @@
         </div>
         <div class="field" id="uber-field" style="display:none;">
           <label>Horas manejadas (Uber)</label>
-          <div class="stepper sm" style="max-width:160px;"><button type="button" id="uber-minus">−</button><span class="val" id="uber-val">0</span><button type="button" id="uber-plus">+</button></div>
+          <div class="stepper sm" style="max-width:160px;"><button type="button" id="uber-minus">−</button><input type="text" inputmode="decimal" class="val" id="uber-val" value="0"><button type="button" id="uber-plus">+</button></div>
         </div>
       </div>
     </div>
@@ -245,7 +256,7 @@
       <div class="acc-body">
         <div class="field">
           <label>Horas estudiadas (universidad)</label>
-          <div class="stepper sm" style="max-width:160px;"><button type="button" id="career-minus">−</button><span class="val" id="career-val">0</span><button type="button" id="career-plus">+</button></div>
+          <div class="stepper sm" style="max-width:160px;"><button type="button" id="career-minus">−</button><input type="text" inputmode="decimal" class="val" id="career-val" value="0"><button type="button" id="career-plus">+</button></div>
         </div>
       </div>
     </div>
@@ -258,21 +269,23 @@
       </div>
       <div class="acc-body">
         <div class="acc-row">
-          <input type="text" id="course-input" list="course-suggestions" placeholder="Selecciona o escribe un curso">
-          <div class="stepper sm"><button type="button" id="course-min-minus">−</button><span class="val" id="course-min-val">15</span><button type="button" id="course-min-plus">+</button></div>
+          <select id="course-select">
+            <option value="">Selecciona un curso</option>
+            <option value="Excel Skills for Business">Excel Skills for Business</option>
+            <option value="Supply Chain Management">Supply Chain Management</option>
+            <option value="AI for Business">AI for Business</option>
+            <option value="Lean Six Sigma">Lean Six Sigma</option>
+            <option value="Google Project Management">Google Project Management</option>
+            <option value="SAP Business Analyst">SAP Business Analyst</option>
+            <option value="Microsoft Data Visualization">Microsoft Data Visualization</option>
+            <option value="Microsoft Business Analyst">Microsoft Business Analyst</option>
+            <option value="Microsoft Power BI Data Analyst">Microsoft Power BI Data Analyst</option>
+            <option value="__otro__">+ Otro (escribir)</option>
+          </select>
+          <div class="stepper sm"><button type="button" id="course-min-minus">−</button><input type="text" inputmode="numeric" class="val" id="course-min-val" value="15"><button type="button" id="course-min-plus">+</button></div>
           <button class="btn-add" id="course-add">Agregar</button>
         </div>
-        <datalist id="course-suggestions">
-          <option value="Excel Skills for Business">
-          <option value="Supply Chain Management">
-          <option value="AI for Business">
-          <option value="Lean Six Sigma">
-          <option value="Google Project Management">
-          <option value="SAP Business Analyst">
-          <option value="Microsoft Data Visualization">
-          <option value="Microsoft Business Analyst">
-          <option value="Microsoft Power BI Data Analyst">
-        </datalist>
+        <input type="text" id="course-input-other" placeholder="Escribe el nombre del curso" style="display:none; margin-bottom:10px;">
         <div class="session-chips" id="course-chips"></div>
       </div>
     </div>
@@ -285,11 +298,16 @@
       </div>
       <div class="acc-body">
         <div class="acc-row">
-          <input type="text" id="lang-input" list="lang-suggestions" placeholder="Alemán, Mandarín...">
-          <div class="stepper sm"><button type="button" id="lang-min-minus">−</button><span class="val" id="lang-min-val">15</span><button type="button" id="lang-min-plus">+</button></div>
+          <select id="lang-select">
+            <option value="">Selecciona un idioma</option>
+            <option value="Alemán">Alemán</option>
+            <option value="Mandarín">Mandarín</option>
+            <option value="__otro__">+ Otro (escribir)</option>
+          </select>
+          <div class="stepper sm"><button type="button" id="lang-min-minus">−</button><input type="text" inputmode="numeric" class="val" id="lang-min-val" value="15"><button type="button" id="lang-min-plus">+</button></div>
           <button class="btn-add" id="lang-add">Agregar</button>
         </div>
-        <datalist id="lang-suggestions"><option value="Alemán"><option value="Mandarín"></datalist>
+        <input type="text" id="lang-input-other" placeholder="Escribe el idioma" style="display:none; margin-bottom:10px;">
         <div class="session-chips" id="lang-chips"></div>
       </div>
     </div>
@@ -321,6 +339,16 @@
     <p class="note"><b>Para abrirlo en un toque:</b> desde tu celular, abre esta página en el navegador y usa "Agregar a pantalla de inicio" (Safari) o "Instalar app" (Chrome, menú ⋮).</p>
   </div>
 </div>
+
+<script>
+  (function(){
+    const el = document.getElementById('main-title');
+    const text = el.textContent;
+    el.innerHTML = text.split('').map((ch,i)=>
+      `<span style="animation-delay:${i*0.03}s">${ch===' '?'&nbsp;':ch}</span>`
+    ).join('');
+  })();
+</script>
 
 <script>
   // Almacenamiento local del dispositivo — funciona al abrir este archivo
@@ -371,8 +399,15 @@
   renderEnergy();
 
   function stepper(idVal, minus, plus, min, max, step, get, set){
-    document.getElementById(plus).addEventListener('click', ()=>{ set(Math.min(max, get()+step)); document.getElementById(idVal).textContent = get(); });
-    document.getElementById(minus).addEventListener('click', ()=>{ set(Math.max(min, get()-step)); document.getElementById(idVal).textContent = get(); });
+    const valEl = document.getElementById(idVal);
+    document.getElementById(plus).addEventListener('click', ()=>{ set(Math.min(max, get()+step)); valEl.value = get(); });
+    document.getElementById(minus).addEventListener('click', ()=>{ set(Math.max(min, get()-step)); valEl.value = get(); });
+    valEl.addEventListener('change', ()=>{
+      let n = parseFloat(valEl.value.replace(',', '.'));
+      if(isNaN(n)) n = get();
+      n = Math.max(min, Math.min(max, n));
+      set(n); valEl.value = n;
+    });
   }
   stepper('sleep-val','sleep-minus','sleep-plus',0,14,0.5, ()=>sleepVal, v=>sleepVal=v);
   stepper('work-val','work-minus','work-plus',0,16,0.5, ()=>workVal, v=>workVal=v);
@@ -429,12 +464,22 @@
     loadHistory();
   }
 
+  document.getElementById('course-select').addEventListener('change', function(){
+    document.getElementById('course-input-other').style.display = this.value === '__otro__' ? 'block' : 'none';
+  });
+  document.getElementById('lang-select').addEventListener('change', function(){
+    document.getElementById('lang-input-other').style.display = this.value === '__otro__' ? 'block' : 'none';
+  });
+
   document.getElementById('course-add').addEventListener('click', ()=>{
-    const name = document.getElementById('course-input').value.trim();
+    const sel = document.getElementById('course-select').value;
+    const name = sel === '__otro__' ? document.getElementById('course-input-other').value.trim() : sel;
     if(!name) return;
     courseSessions.push({name, minutes: courseMin});
     renderCourseChips();
-    document.getElementById('course-input').value='';
+    document.getElementById('course-select').value='';
+    document.getElementById('course-input-other').value='';
+    document.getElementById('course-input-other').style.display='none';
     updateAccSummaries();
     autosaveToday();
   });
@@ -445,11 +490,14 @@
   }
 
   document.getElementById('lang-add').addEventListener('click', ()=>{
-    const name = document.getElementById('lang-input').value.trim();
+    const sel = document.getElementById('lang-select').value;
+    const name = sel === '__otro__' ? document.getElementById('lang-input-other').value.trim() : sel;
     if(!name) return;
     langSessions.push({name, minutes: langMin});
     renderLangChips();
-    document.getElementById('lang-input').value='';
+    document.getElementById('lang-select').value='';
+    document.getElementById('lang-input-other').value='';
+    document.getElementById('lang-input-other').style.display='none';
     updateAccSummaries();
     autosaveToday();
   });
@@ -591,22 +639,22 @@
       const r = await storage.get('habit:'+date);
       if(r && r.value){
         const e = JSON.parse(r.value);
-        sleepVal = e.sleep ?? sleepVal; document.getElementById('sleep-val').textContent = sleepVal;
+        sleepVal = e.sleep ?? sleepVal; document.getElementById('sleep-val').value = sleepVal;
         energyVal = e.energy ?? energyVal; renderEnergy();
         exerciseVal = e.exercise ?? exerciseVal;
         document.querySelectorAll('#exercise-pills .pill').forEach(p=>{
           p.classList.toggle('active', parseInt(p.dataset.v) === exerciseVal);
         });
         if(e.work){
-          workVal = e.work.hours || 0; document.getElementById('work-val').textContent = workVal;
+          workVal = e.work.hours || 0; document.getElementById('work-val').value = workVal;
           workTypes = new Set(e.work.types || []);
           document.querySelectorAll('#work-type-pills .pill').forEach(p=>{
             p.classList.toggle('active', workTypes.has(p.dataset.v));
           });
-          uberVal = e.work.uberHours || 0; document.getElementById('uber-val').textContent = uberVal;
+          uberVal = e.work.uberHours || 0; document.getElementById('uber-val').value = uberVal;
           document.getElementById('uber-field').style.display = workTypes.has('uber') ? 'block' : 'none';
         }
-        careerVal = e.career || 0; document.getElementById('career-val').textContent = careerVal;
+        careerVal = e.career || 0; document.getElementById('career-val').value = careerVal;
         courseSessions = e.courses || []; renderCourseChips();
         langSessions = e.languages || []; renderLangChips();
         if(e.note) document.getElementById('f-note').value = e.note;
