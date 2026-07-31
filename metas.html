@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de metas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0D10; --panel:#14171C; --line:#262B33;
+    --ink:#EDEFEA; --ink-dim:#8A9099;
+    --h1y:#5E9BD8; --h3y:#D9A441; --h5y:#C25B4F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg); color:var(--ink); font-family:'IBM Plex Mono',monospace;
+    min-height:100vh; position:relative; overflow-x:hidden;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 34px 34px;
+    animation: gridDrift 50s linear infinite;
+  }
+  @keyframes gridDrift{
+    0%{background-position: 0 0, 0 0;}
+    100%{background-position: 340px 220px, 340px 220px;}
+  }
+
+  .contours{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;}
+  .contour{position:absolute; border-radius:50%; border:1px solid rgba(94,155,216,0.14); will-change:transform;}
+  .c1{width:60vw; height:60vw; max-width:820px; max-height:820px; top:-30vw; left:-25vw; animation:rotateSlow 90s linear infinite;}
+  .c1::before{content:""; position:absolute; inset:70px; border-radius:50%; border:1px solid rgba(94,155,216,0.10);}
+  .c1::after{content:""; position:absolute; inset:150px; border-radius:50%; border:1px solid rgba(94,155,216,0.08);}
+  .c2{width:50vw; height:50vw; max-width:680px; max-height:680px; bottom:-28vw; right:-20vw; border-color:rgba(217,164,65,0.13); animation:rotateSlow 70s linear infinite reverse;}
+  .c2::before{content:""; position:absolute; inset:60px; border-radius:50%; border:1px solid rgba(217,164,65,0.09);}
+  .c2::after{content:""; position:absolute; inset:130px; border-radius:50%; border:1px solid rgba(217,164,65,0.07);}
+  .c3{width:36vw; height:36vw; max-width:480px; max-height:480px; top:30vh; right:-15vw; border-color:rgba(194,91,79,0.12); animation:rotateSlow 60s linear infinite;}
+  .c3::before{content:""; position:absolute; inset:50px; border-radius:50%; border:1px solid rgba(194,91,79,0.08);}
+
+  @keyframes rotateSlow{
+    0%{transform:rotate(0deg);}
+    100%{transform:rotate(360deg);}
+  }
+
+  .page{max-width:820px; margin:0 auto; padding:52px 22px 90px; position:relative; z-index:1;}
+
+  header{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:34px; padding-bottom:26px; border-bottom:1px solid var(--line);}
+  .eyebrow{font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--h3y); margin-bottom:10px;}
+  h1{font-family:'Fraunces',serif; font-weight:600; font-size:28px; color:var(--ink); letter-spacing:-0.01em;}
+  .sub{color:var(--ink-dim); font-size:13px; margin-top:8px; max-width:480px; line-height:1.6;}
+  .back-link{font-size:11px; color:var(--ink); text-decoration:none; border:1px solid var(--line); padding:8px 14px; white-space:nowrap;}
+  .back-link:hover{border-color:var(--h1y);}
+
+  .overview{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-bottom:30px;}
+  .ov{background:var(--panel); padding:18px; text-align:center;}
+  .ov span{display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-dim); margin-bottom:8px;}
+  .ov b{font-family:'Fraunces',serif; font-size:26px; color:var(--ink); font-weight:600;}
+
+  .panel{border:1px solid var(--line); background:var(--panel); padding:24px 22px; margin-bottom:26px;}
+  .panel h2{font-family:'Fraunces',serif; font-size:16px; font-weight:600; color:var(--ink); margin-bottom:18px; letter-spacing:-0.005em;}
+
+  .form-row{display:grid; grid-template-columns:1.6fr 1fr 1fr; gap:12px; margin-bottom:14px;}
+  label{display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-dim); margin-bottom:7px;}
+  input[type=text], select{
+    width:100%; padding:10px 11px; border:1px solid var(--line); background:#0E1116; color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+  }
+  input[type=text]:focus, select:focus{outline:none; border-color:var(--h1y);}
+  .btn{background:transparent; border:1px solid var(--h1y); color:var(--h1y); padding:10px 20px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:0.04em; cursor:pointer; text-transform:uppercase;}
+  .btn:hover{background:var(--h1y); color:#0B0D10;}
+  .row-end{display:flex; justify-content:flex-end;}
+
+  /* ===== RUTA DE META ===== */
+  .goal{border:1px solid var(--line); margin-bottom:16px; background:#0E1116;}
+  .goal-head{display:flex; justify-content:space-between; align-items:flex-start; padding:18px 20px 4px;}
+  .goal-title{font-family:'Fraunces',serif; font-size:17px; font-weight:600; color:var(--ink);}
+  .goal-tags{margin-top:6px; display:flex; gap:8px;}
+  .tag{font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em; padding:3px 9px; border:1px solid var(--line); color:var(--ink-dim);}
+  .goal-del{cursor:pointer; color:var(--ink-dim); font-size:15px;}
+  .goal-del:hover{color:var(--h5y);}
+
+  .route-wrap{padding:26px 20px 20px;}
+  .route-track{position:relative; height:3px; background:var(--line); border-radius:2px; margin:0 8px;}
+  .route-fill{position:absolute; top:0; left:0; height:100%; border-radius:2px;}
+  .route-flag{position:absolute; right:-8px; top:50%; transform:translateY(-50%); font-size:14px;}
+  .route-node{
+    position:absolute; top:50%; width:13px; height:13px; border-radius:50%;
+    background:var(--bg); border:2px solid var(--line); transform:translate(-50%,-50%); cursor:pointer;
+  }
+  .route-node.done{background:var(--h1y); border-color:var(--h1y);}
+  .route-labels{display:flex; justify-content:space-between; margin-top:14px; font-size:9.5px; color:var(--ink-dim); text-transform:uppercase;}
+
+  .checkpoint-log{margin-top:20px; display:flex; flex-direction:column; gap:0;}
+  .cp{display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--line); font-size:12.5px;}
+  .cp:first-child{border-top:none;}
+  .cp input[type=checkbox]{accent-color:var(--h1y); width:15px; height:15px; cursor:pointer; flex-shrink:0;}
+  .cp .txt{flex:1; color:var(--ink);}
+  .cp.done .txt{color:var(--ink-dim); text-decoration:line-through;}
+  .cp .del{cursor:pointer; color:var(--ink-dim); font-size:13px;}
+  .cp .del:hover{color:var(--h5y);}
+
+  .add-cp{display:flex; gap:8px; margin-top:14px;}
+  .add-cp input{flex:1; padding:8px 10px; border:1px solid var(--line); background:#0B0D10; color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:11.5px;}
+  .add-cp button{background:transparent; border:1px solid var(--line); color:var(--ink-dim); padding:8px 14px; font-size:10.5px; cursor:pointer; text-transform:uppercase;}
+  .add-cp button:hover{border-color:var(--h3y); color:var(--h3y);}
+
+  .empty{color:var(--ink-dim); font-size:12.5px; padding:20px 4px; text-align:center;}
+
+  @media (max-width:560px){
+    .form-row, .overview{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0B0D10; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div style="background:#14171C; border:1px solid #262B33; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#D9A441; margin-bottom:14px;">Acceso privado</div>
+    <div style="font-family:'Fraunces',serif; font-weight:600; font-size:20px; color:#EDEFEA; margin-bottom:22px;">Ingresa tu PIN</div>
+    <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border:1px solid #262B33; background:#0B0D10; color:#EDEFEA; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
+    <div id="pin-error" style="color:#C25B4F; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
+    <button id="pin-submit" style="width:100%; padding:13px; border:none; background:#D9A441; color:#0B0D10; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em; cursor:pointer;">Entrar</button>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const CORRECT_PIN = '3751';
+    const gate = document.getElementById('pin-gate');
+    const input = document.getElementById('pin-input');
+    const err = document.getElementById('pin-error');
+    if(localStorage.getItem('habit_unlocked') === 'yes'){ gate.style.display = 'none'; }
+    else { setTimeout(()=> input.focus(), 200); }
+    function tryUnlock(){
+      if(input.value === CORRECT_PIN){ localStorage.setItem('habit_unlocked','yes'); gate.style.display='none'; }
+      else { err.textContent = 'PIN incorrecto'; input.value=''; input.focus(); }
+    }
+    document.getElementById('pin-submit').addEventListener('click', tryUnlock);
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryUnlock(); });
+  })();
+</script>
+
+<div class="contours">
+  <div class="contour c1"></div>
+  <div class="contour c2"></div>
+  <div class="contour c3"></div>
+</div>
+
+<div class="page">
+  <header>
+    <div>
+      <div class="eyebrow">Fase 0 · Sistema 2</div>
+      <h1>Panel de metas</h1>
+      <p class="sub">Cada meta es una ruta. Los checkpoints son el camino — no la revisas a diario, la revisas cuando toca avanzar.</p>
+    </div>
+    <a class="back-link" href="index.html">← Hábitos</a>
+  </header>
+
+  <div class="overview">
+    <div class="ov"><span>Metas activas</span><b id="ov-total">0</b></div>
+    <div class="ov"><span>Checkpoints</span><b id="ov-checkpoints">0</b></div>
+    <div class="ov"><span>Avance global</span><b id="ov-done">0%</b></div>
+  </div>
+
+  <div class="panel">
+    <h2>Trazar nueva ruta</h2>
+    <div class="form-row">
+      <div><label>Meta</label><input type="text" id="g-title" placeholder="Ej: Vivir del freelance"></div>
+      <div><label>Horizonte</label>
+        <select id="g-horizon"><option value="1 año">1 año</option><option value="3 años">3 años</option><option value="5 años">5 años</option></select>
+      </div>
+      <div><label>Categoría</label>
+        <select id="g-category"><option value="Carrera">Carrera</option><option value="Estudios">Estudios</option><option value="Personal">Personal</option><option value="Financiero">Financiero</option></select>
+      </div>
+    </div>
+    <div class="row-end"><button class="btn" id="add-goal">Agregar</button></div>
+  </div>
+
+  <div id="goals-list"></div>
+  <div class="empty" id="empty-state" style="display:none;">Aún no hay rutas trazadas. Agrega la primera arriba.</div>
+</div>
+
+<script>
+  const horizonColor = {'1 año':'var(--h1y)', '3 años':'var(--h3y)', '5 años':'var(--h5y)'};
+
+  function loadGoals(){ try{ return JSON.parse(localStorage.getItem('goals')||'[]'); } catch(e){ return []; } }
+  function saveGoals(goals){ localStorage.setItem('goals', JSON.stringify(goals)); render(); }
+
+  document.getElementById('add-goal').addEventListener('click', ()=>{
+    const title = document.getElementById('g-title').value.trim();
+    if(!title) return;
+    const goals = loadGoals();
+    goals.unshift({
+      id: Date.now().toString(), title,
+      horizon: document.getElementById('g-horizon').value,
+      category: document.getElementById('g-category').value,
+      checkpoints: []
+    });
+    document.getElementById('g-title').value = '';
+    saveGoals(goals);
+  });
+
+  function addCheckpoint(id, text){
+    if(!text.trim()) return;
+    const goals = loadGoals(); const g = goals.find(x=>x.id===id);
+    if(g){ g.checkpoints.push({text:text.trim(), done:false}); saveGoals(goals); }
+  }
+  function toggleCheckpoint(id, idx){
+    const goals = loadGoals(); const g = goals.find(x=>x.id===id);
+    if(g){ g.checkpoints[idx].done = !g.checkpoints[idx].done; saveGoals(goals); }
+  }
+  function deleteCheckpoint(id, idx){
+    const goals = loadGoals(); const g = goals.find(x=>x.id===id);
+    if(g){ g.checkpoints.splice(idx,1); saveGoals(goals); }
+  }
+  function deleteGoal(id){ saveGoals(loadGoals().filter(g=>g.id!==id)); }
+
+  function render(){
+    const goals = loadGoals();
+    const list = document.getElementById('goals-list');
+    document.getElementById('empty-state').style.display = goals.length===0 ? 'block' : 'none';
+
+    let totalCp=0, doneCp=0;
+    goals.forEach(g=>{ totalCp += g.checkpoints.length; doneCp += g.checkpoints.filter(c=>c.done).length; });
+    document.getElementById('ov-total').textContent = goals.length;
+    document.getElementById('ov-checkpoints').textContent = totalCp;
+    document.getElementById('ov-done').textContent = totalCp>0 ? Math.round((doneCp/totalCp)*100)+'%' : '0%';
+
+    list.innerHTML = goals.map(g=>{
+      const n = g.checkpoints.length;
+      const doneN = g.checkpoints.filter(c=>c.done).length;
+      const pct = n>0 ? (doneN/n)*100 : 0;
+      const color = horizonColor[g.horizon] || 'var(--h1y)';
+
+      const nodes = g.checkpoints.map((c,i)=>{
+        const pos = n>1 ? (i/(n-1))*100 : 50;
+        return `<div class="route-node ${c.done?'done':''}" style="left:${pos}%; ${c.done?`border-color:${color}; background:${color};`:''}" title="${c.text}" data-toggle="${g.id}|${i}"></div>`;
+      }).join('');
+
+      return `
+      <div class="goal">
+        <div class="goal-head">
+          <div>
+            <div class="goal-title">${g.title}</div>
+            <div class="goal-tags"><span class="tag">${g.horizon}</span><span class="tag">${g.category}</span></div>
+          </div>
+          <span class="goal-del" data-del-goal="${g.id}">×</span>
+        </div>
+        <div class="route-wrap">
+          <div class="route-track">
+            <div class="route-fill" style="width:${pct}%; background:${color};"></div>
+            ${nodes}
+            <span class="route-flag">▸</span>
+          </div>
+          <div class="route-labels"><span>Hoy</span><span>${doneN}/${n} checkpoints</span><span>${g.title.length>18? g.title.slice(0,18)+'…' : g.title}</span></div>
+
+          <div class="checkpoint-log">
+            ${g.checkpoints.map((c,i)=>`
+              <div class="cp ${c.done?'done':''}">
+                <input type="checkbox" ${c.done?'checked':''} data-cp-toggle="${g.id}|${i}">
+                <span class="txt">${c.text}</span>
+                <span class="del" data-cp-del="${g.id}|${i}">×</span>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="add-cp">
+            <input type="text" placeholder="Nuevo checkpoint..." data-newcp="${g.id}">
+            <button data-addcp="${g.id}">Agregar</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    list.querySelectorAll('[data-del-goal]').forEach(el=> el.addEventListener('click', ()=> deleteGoal(el.dataset.delGoal)));
+    list.querySelectorAll('[data-toggle]').forEach(el=> el.addEventListener('click', ()=>{
+      const [gid, idx] = el.dataset.toggle.split('|'); toggleCheckpoint(gid, parseInt(idx));
+    }));
+    list.querySelectorAll('[data-cp-toggle]').forEach(el=> el.addEventListener('change', ()=>{
+      const [gid, idx] = el.dataset.cpToggle.split('|'); toggleCheckpoint(gid, parseInt(idx));
+    }));
+    list.querySelectorAll('[data-cp-del]').forEach(el=> el.addEventListener('click', ()=>{
+      const [gid, idx] = el.dataset.cpDel.split('|'); deleteCheckpoint(gid, parseInt(idx));
+    }));
+    list.querySelectorAll('[data-addcp]').forEach(btn=> btn.addEventListener('click', ()=>{
+      const gid = btn.dataset.addcp;
+      const inp = list.querySelector(`[data-newcp="${gid}"]`);
+      addCheckpoint(gid, inp.value); inp.value='';
+    }));
+  }
+
+  render();
+</script>
+</body>
+</html>
