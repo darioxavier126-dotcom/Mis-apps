@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitácora de errores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Special+Elite&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+  :root{
+    --paper:#D8CCA8; --paper-dark:#C9BC93; --paper2:#CBBD8E;
+    --ink:#241F14; --ink-soft:#4A4128; --red:#A8471F; --line:#8F8253;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--paper); color:var(--ink); font-family:'Courier Prime',monospace;
+    min-height:100vh; position:relative; overflow-x:hidden;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(139,46,46,0.03), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(43,36,24,0.04), transparent 40%);
+  }
+  /* textura de ruido sutil */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.5;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    animation: grainShift 1.2s steps(3) infinite;
+  }
+  @keyframes grainShift{0%{transform:translate(0,0);}33%{transform:translate(-1%,1%);}66%{transform:translate(1%,-1%);}100%{transform:translate(0,0);}}
+
+  .stains{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;}
+  .word{
+    position:absolute; font-family:'Special Elite',monospace; color:var(--red); text-transform:uppercase;
+    letter-spacing:0.08em; will-change:transform; white-space:nowrap;
+  }
+  .w1{font-size:64px; opacity:0.09; top:-4vh; left:-6vw; animation:driftA 15s ease-in-out infinite;}
+  .w2{font-size:46px; opacity:0.08; bottom:-2vh; right:-8vw; color:var(--ink); animation:driftB 19s ease-in-out infinite;}
+  .w3{font-size:38px; opacity:0.10; top:32vh; right:2vw; animation:driftA 13s ease-in-out infinite reverse;}
+  .w4{font-size:52px; opacity:0.08; bottom:8vh; left:4vw; color:var(--ink); animation:driftB 17s ease-in-out infinite reverse;}
+  .w5{font-size:30px; opacity:0.11; top:4vh; left:38vw; animation:driftA 21s ease-in-out infinite;}
+  .w6{font-size:40px; opacity:0.09; bottom:34vh; left:58vw; color:var(--ink); animation:driftB 12s ease-in-out infinite;}
+  @keyframes driftA{
+    0%{transform:translate(0,0) rotate(-3deg) scale(1);}
+    25%{transform:translate(38vw,20vh) rotate(4deg) scale(1.08);}
+    50%{transform:translate(16vw,48vh) rotate(-6deg) scale(0.94);}
+    75%{transform:translate(-12vw,16vh) rotate(3deg) scale(1.04);}
+    100%{transform:translate(0,0) rotate(-3deg) scale(1);}
+  }
+  @keyframes driftB{
+    0%{transform:translate(0,0) rotate(2deg) scale(1);}
+    30%{transform:translate(-34vw,-26vh) rotate(-5deg) scale(1.1);}
+    60%{transform:translate(-12vw,12vh) rotate(4deg) scale(0.92);}
+    100%{transform:translate(0,0) rotate(2deg) scale(1);}
+  }
+
+  .page{position:relative; z-index:1; max-width:800px; margin:0 auto; padding:50px 22px 90px;}
+
+  .nav3{display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap;}
+  .nav3 a{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; text-decoration:none; color:var(--ink-soft);
+    border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.25); letter-spacing:0.03em;
+  }
+  .nav3 a.current{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  .nav3 a:hover{border-color:var(--red); color:var(--red);}
+
+  header{border-bottom:3px double var(--ink); padding-bottom:20px; margin-bottom:30px; position:relative;}
+  .case-no{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--red); margin-bottom:8px;}
+  h1{font-family:'Special Elite',monospace; font-size:30px; color:var(--ink); letter-spacing:-0.01em;}
+  .sub{color:var(--ink-soft); font-size:13px; margin-top:10px; max-width:520px; line-height:1.7;}
+
+  .stamp{
+    position:absolute; top:6px; right:0; border:3px solid var(--red); color:var(--red);
+    font-family:'Special Elite',monospace; font-size:13px; padding:6px 14px; transform:rotate(-8deg);
+    letter-spacing:0.08em; opacity:0.75; border-radius:4px;
+  }
+
+  .folder{background:var(--paper2); border:1px solid var(--line); box-shadow:2px 3px 0 rgba(43,36,24,0.08); padding:24px 24px 20px; margin-bottom:24px; position:relative;}
+  .folder h2{font-family:'Special Elite',monospace; font-size:16px; color:var(--ink); margin-bottom:16px;}
+
+  .field label{display:block; font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-soft); margin-bottom:6px;}
+  input[type=text], input[type=date], select, textarea{
+    width:100%; padding:9px 11px; border:1px solid var(--line); background:rgba(255,255,255,0.5);
+    color:var(--ink); font-family:'Courier Prime',monospace; font-size:13px;
+  }
+  textarea{resize:vertical; min-height:56px;}
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;}
+  .btn{
+    background:var(--ink); color:var(--paper); border:none; padding:11px 22px;
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:0.06em; cursor:pointer; text-transform:uppercase;
+  }
+  .btn:hover{background:var(--red);}
+  .row-end{display:flex; justify-content:flex-end;}
+
+  .patterns-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px;}
+  .btn, .btn-add, button{transition:transform 0.12s ease, box-shadow 0.12s ease;}
+  .btn:active, .btn-add:active, button:active{transform:scale(0.94);}
+  .btn:hover, .btn-add:hover{box-shadow:0 4px 14px rgba(43,36,24,0.18);}
+  .folder{transition:transform 0.18s ease, box-shadow 0.18s ease;}
+  .folder:hover{transform:translateY(-3px); box-shadow:4px 8px 0 rgba(43,36,24,0.10);}
+
+  .typewriter-title span{display:inline-block; opacity:0; animation:letterPop 0.35s ease forwards;}
+  @keyframes letterPop{
+    0%{opacity:0; transform:translateY(10px) scale(0.8);}
+    60%{opacity:1; transform:translateY(-2px) scale(1.05);}
+    100%{opacity:1; transform:translateY(0) scale(1);}
+  }
+  .pattern-tag{border:1px solid var(--line); background:rgba(255,255,255,0.35); padding:12px 14px; cursor:pointer; transition:transform 0.15s ease, box-shadow 0.15s ease;}
+  .pattern-tag:hover{transform:translateY(-3px); box-shadow:2px 4px 0 rgba(36,31,20,0.15);}
+  .pattern-tag.filter-active{background:var(--red); border-color:var(--red);}
+  .pattern-tag.filter-active .cat, .pattern-tag.filter-active b{color:#fff;}
+  .pattern-tag .cat{font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; color:var(--ink-soft); letter-spacing:0.05em;}
+  .pattern-tag b{font-family:'Special Elite',monospace; font-size:22px; display:block; margin-top:4px; color:var(--red);}
+
+  .entry{border-bottom:1px dashed var(--line); padding:16px 2px; position:relative; transition:transform 0.15s ease;}
+  .entry:hover{transform:translateX(4px);}
+  .entry:last-child{border-bottom:none;}
+  .entry-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .entry-date{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft);}
+  .entry-tag{font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; border:1px solid var(--red); color:var(--red); padding:2px 8px; letter-spacing:0.04em;}
+  .entry-what{font-size:14px; margin-top:8px; color:var(--ink); line-height:1.5;}
+  .entry-lesson{font-size:13px; margin-top:6px; color:var(--ink-soft); font-style:italic; line-height:1.5;}
+  .entry-lesson::before{content:"→ ";}
+  .entry-del{position:absolute; top:16px; right:0; cursor:pointer; color:var(--ink-soft); font-size:15px;}
+  .entry-del:hover{color:var(--red);}
+
+  .empty{color:var(--ink-soft); font-size:13px; padding:20px 4px; text-align:center; font-style:italic;}
+
+  @media (max-width:560px){
+    .form-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;background:#D8CCA8;pointer-events:none;"></div>
+
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#2B2418; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div style="background:#E8DEC6; border:1px solid #B8A97C; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#8B2E2E; margin-bottom:14px;">Expediente confidencial</div>
+    <div style="font-family:'Special Elite',monospace; font-weight:400; font-size:19px; color:#2B2418; margin-bottom:22px;">Código de acceso</div>
+    <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border:1px solid #B8A97C; background:#fff; color:#2B2418; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
+    <div id="pin-error" style="color:#8B2E2E; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
+    <button id="pin-submit" style="width:100%; padding:13px; border:none; background:#8B2E2E; color:#E8DEC6; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em; cursor:pointer;">Abrir expediente</button>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const CORRECT_PIN = '3751';
+    const gate = document.getElementById('pin-gate');
+    const input = document.getElementById('pin-input');
+    const err = document.getElementById('pin-error');
+    if(localStorage.getItem('habit_unlocked') === 'yes'){ gate.style.display = 'none'; }
+    else { setTimeout(()=> input.focus(), 200); }
+    function tryUnlock(){
+      if(input.value === CORRECT_PIN){ localStorage.setItem('habit_unlocked','yes'); gate.style.display='none'; }
+      else { err.textContent = 'Código incorrecto'; input.value=''; input.focus(); }
+    }
+    document.getElementById('pin-submit').addEventListener('click', tryUnlock);
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryUnlock(); });
+  })();
+</script>
+
+<canvas id="dust-canvas" style="position:fixed; inset:0; z-index:0;"></canvas>
+<div class="stains" style="opacity:0.6;">
+  <span class="word w1">CASO</span>
+  <span class="word w2">ARCHIVADO</span>
+  <span class="word w3">PATRÓN</span>
+  <span class="word w4">LECCIÓN</span>
+  <span class="word w5">EVIDENCIA</span>
+  <span class="word w6">EXPEDIENTE</span>
+</div>
+
+<div class="page">
+  <div class="nav3">
+    <a href="index.html">Hábitos</a>
+    <a href="metas.html">Metas</a>
+    <a href="errores.html" class="current">Errores</a>
+    <a href="sesgos.html">Sesgos</a>
+    <a href="cerebro.html">Cerebro</a>
+  </div>
+
+  <header>
+    <div class="case-no">Fase 0 · Sistema 3 — Expediente abierto</div>
+    <h1 class="typewriter-title" id="main-title">Bitácora de errores</h1>
+    <p class="sub">Cada vez que algo sale mal, se archiva aquí en dos líneas. No para castigarte — para que el patrón aparezca antes de que se repita por quinta vez.</p>
+    <div class="stamp">ARCHIVADO</div>
+  </header>
+
+  <div class="folder">
+    <h2>Nuevo caso</h2>
+    <div class="form-grid">
+      <div class="field"><label>Fecha</label><input type="date" id="e-date"></div>
+      <div class="field"><label>Categoría</label>
+        <select id="e-category"><option>Estudios</option><option>Trabajo</option><option>Decisión</option><option>Personal</option></select>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:12px;">
+      <label>¿Qué pasó?</label>
+      <textarea id="e-what" placeholder="Ej: Entregué la propuesta sin revisar el presupuesto del cliente."></textarea>
+    </div>
+    <div class="field" style="margin-bottom:14px;">
+      <label>Lección — ¿qué harás distinto?</label>
+      <textarea id="e-lesson" placeholder="Ej: Siempre confirmar presupuesto antes de enviar cualquier propuesta."></textarea>
+    </div>
+    <div class="row-end"><button class="btn" id="add-entry">Archivar caso</button></div>
+  </div>
+
+  <div class="folder">
+    <h2>Patrones (todo el historial) — toca una categoría para filtrar</h2>
+    <div class="patterns-grid" id="patterns-grid"></div>
+  </div>
+
+  <div class="folder">
+    <h2>Expedientes recientes</h2>
+    <div id="entries-list"></div>
+    <div class="empty" id="empty-state" style="display:none;">Sin casos archivados todavía.</div>
+  </div>
+</div>
+
+<script>
+<script>
+  (function(){
+    const el = document.getElementById('main-title');
+    const text = el.textContent;
+    el.innerHTML = text.split('').map((ch,i)=>
+      `<span style="animation-delay:${i*0.045}s">${ch===' '?'&nbsp;':ch}</span>`
+    ).join('');
+  })();
+</script>
+
+<script>
+  const dateInput = document.getElementById('e-date');
+  dateInput.value = new Date().toISOString().split('T')[0];
+
+  function loadEntries(){ try{ return JSON.parse(localStorage.getItem('errorlog')||'[]'); } catch(e){ return []; } }
+  function saveEntries(entries){ localStorage.setItem('errorlog', JSON.stringify(entries)); render(); }
+
+  document.getElementById('add-entry').addEventListener('click', ()=>{
+    const what = document.getElementById('e-what').value.trim();
+    if(!what) return;
+    const entries = loadEntries();
+    entries.unshift({
+      id: Date.now().toString(),
+      date: dateInput.value,
+      category: document.getElementById('e-category').value,
+      what,
+      lesson: document.getElementById('e-lesson').value.trim()
+    });
+    document.getElementById('e-what').value='';
+    document.getElementById('e-lesson').value='';
+    saveEntries(entries);
+  });
+
+  let activeFilter = null;
+
+  function deleteEntry(id){ saveEntries(loadEntries().filter(e=>e.id!==id)); }
+
+  function render(){
+    const entries = loadEntries();
+    document.getElementById('empty-state').style.display = entries.length===0 ? 'block' : 'none';
+
+    const counts = {};
+    entries.forEach(e=>{ counts[e.category] = (counts[e.category]||0) + 1; });
+    const patterns = document.getElementById('patterns-grid');
+    const cats = ['Estudios','Trabajo','Decisión','Personal'];
+    patterns.innerHTML = cats.map(c=>`
+      <div class="pattern-tag ${activeFilter===c?'filter-active':''}" data-filter="${c}"><span class="cat">${c}</span><b>${counts[c]||0}</b></div>
+    `).join('');
+    patterns.querySelectorAll('[data-filter]').forEach(el=> el.addEventListener('click', ()=>{
+      const c = el.dataset.filter;
+      activeFilter = (activeFilter === c) ? null : c;
+      render();
+    }));
+
+    const filtered = activeFilter ? entries.filter(e=> e.category === activeFilter) : entries;
+    const list = document.getElementById('entries-list');
+    list.innerHTML = filtered.slice(0,15).map(e=>`
+      <div class="entry">
+        <div class="entry-top">
+          <span class="entry-date">${e.date}</span>
+          <span class="entry-tag">${e.category}</span>
+        </div>
+        <div class="entry-what">${e.what}</div>
+        ${e.lesson ? `<div class="entry-lesson">${e.lesson}</div>` : ''}
+        <span class="entry-del" data-del="${e.id}">×</span>
+      </div>
+    `).join('');
+    list.querySelectorAll('[data-del]').forEach(el=> el.addEventListener('click', ()=> deleteEntry(el.dataset.del)));
+  }
+
+  render();
+</script>
+<script>
+  // ===== Recortes de papel cayendo y girando en 3D (silueta plana, no puntos) =====
+  const dustCanvas = document.getElementById('dust-canvas');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.z = 26;
+  const renderer = new THREE.WebGLRenderer({ canvas: dustCanvas, antialias:true, alpha:true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  function paperTexture(hex){
+    const c = document.createElement('canvas'); c.width = 96; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = hex; ctx.fillRect(0,0,96,128);
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 2;
+    ctx.strokeRect(1,1,94,126);
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    for(let i=0; i<3; i++) ctx.fillRect(10, 20+i*22, 76-Math.random()*20, 3);
+    return new THREE.CanvasTexture(c);
+  }
+
+  const paperColors = ['#D8CCA8','#C9BC93','#E4D9B8','#B8A97C'];
+  const SCRAP_COUNT = 26;
+  const scraps = [];
+  for(let i=0; i<SCRAP_COUNT; i++){
+    const tex = paperTexture(paperColors[i % paperColors.length]);
+    const geo = new THREE.PlaneGeometry(1.6 + Math.random()*1.2, 2.1 + Math.random()*1.4);
+    const mat = new THREE.MeshBasicMaterial({ map:tex, transparent:true, opacity:0.8, side:THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set((Math.random()-0.5)*36, 18 + Math.random()*24, (Math.random()-0.5)*14);
+    mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+    scene.add(mesh);
+    scraps.push({
+      mesh,
+      fallSpeed: 0.015 + Math.random()*0.02,
+      rotSpeed: new THREE.Vector3((Math.random()-0.5)*0.01, (Math.random()-0.5)*0.014, (Math.random()-0.5)*0.01),
+      swayPhase: Math.random()*Math.PI*2, swaySpeed: 0.3+Math.random()*0.4
+    });
+  }
+
+  const pClock = new THREE.Clock();
+  function animatePaper(){
+    requestAnimationFrame(animatePaper);
+    const t = pClock.getElapsedTime();
+    for(const s of scraps){
+      s.mesh.position.y -= s.fallSpeed;
+      s.mesh.position.x += Math.sin(t*s.swaySpeed + s.swayPhase) * 0.01;
+      s.mesh.rotation.x += s.rotSpeed.x;
+      s.mesh.rotation.y += s.rotSpeed.y;
+      s.mesh.rotation.z += s.rotSpeed.z;
+      if(s.mesh.position.y < -20){ s.mesh.position.y = 20 + Math.random()*8; s.mesh.position.x = (Math.random()-0.5)*36; }
+    }
+    renderer.render(scene, camera);
+  }
+  animatePaper();
+  window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+
+  gsap.from('.folder', { opacity:0, y:22, duration:0.65, stagger:0.12, ease:'power2.out' });
+</script>
+
+<script>
+  // ===== Transición entre páginas (sin flash blanco) =====
+  window.addEventListener('load', ()=>{
+    gsap.to('#page-veil', { opacity:0, duration:0.5, delay:0.05, ease:'power1.out', onComplete:()=>{
+      document.getElementById('page-veil').style.pointerEvents = 'none';
+    }});
+  });
+  document.querySelectorAll('a[href$=".html"]').forEach(link=>{
+    link.addEventListener('click', function(e){
+      if(this.target === '_blank') return;
+      const href = this.getAttribute('href');
+      e.preventDefault();
+      gsap.to('#page-veil', { opacity:1, duration:0.32, ease:'power1.in', onComplete:()=>{ window.location.href = href; } });
+    });
+  });
+
+  // ===== Aparición al hacer scroll =====
+  const revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        gsap.to(entry.target, { opacity:1, y:0, duration:0.5, ease:'power2.out' });
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold:0.15 });
+
+  function observeReveals(selector){
+    document.querySelectorAll(selector).forEach(el=>{
+      if(el.dataset.revealed) return;
+      el.dataset.revealed = '1';
+      gsap.set(el, { opacity:0, y:14 });
+      revealObserver.observe(el);
+    });
+  }
+  const revealWatcher = new MutationObserver(()=> observeReveals('.entry'));
+  revealWatcher.observe(document.body, { childList:true, subtree:true });
+  observeReveals('.entry');
+
+  // ===== Hover con física real en botones =====
+  document.querySelectorAll('button, .pill').forEach(btn=>{
+    btn.addEventListener('mouseenter', ()=> gsap.to(btn, { scale:1.05, duration:0.2, ease:'back.out(2)' }));
+    btn.addEventListener('mouseleave', ()=> gsap.to(btn, { scale:1, duration:0.2, ease:'power2.out' }));
+  });
+</script>
+
+</body>
+</html>
