@@ -213,12 +213,13 @@
 <div class="drawer" id="ask-drawer">
   <div class="drawer-head"><h2>Pregúntale a tu cerebro</h2><span class="drawer-close" data-close="ask-drawer">×</span></div>
   <div class="drawer-body">
-    <div class="field"><label>Tu clave de API (solo esta sesión)</label><input type="password" id="api-key" placeholder="sk-ant-…"></div>
+    <div class="field"><label>Tu clave de API</label><input type="password" id="api-key" placeholder="sk-ant-…"></div>
     <div class="field"><label>Pregunta</label><textarea id="ai-question" placeholder="Ej: ¿qué tengo apuntado sobre Lean Six Sigma?" style="min-height:54px;"></textarea></div>
     <div class="row-end"><button class="btn" id="ask-ai">Preguntar</button></div>
     <div class="status" id="ai-status"></div>
     <div class="ai-answer" id="ai-answer"></div>
-    <p class="ai-note">Tu clave nunca se guarda — vive solo en la memoria de esta pestaña. Consíguela en console.anthropic.com.</p>
+    <p class="ai-note">Tu clave queda guardada en este celular para no pegarla cada vez — vive solo en este navegador, nunca sale de aquí. Si prestas o vendes el celular, bórrala tocando "Olvidar clave". Consíguela en console.anthropic.com.</p>
+    <div class="row-end" style="margin-top:8px;"><span class="drawer-close" id="forget-key" style="font-size:10px; text-decoration:underline;">Olvidar clave</span></div>
   </div>
 </div>
 
@@ -451,13 +452,25 @@
   document.querySelectorAll('[data-close]').forEach(el=> el.addEventListener('click', ()=> closeDrawer(el.dataset.close)));
 
   // ===== Preguntar a la IA =====
+  // La clave se guarda en localStorage de este dispositivo para no pegarla cada vez.
+  // Vive solo en este navegador — nunca se envía a ningún lado excepto a la API de Anthropic.
+  const apiKeyInput = document.getElementById('api-key');
+  try{ const saved = localStorage.getItem('brain_api_key'); if(saved) apiKeyInput.value = saved; }catch(e){}
+
+  document.getElementById('forget-key').addEventListener('click', ()=>{
+    try{ localStorage.removeItem('brain_api_key'); }catch(e){}
+    apiKeyInput.value = '';
+    showToast('Clave olvidada');
+  });
+
   document.getElementById('ask-ai').addEventListener('click', async ()=>{
-    const apiKey = document.getElementById('api-key').value.trim();
+    const apiKey = apiKeyInput.value.trim();
     const question = document.getElementById('ai-question').value.trim();
     const statusEl = document.getElementById('ai-status');
     const answerEl = document.getElementById('ai-answer');
     if(!apiKey){ statusEl.textContent = 'Falta tu clave de API.'; return; }
     if(!question){ statusEl.textContent = 'Escribe una pregunta.'; return; }
+    try{ localStorage.setItem('brain_api_key', apiKey); }catch(e){}
 
     const notes = loadNotes();
     const context = notes.map(n => `Título: ${n.title}\nEtiquetas: ${(n.tags||[]).join(', ')}\nContenido: ${n.content}`).join('\n\n---\n\n');
