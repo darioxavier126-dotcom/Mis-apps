@@ -6,6 +6,8 @@
 <title>Bitácora de errores</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Special+Elite&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <style>
   :root{
     --paper:#D8CCA8; --paper-dark:#C9BC93; --paper2:#CBBD8E;
@@ -131,6 +133,7 @@
 </style>
 </head>
 <body>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;background:#D8CCA8;pointer-events:none;"></div>
 
 <div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#2B2418; display:flex; align-items:center; justify-content:center; padding:24px;">
   <div style="background:#E8DEC6; border:1px solid #B8A97C; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
@@ -159,7 +162,8 @@
   })();
 </script>
 
-<div class="stains">
+<canvas id="dust-canvas" style="position:fixed; inset:0; z-index:0;"></canvas>
+<div class="stains" style="opacity:0.6;">
   <span class="word w1">CASO</span>
   <span class="word w2">ARCHIVADO</span>
   <span class="word w3">PATRÓN</span>
@@ -174,6 +178,7 @@
     <a href="metas.html">Metas</a>
     <a href="errores.html" class="current">Errores</a>
     <a href="sesgos.html">Sesgos</a>
+    <a href="cerebro.html">Cerebro</a>
   </div>
 
   <header>
@@ -287,5 +292,115 @@
 
   render();
 </script>
+<script>
+  // ===== Recortes de papel cayendo y girando en 3D (silueta plana, no puntos) =====
+  const dustCanvas = document.getElementById('dust-canvas');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.z = 26;
+  const renderer = new THREE.WebGLRenderer({ canvas: dustCanvas, antialias:true, alpha:true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  function paperTexture(hex){
+    const c = document.createElement('canvas'); c.width = 96; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = hex; ctx.fillRect(0,0,96,128);
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 2;
+    ctx.strokeRect(1,1,94,126);
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    for(let i=0; i<3; i++) ctx.fillRect(10, 20+i*22, 76-Math.random()*20, 3);
+    return new THREE.CanvasTexture(c);
+  }
+
+  const paperColors = ['#D8CCA8','#C9BC93','#E4D9B8','#B8A97C'];
+  const SCRAP_COUNT = 26;
+  const scraps = [];
+  for(let i=0; i<SCRAP_COUNT; i++){
+    const tex = paperTexture(paperColors[i % paperColors.length]);
+    const geo = new THREE.PlaneGeometry(1.6 + Math.random()*1.2, 2.1 + Math.random()*1.4);
+    const mat = new THREE.MeshBasicMaterial({ map:tex, transparent:true, opacity:0.8, side:THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set((Math.random()-0.5)*36, 18 + Math.random()*24, (Math.random()-0.5)*14);
+    mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+    scene.add(mesh);
+    scraps.push({
+      mesh,
+      fallSpeed: 0.015 + Math.random()*0.02,
+      rotSpeed: new THREE.Vector3((Math.random()-0.5)*0.01, (Math.random()-0.5)*0.014, (Math.random()-0.5)*0.01),
+      swayPhase: Math.random()*Math.PI*2, swaySpeed: 0.3+Math.random()*0.4
+    });
+  }
+
+  const pClock = new THREE.Clock();
+  function animatePaper(){
+    requestAnimationFrame(animatePaper);
+    const t = pClock.getElapsedTime();
+    for(const s of scraps){
+      s.mesh.position.y -= s.fallSpeed;
+      s.mesh.position.x += Math.sin(t*s.swaySpeed + s.swayPhase) * 0.01;
+      s.mesh.rotation.x += s.rotSpeed.x;
+      s.mesh.rotation.y += s.rotSpeed.y;
+      s.mesh.rotation.z += s.rotSpeed.z;
+      if(s.mesh.position.y < -20){ s.mesh.position.y = 20 + Math.random()*8; s.mesh.position.x = (Math.random()-0.5)*36; }
+    }
+    renderer.render(scene, camera);
+  }
+  animatePaper();
+  window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+
+  gsap.from('.folder', { opacity:0, y:22, duration:0.65, stagger:0.12, ease:'power2.out' });
+</script>
+
+<script>
+  // ===== Transición entre páginas (sin flash blanco) =====
+  window.addEventListener('load', ()=>{
+    gsap.to('#page-veil', { opacity:0, duration:0.5, delay:0.05, ease:'power1.out', onComplete:()=>{
+      document.getElementById('page-veil').style.pointerEvents = 'none';
+    }});
+  });
+  document.querySelectorAll('a[href$=".html"]').forEach(link=>{
+    link.addEventListener('click', function(e){
+      if(this.target === '_blank') return;
+      const href = this.getAttribute('href');
+      e.preventDefault();
+      gsap.to('#page-veil', { opacity:1, duration:0.32, ease:'power1.in', onComplete:()=>{ window.location.href = href; } });
+    });
+  });
+
+  // ===== Aparición al hacer scroll =====
+  const revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        gsap.to(entry.target, { opacity:1, y:0, duration:0.5, ease:'power2.out' });
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold:0.15 });
+
+  function observeReveals(selector){
+    document.querySelectorAll(selector).forEach(el=>{
+      if(el.dataset.revealed) return;
+      el.dataset.revealed = '1';
+      gsap.set(el, { opacity:0, y:14 });
+      revealObserver.observe(el);
+    });
+  }
+  const revealWatcher = new MutationObserver(()=> observeReveals('.entry'));
+  revealWatcher.observe(document.body, { childList:true, subtree:true });
+  observeReveals('.entry');
+
+  // ===== Hover con física real en botones =====
+  document.querySelectorAll('button, .pill').forEach(btn=>{
+    btn.addEventListener('mouseenter', ()=> gsap.to(btn, { scale:1.05, duration:0.2, ease:'back.out(2)' }));
+    btn.addEventListener('mouseleave', ()=> gsap.to(btn, { scale:1, duration:0.2, ease:'power2.out' }));
+  });
+</script>
+
 </body>
 </html>

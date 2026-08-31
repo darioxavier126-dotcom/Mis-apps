@@ -6,6 +6,8 @@
 <title>Panel de metas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <style>
   :root{
     --bg:#0B0D10; --panel:#14171C; --line:#262B33;
@@ -119,6 +121,7 @@
 </style>
 </head>
 <body>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;background:#0B0D10;pointer-events:none;"></div>
 
 <div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0B0D10; display:flex; align-items:center; justify-content:center; padding:24px;">
   <div style="background:#14171C; border:1px solid #262B33; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
@@ -147,7 +150,8 @@
   })();
 </script>
 
-<div class="contours">
+<canvas id="route-canvas" style="position:fixed; inset:0; z-index:0;"></canvas>
+<div class="contours" style="opacity:0.5;">
   <div class="contour c1"></div>
   <div class="contour c2"></div>
   <div class="contour c3"></div>
@@ -164,6 +168,7 @@
       <a class="back-link" href="index.html">Hábitos</a>
       <a class="back-link" href="errores.html">Errores</a>
       <a class="back-link" href="sesgos.html">Sesgos</a>
+      <a class="back-link" href="cerebro.html">Cerebro</a>
     </div>
   </header>
 
@@ -312,5 +317,127 @@
 
   render();
 </script>
+<script>
+  // ===== Camino de montaña real en 3D, con waypoints que laten =====
+  const routeCanvas = document.getElementById('route-canvas');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(58, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 6, 34);
+  camera.lookAt(0,0,0);
+  const renderer = new THREE.WebGLRenderer({ canvas: routeCanvas, antialias:true, alpha:true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const routePoints = [];
+  const N = 80;
+  for(let i=0; i<N; i++){
+    const x = (i/(N-1)) * 60 - 30;
+    const y = Math.sin(i*0.25) * 4 + Math.sin(i*0.07) * 6;
+    const z = Math.cos(i*0.18) * 5 - 4;
+    routePoints.push(new THREE.Vector3(x, y, z));
+  }
+  const routeCurve = new THREE.CatmullRomCurve3(routePoints);
+  const tubeGeo = new THREE.TubeGeometry(routeCurve, 200, 0.12, 8, false);
+  const tubeMat = new THREE.MeshBasicMaterial({ color:0x5E9BD8, transparent:true, opacity:0.5 });
+  scene.add(new THREE.Mesh(tubeGeo, tubeMat));
+
+  const routeCurve2 = new THREE.CatmullRomCurve3(routePoints.map(p => new THREE.Vector3(p.x, p.y-3, p.z-6)));
+  const tubeGeo2 = new THREE.TubeGeometry(routeCurve2, 200, 0.06, 6, false);
+  const tubeMat2 = new THREE.MeshBasicMaterial({ color:0xD9A441, transparent:true, opacity:0.22 });
+  scene.add(new THREE.Mesh(tubeGeo2, tubeMat2));
+
+  function glowTex(hex){
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(32,32,0,32,32,32);
+    g.addColorStop(0,'rgba(255,255,255,1)');
+    g.addColorStop(0.4, hex);
+    g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,64,64);
+    return new THREE.CanvasTexture(c);
+  }
+
+  const waypointColors = ['rgba(94,155,216,0.9)','rgba(217,164,65,0.9)','rgba(194,91,79,0.9)'];
+  const waypoints = [];
+  const WP_COUNT = 9;
+  for(let i=0; i<WP_COUNT; i++){
+    const t = (i+0.5) / WP_COUNT;
+    const p = routeCurve.getPointAt(t);
+    const color = waypointColors[i % waypointColors.length];
+    const mat = new THREE.SpriteMaterial({ map:glowTex(color), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(1.6,1.6,1);
+    sprite.position.copy(p);
+    scene.add(sprite);
+    waypoints.push({ sprite, phase: Math.random()*Math.PI*2, baseScale:1.6 });
+  }
+
+  const rClock = new THREE.Clock();
+  function animateRoute(){
+    requestAnimationFrame(animateRoute);
+    const t = rClock.getElapsedTime();
+    for(const w of waypoints){
+      const s = w.baseScale + Math.sin(t*1.4 + w.phase) * 0.35;
+      w.sprite.scale.set(s, s, 1);
+    }
+    scene.rotation.y = Math.sin(t*0.04) * 0.12;
+    camera.position.y = 6 + Math.sin(t*0.06) * 1.5;
+    renderer.render(scene, camera);
+  }
+  animateRoute();
+  window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  gsap.from('.panel, .goal', { opacity:0, y:20, duration:0.6, stagger:0.1, ease:'power2.out' });
+</script>
+
+<script>
+  // ===== Transición entre páginas (sin flash blanco) =====
+  window.addEventListener('load', ()=>{
+    gsap.to('#page-veil', { opacity:0, duration:0.5, delay:0.05, ease:'power1.out', onComplete:()=>{
+      document.getElementById('page-veil').style.pointerEvents = 'none';
+    }});
+  });
+  document.querySelectorAll('a[href$=".html"]').forEach(link=>{
+    link.addEventListener('click', function(e){
+      if(this.target === '_blank') return;
+      const href = this.getAttribute('href');
+      e.preventDefault();
+      gsap.to('#page-veil', { opacity:1, duration:0.32, ease:'power1.in', onComplete:()=>{ window.location.href = href; } });
+    });
+  });
+
+  // ===== Aparición al hacer scroll =====
+  const revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        gsap.to(entry.target, { opacity:1, y:0, duration:0.5, ease:'power2.out' });
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold:0.15 });
+
+  function observeReveals(selector){
+    document.querySelectorAll(selector).forEach(el=>{
+      if(el.dataset.revealed) return;
+      el.dataset.revealed = '1';
+      gsap.set(el, { opacity:0, y:14 });
+      revealObserver.observe(el);
+    });
+  }
+  const revealWatcher = new MutationObserver(()=> observeReveals('.goal'));
+  revealWatcher.observe(document.body, { childList:true, subtree:true });
+  observeReveals('.goal');
+
+  // ===== Hover con física real en botones =====
+  document.querySelectorAll('button, .pill').forEach(btn=>{
+    btn.addEventListener('mouseenter', ()=> gsap.to(btn, { scale:1.05, duration:0.2, ease:'back.out(2)' }));
+    btn.addEventListener('mouseleave', ()=> gsap.to(btn, { scale:1, duration:0.2, ease:'power2.out' }));
+  });
+</script>
+
 </body>
 </html>

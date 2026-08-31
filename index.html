@@ -6,6 +6,8 @@
 <title>Rastreador de hábitos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <style>
   :root{
     --cream:#F7F2E7; --navy:#14213D; --gold:#B08D57; --gold-soft:#D9BD8C;
@@ -132,6 +134,7 @@
 </style>
 </head>
 <body>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;background:#F7F2E7;pointer-events:none;"></div>
 
 <div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#14213D; display:flex; align-items:center; justify-content:center; padding:24px;">
   <div style="background:rgba(255,255,255,0.08); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.15); border-radius:18px; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
@@ -171,11 +174,10 @@
   })();
 </script>
 
-<div class="aurora">
+<canvas id="orb-canvas" style="position:fixed; inset:0; z-index:0;"></canvas>
+<div class="aurora" style="opacity:0.35;">
   <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
-  <div class="blob b4"></div><div class="blob b5"></div><div class="blob b6"></div>
-  <div class="blob b7"></div><div class="blob b8"></div><div class="blob b9"></div>
-  <div class="blob b10"></div><div class="blob b11"></div><div class="blob b12"></div>
+
 </div>
 
 <div class="page">
@@ -189,6 +191,7 @@
       <a href="metas.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Metas</a>
       <a href="errores.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Errores</a>
       <a href="sesgos.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Sesgos</a>
+      <a href="cerebro.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Cerebro</a>
     </div>
   </header>
 
@@ -666,5 +669,122 @@
   loadToday();
   loadHistory();
 </script>
+<script>
+  // ===== Cintas de aurora ondulando en 3D (silueta de tela, no partículas) =====
+  const orbCanvas = document.getElementById('orb-canvas');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 0, 26);
+  const renderer = new THREE.WebGLRenderer({ canvas: orbCanvas, antialias:true, alpha:true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  function ribbonTexture(colorA, colorB){
+    const c = document.createElement('canvas'); c.width = 8; c.height = 256;
+    const ctx = c.getContext('2d');
+    const g = ctx.createLinearGradient(0,0,0,256);
+    g.addColorStop(0,'rgba(255,255,255,0)');
+    g.addColorStop(0.5, colorA);
+    g.addColorStop(0.75, colorB);
+    g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,8,256);
+    return new THREE.CanvasTexture(c);
+  }
+
+  const ribbonColors = [
+    ['rgba(217,189,140,0.55)','rgba(176,141,87,0.35)'],
+    ['rgba(255,255,255,0.4)','rgba(217,189,140,0.25)'],
+    ['rgba(176,141,87,0.5)','rgba(255,255,255,0.2)']
+  ];
+
+  const ribbons = [];
+  const RIBBON_COUNT = 5;
+  const SEGMENTS = 64;
+  for(let r=0; r<RIBBON_COUNT; r++){
+    const width = 46;
+    const geo = new THREE.PlaneGeometry(width, 5, SEGMENTS, 1);
+    const [ca, cb] = ribbonColors[r % ribbonColors.length];
+    const mat = new THREE.MeshBasicMaterial({
+      map: ribbonTexture(ca, cb), transparent:true, side:THREE.DoubleSide,
+      blending:THREE.AdditiveBlending, depthWrite:false
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(0, (r - RIBBON_COUNT/2) * 4.2, -6 + r*1.5);
+    mesh.rotation.z = (Math.random()-0.5) * 0.15;
+    scene.add(mesh);
+    ribbons.push({ mesh, geo, phase: Math.random()*Math.PI*2, speed: 0.4 + Math.random()*0.3, amp: 1.8 + Math.random()*1.4 });
+  }
+
+  const clock = new THREE.Clock();
+  function animateRibbons(){
+    requestAnimationFrame(animateRibbons);
+    const t = clock.getElapsedTime();
+    for(const rb of ribbons){
+      const pos = rb.geo.attributes.position;
+      for(let i=0; i<=SEGMENTS; i++){
+        const x = pos.getX(i);
+        const wave = Math.sin(x*0.15 + t*rb.speed + rb.phase) * rb.amp
+                   + Math.sin(x*0.05 - t*rb.speed*0.6) * rb.amp*0.4;
+        pos.setY(i, wave);
+      }
+      pos.needsUpdate = true;
+      rb.mesh.rotation.z = Math.sin(t*0.1 + rb.phase) * 0.05;
+    }
+    scene.rotation.y = Math.sin(t*0.05) * 0.08;
+    renderer.render(scene, camera);
+  }
+  animateRibbons();
+  window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+</script>
+
+<script>
+  // ===== Transición entre páginas (sin flash blanco) =====
+  window.addEventListener('load', ()=>{
+    gsap.to('#page-veil', { opacity:0, duration:0.5, delay:0.05, ease:'power1.out', onComplete:()=>{
+      document.getElementById('page-veil').style.pointerEvents = 'none';
+    }});
+  });
+  document.querySelectorAll('a[href$=".html"]').forEach(link=>{
+    link.addEventListener('click', function(e){
+      if(this.target === '_blank') return;
+      const href = this.getAttribute('href');
+      e.preventDefault();
+      gsap.to('#page-veil', { opacity:1, duration:0.32, ease:'power1.in', onComplete:()=>{ window.location.href = href; } });
+    });
+  });
+
+  // ===== Aparición al hacer scroll =====
+  const revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        gsap.to(entry.target, { opacity:1, y:0, duration:0.5, ease:'power2.out' });
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold:0.15 });
+
+  function observeReveals(selector){
+    document.querySelectorAll(selector).forEach(el=>{
+      if(el.dataset.revealed) return;
+      el.dataset.revealed = '1';
+      gsap.set(el, { opacity:0, y:14 });
+      revealObserver.observe(el);
+    });
+  }
+  const revealWatcher = new MutationObserver(()=> observeReveals('.day-card'));
+  revealWatcher.observe(document.body, { childList:true, subtree:true });
+  observeReveals('.day-card');
+
+  // ===== Hover con física real en botones =====
+  document.querySelectorAll('button, .pill').forEach(btn=>{
+    btn.addEventListener('mouseenter', ()=> gsap.to(btn, { scale:1.05, duration:0.2, ease:'back.out(2)' }));
+    btn.addEventListener('mouseleave', ()=> gsap.to(btn, { scale:1, duration:0.2, ease:'power2.out' }));
+  });
+</script>
+
 </body>
 </html>
