@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Panel de metas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <style>
@@ -44,12 +44,19 @@
     width:min(600px, 92vw); background:rgba(21,26,32,0.62); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
     border:1px solid var(--line); border-radius:16px; padding:14px 16px; box-shadow:0 20px 50px -20px rgba(0,0,0,0.7);}
   .capture-eyebrow{font-size:9.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--brass); margin-bottom:10px; text-align:center;}
-  .capture-row{display:grid; grid-template-columns:1.5fr 1fr 1fr auto; gap:8px;}
-  .capture-row input, .capture-row select{
-    padding:10px 10px; border:1px solid var(--line); border-radius:9px; background:rgba(10,13,18,0.6); color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:12px;
+  .cd-title{width:100%; padding:12px 13px; border:1px solid var(--line); border-radius:10px; background:rgba(10,13,18,0.6);
+    color:var(--ink); font-family:'Fraunces',serif; font-size:15px; margin-bottom:9px;}
+  .cd-title:focus{outline:none; border-color:var(--brass);}
+  .capture-row{display:grid; grid-template-columns:88px 1fr auto; gap:8px; align-items:stretch;}
+  .cd-years{display:flex; align-items:center; gap:5px; border:1px solid var(--line); border-radius:9px; background:rgba(10,13,18,0.6); padding:0 8px;}
+  .cd-years input{width:34px; border:none; background:transparent; color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:10px 0; text-align:right;}
+  .cd-years input:focus{outline:none;}
+  .cd-years span{font-size:10px; color:var(--ink-dim); white-space:nowrap;}
+  .capture-row select{
+    padding:10px 8px; border:1px solid var(--line); border-radius:9px; background:rgba(10,13,18,0.6); color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:12px; min-width:0;
   }
-  .capture-row input:focus, .capture-row select:focus{outline:none; border-color:var(--brass);}
-  .capture-row button{background:var(--brass); color:#0A0D12; border:none; border-radius:9px; cursor:pointer; font-size:16px; font-weight:600;}
+  .capture-row select:focus{outline:none; border-color:var(--brass);}
+  .capture-row button{background:var(--brass); color:#0A0D12; border:none; border-radius:9px; cursor:pointer; font-size:13px; font-weight:600; padding:0 16px; white-space:nowrap;}
 
   /* ===== FAB ===== */
   .fab-stack{position:fixed; right:20px; bottom:26px; z-index:20; display:flex; flex-direction:column; gap:10px;}
@@ -107,12 +114,21 @@
   button:active, .fab:active{transform:scale(0.94);}
 
   @media (max-width:640px){
-    .drawer{right:8px; left:8px; width:auto; top:72px; bottom:160px;}
-    .fab-stack{bottom:130px;}
-    .capture-dock{bottom:20px; padding:12px;}
-    .capture-row{grid-template-columns:1fr 1fr; gap:7px;}
-    .capture-row input[type=text]{grid-column:1 / -1;}
+    .drawer{right:8px; left:8px; width:auto; top:72px; bottom:190px;}
+    .fab-stack{bottom:168px; right:16px;}
+    .capture-dock{bottom:16px; padding:12px; width:calc(100vw - 32px);}
   }
+  @media (max-width:360px){
+    .capture-row{grid-template-columns:76px 1fr auto; gap:6px;}
+    .capture-row button{padding:0 12px; font-size:12px;}
+  }
+
+  /* ===== Ajustes globales moviles ===== */
+  h1, h2, .eyebrow, .brand, label{overflow-wrap:normal; word-break:keep-all; hyphens:none;}
+  button, .btn, .pill, .fab, a{touch-action:manipulation;}
+  button, .btn, .pill, .fab{transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1) !important;}
+  .signature{position:fixed; bottom:6px; left:14px; z-index:15;
+    font-family:"Mrs Saint Delafield",cursive; font-size:15px; opacity:0.35; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
 </style>
 </head>
 <body>
@@ -121,7 +137,8 @@
 <div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0A0D12; display:flex; align-items:center; justify-content:center; padding:24px;">
   <div style="background:#151A20; border:1px solid #262E36; padding:36px 30px; max-width:340px; width:100%; text-align:center; border-radius:12px;">
     <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#D9A441; margin-bottom:14px;">Acceso privado</div>
-    <div style="font-family:'Fraunces',serif; font-weight:600; font-size:20px; color:#EDEFEA; margin-bottom:22px;">Ingresa tu PIN</div>
+    <div style="font-family:'Fraunces',serif; font-weight:600; font-size:20px; color:#EDEFEA; margin-bottom:6px;">Bienvenido, Darío</div>
+    <div style="font-size:12px; color:#8A9099; margin-bottom:20px;">Ingresa tu PIN para continuar</div>
     <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border-radius:8px; border:1px solid #262E36; background:#0A0D12; color:#EDEFEA; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
     <div id="pin-error" style="color:#C25B4F; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
     <button id="pin-submit" style="width:100%; padding:13px; border:none; border-radius:8px; background:#D9A441; color:#0A0D12; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em; cursor:pointer;">Entrar</button>
@@ -174,11 +191,14 @@
 
 <div class="capture-dock">
   <div class="capture-eyebrow">Trazar nueva ruta</div>
+  <input type="text" id="g-title" placeholder="¿Qué meta quieres alcanzar?" class="cd-title">
   <div class="capture-row">
-    <input type="text" id="g-title" placeholder="Ej: Vivir del freelance">
-    <select id="g-horizon"><option value="1 año">1 año</option><option value="3 años">3 años</option><option value="5 años">5 años</option></select>
+    <div class="cd-years">
+      <input type="number" inputmode="numeric" id="g-horizon-num" min="1" max="80" value="1">
+      <span>años</span>
+    </div>
     <select id="g-category"><option value="Carrera">Carrera</option><option value="Estudios">Estudios</option><option value="Personal">Personal</option><option value="Financiero">Financiero</option></select>
-    <button id="add-goal">↵</button>
+    <button id="add-goal">Trazar ↵</button>
   </div>
 </div>
 
@@ -200,7 +220,8 @@
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span id="toast-text">Ruta trazada</span></div>
 
 <script>
-  const horizonColor = {'1 año':'#5E9BD8', '3 años':'#D9A441', '5 años':'#C25B4F'};
+  // Cualquier número de años — el color solo indica plazo corto/medio/largo, ya no depende de 3 valores fijos
+  function colorForYears(n){ n = parseInt(n)||1; return n<=2 ? '#5E9BD8' : (n<=6 ? '#D9A441' : '#C25B4F'); }
 
   function loadGoals(){ try{ return JSON.parse(localStorage.getItem('goals')||'[]'); } catch(e){ return []; } }
   function saveGoals(goals){ try{ localStorage.setItem('goals', JSON.stringify(goals)); }catch(e){} render(); }
@@ -216,13 +237,15 @@
 
   document.getElementById('add-goal').addEventListener('click', addGoal);
   document.getElementById('g-title').addEventListener('keydown', e=>{ if(e.key==='Enter') addGoal(); });
+  document.getElementById('g-horizon-num').addEventListener('keydown', e=>{ if(e.key==='Enter') addGoal(); });
   function addGoal(){
     const title = document.getElementById('g-title').value.trim();
     if(!title) return;
+    const years = Math.max(1, Math.min(80, parseInt(document.getElementById('g-horizon-num').value) || 1));
     const goals = loadGoals();
     goals.unshift({
       id: Date.now().toString(), title,
-      horizon: document.getElementById('g-horizon').value,
+      horizon: years + ' año' + (years===1 ? '' : 's'),
       category: document.getElementById('g-category').value,
       checkpoints: []
     });
@@ -259,7 +282,7 @@
     document.getElementById('goals-list').innerHTML = goals.map(g=>{
       const n = g.checkpoints.length, doneN = g.checkpoints.filter(c=>c.done).length;
       const pct = n>0 ? Math.round((doneN/n)*100) : 0;
-      const color = horizonColor[g.horizon] || '#5E9BD8';
+      const color = colorForYears(g.horizon);
       const isOpen = expandedId===g.id;
       return `
       <div class="goal-row ${isOpen?'expanded':''}" data-id="${g.id}">
@@ -301,7 +324,7 @@
       addCheckpoint(gid, inp.value); inp.value='';
     }));
 
-    if(typeof relightGoals === 'function') relightGoals(goals.map(g=>({id:g.id, pct: g.checkpoints.length ? doneRatio(g) : 0, color: horizonColor[g.horizon]||'#5E9BD8'})));
+    if(typeof relightGoals === 'function') relightGoals(goals.map(g=>({id:g.id, pct: g.checkpoints.length ? doneRatio(g) : 0, color: colorForYears(g.horizon)})));
   }
   function doneRatio(g){ return g.checkpoints.filter(c=>c.done).length / g.checkpoints.length; }
 
@@ -329,7 +352,21 @@
     const routeCanvas = document.getElementById('route-canvas');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(58, window.innerWidth/window.innerHeight, 0.1, 1000);
+    // La ruta mide ~60 unidades de ancho — en celular vertical el campo de visión horizontal
+    // se estrecha muchísimo, así que la cámara necesita alejarse bastante más que en escritorio.
+    const ROUTE_HALF_W = 30, ROUTE_HALF_H = 10;
+    let camBaseZ = 30;
+    function fitCamera(){
+      const aspect = window.innerWidth / window.innerHeight;
+      const vFov = camera.fov * Math.PI/180;
+      const zForHeight = ROUTE_HALF_H / Math.tan(vFov/2);
+      const hFov = 2*Math.atan(Math.tan(vFov/2)*aspect);
+      const zForWidth = ROUTE_HALF_W / Math.tan(hFov/2);
+      camBaseZ = Math.max(zForHeight, zForWidth) * 1.12;
+      camera.position.z = camBaseZ;
+    }
     camera.position.set(0, 6, 30);
+    fitCamera();
     camera.lookAt(0,0,0);
     const renderer = new THREE.WebGLRenderer({ canvas: routeCanvas, antialias:true, alpha:true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -409,6 +446,7 @@
 
     function resize(){
       camera.aspect = window.innerWidth/window.innerHeight;
+      fitCamera();
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
@@ -448,5 +486,6 @@
   });
 </script>
 
+<div class="signature">Darío Calle</div>
 </body>
 </html>

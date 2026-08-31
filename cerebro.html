@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Segundo cerebro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <style>
@@ -110,10 +110,17 @@
   .toast svg{width:14px; height:14px;}
 
   @media (max-width:640px){
-    .drawer{right:8px; left:8px; width:auto; top:72px; bottom:150px;}
-    .fab-stack{bottom:96px;}
-    .capture-dock{bottom:20px;}
+    .drawer{right:8px; left:8px; width:auto; top:72px; bottom:190px;}
+    .fab-stack{bottom:168px; right:16px;}
+    .capture-dock{bottom:16px; width:calc(100vw - 32px);}
   }
+
+  /* ===== Ajustes globales moviles ===== */
+  h1, h2, .eyebrow, .brand, label{overflow-wrap:normal; word-break:keep-all; hyphens:none;}
+  button, .btn, .pill, .fab, a{touch-action:manipulation;}
+  button, .btn, .pill, .fab{transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1) !important;}
+  .signature{position:fixed; bottom:6px; left:14px; z-index:15;
+    font-family:"Mrs Saint Delafield",cursive; font-size:15px; opacity:0.35; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
 </style>
 </head>
 <body>
@@ -128,7 +135,8 @@
 <div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#05070F; display:flex; align-items:center; justify-content:center; padding:24px;">
   <div style="background:#0C1020; border:1px solid #1E2440; border-radius:16px; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
     <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#F5D77A; margin-bottom:14px;">Acceso privado</div>
-    <div style="font-family:'Fraunces',serif; font-weight:600; font-size:20px; color:#EEF1FA; margin-bottom:22px;">Ingresa tu PIN</div>
+    <div style="font-family:'Fraunces',serif; font-weight:600; font-size:20px; color:#EEF1FA; margin-bottom:6px;">Bienvenido, Darío</div>
+    <div style="font-size:12px; color:#7C84A8; margin-bottom:20px;">Ingresa tu PIN para continuar</div>
     <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border-radius:10px; border:1px solid #1E2440; background:#05070F; color:#EEF1FA; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
     <div id="pin-error" style="color:#E85F7A; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
     <button id="pin-submit" style="width:100%; padding:13px; border:none; border-radius:10px; background:#6C7DE8; color:#fff; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em; cursor:pointer;">Entrar</button>
@@ -225,7 +233,18 @@
     const canvas = document.getElementById('stars');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(52, window.innerWidth/window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 20);
+    // Extensión real del cerebro (medida sobre la geometría) — se usa para que la cámara
+    // siempre encuadre el cerebro completo, sea celular vertical o monitor ancho.
+    const BRAIN_HALF_W = 8.1, BRAIN_HALF_H = 4.7;
+    function fitCamera(){
+      const aspect = window.innerWidth / window.innerHeight;
+      const vFov = camera.fov * Math.PI/180;
+      const zForHeight = BRAIN_HALF_H / Math.tan(vFov/2);
+      const hFov = 2*Math.atan(Math.tan(vFov/2)*aspect);
+      const zForWidth = BRAIN_HALF_W / Math.tan(hFov/2);
+      camera.position.z = Math.max(zForHeight, zForWidth) * 1.22;
+    }
+    fitCamera();
     const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -318,6 +337,7 @@
 
     function resize(){
       camera.aspect = window.innerWidth/window.innerHeight;
+      fitCamera();
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
@@ -490,5 +510,6 @@
   });
 </script>
 
+<div class="signature">Darío Calle</div>
 </body>
 </html>

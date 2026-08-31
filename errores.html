@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bitácora de errores</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Special+Elite&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Special+Elite&family=IBM+Plex+Mono:wght@400;600&family=Mrs+Saint+Delafield&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
@@ -124,6 +124,19 @@
   @media (max-width:560px){
     .form-grid{grid-template-columns:1fr;}
   }
+
+  /* ===== Ajustes globales moviles ===== */
+  h1, h2, .eyebrow, .case-no, label{overflow-wrap:normal; word-break:keep-all; hyphens:none;}
+  button, .btn, .pill, a{touch-action:manipulation;}
+  button, .btn, .pill{transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1) !important;}
+  .signature{position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:15;
+    font-family:"Mrs Saint Delafield",cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-soft);}
+  .toast{position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:9998;
+    background:rgba(168,71,31,0.14); border:1px solid var(--red); color:var(--red);
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:10px 18px; border-radius:4px;
+    opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px;}
+  .toast svg{width:14px; height:14px;}
+  @media (max-width:480px){ h1{font-size:clamp(21px,6.5vw,30px) !important;} }
 </style>
 </head>
 <body>
@@ -143,7 +156,8 @@
 <div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#2B2418; display:flex; align-items:center; justify-content:center; padding:24px;">
   <div style="background:#E8DEC6; border:1px solid #B8A97C; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
     <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#8B2E2E; margin-bottom:14px;">Expediente confidencial</div>
-    <div style="font-family:'Special Elite',monospace; font-weight:400; font-size:19px; color:#2B2418; margin-bottom:22px;">Código de acceso</div>
+    <div style="font-family:'Special Elite',monospace; font-weight:400; font-size:19px; color:#2B2418; margin-bottom:6px;">Bienvenido, Darío</div>
+    <div style="font-size:12px; color:#6B5E44; margin-bottom:20px; font-family:'IBM Plex Mono',monospace;">Código de acceso</div>
     <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border:1px solid #B8A97C; background:#fff; color:#2B2418; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
     <div id="pin-error" style="color:#8B2E2E; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
     <button id="pin-submit" style="width:100%; padding:13px; border:none; background:#8B2E2E; color:#E8DEC6; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em; cursor:pointer;">Abrir expediente</button>
@@ -207,6 +221,7 @@
       <textarea id="e-lesson" placeholder="Ej: Siempre confirmar presupuesto antes de enviar cualquier propuesta."></textarea>
     </div>
     <div class="row-end"><button class="btn" id="add-entry">Archivar caso</button></div>
+    <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span>Caso archivado</span></div>
   </div>
 
   <div class="folder">
@@ -236,7 +251,15 @@
   dateInput.value = new Date().toISOString().split('T')[0];
 
   function loadEntries(){ try{ return JSON.parse(localStorage.getItem('errorlog')||'[]'); } catch(e){ return []; } }
-  function saveEntries(entries){ localStorage.setItem('errorlog', JSON.stringify(entries)); render(); }
+  function saveEntries(entries){ try{ localStorage.setItem('errorlog', JSON.stringify(entries)); }catch(e){} render(); }
+
+  function showToast(){
+    const el = document.getElementById('toast');
+    gsap.killTweensOf(el);
+    gsap.timeline()
+      .to(el, { opacity:1, y:0, duration:0.35, ease:'back.out(2)' })
+      .to(el, { opacity:0, y:-14, duration:0.4, ease:'power1.in', delay:1.6 });
+  }
 
   document.getElementById('add-entry').addEventListener('click', ()=>{
     const what = document.getElementById('e-what').value.trim();
@@ -252,6 +275,7 @@
     document.getElementById('e-what').value='';
     document.getElementById('e-lesson').value='';
     saveEntries(entries);
+    showToast();
   });
 
   let activeFilter = null;
@@ -401,5 +425,6 @@
   });
 </script>
 
+<div class="signature">Darío Calle</div>
 </body>
 </html>

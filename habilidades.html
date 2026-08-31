@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mapa de habilidades</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0E1A17; --panel:#132420; --line:#22403A;
@@ -94,6 +94,19 @@
 
   button, .cap-add, .lvl{transition:transform 0.12s ease;}
   button:active, .cap-add:active, .lvl:active{transform:scale(0.94);}
+
+  /* ===== Ajustes globales moviles ===== */
+  h1, h2, .eyebrow, .case-no, label{overflow-wrap:normal; word-break:keep-all; hyphens:none;}
+  button, .btn, .pill, a{touch-action:manipulation;}
+  button, .btn, .pill{transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1) !important;}
+  .signature{position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:15;
+    font-family:"Mrs Saint Delafield",cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
+  .toast{position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:9998;
+    background:rgba(63,217,160,0.14); border:1px solid var(--emerald); color:var(--emerald);
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:10px 18px; border-radius:4px;
+    opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px;}
+  .toast svg{width:14px; height:14px;}
+  @media (max-width:480px){ h1{font-size:clamp(21px,6.5vw,30px) !important;} }
 </style>
 </head>
 <body>
@@ -115,7 +128,8 @@
 <div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0E1A17; display:flex; align-items:center; justify-content:center; padding:24px;">
   <div style="background:#132420; border:1px solid #22403A; border-radius:4px; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
     <div style="font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#E0A63C; margin-bottom:14px; font-family:'IBM Plex Mono',monospace;">Acceso privado</div>
-    <div style="font-family:'Fraunces',serif; font-weight:600; font-size:20px; color:#EAF3EE; margin-bottom:22px;">Ingresa tu PIN</div>
+    <div style="font-family:'Fraunces',serif; font-weight:600; font-size:20px; color:#EAF3EE; margin-bottom:6px;">Bienvenido, Darío</div>
+    <div style="font-size:12px; color:#7FA294; margin-bottom:20px;">Ingresa tu PIN para continuar</div>
     <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border-radius:3px; border:1px solid #22403A; background:#0E1A17; color:#EAF3EE; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
     <div id="pin-error" style="color:#E0A63C; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
     <button id="pin-submit" style="width:100%; padding:13px; border:none; border-radius:3px; background:#3FD9A0; color:#0E1A17; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em; cursor:pointer; font-weight:600;">Entrar</button>
@@ -159,6 +173,8 @@
     <div class="cap-row">
       <input type="text" id="sk-name" placeholder="Nombra una habilidad…" autocomplete="off">
       <button class="cap-add" id="sk-add">Trazar</button>
+    </div>
+    <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span>Habilidad añadida</span>
     </div>
     <div class="level-row">
       <span class="lbl">Nivel</span>
@@ -255,7 +271,16 @@
 
   // ===== Datos =====
   function load(){ try{ return JSON.parse(localStorage.getItem('skillmap')||'[]'); }catch(e){ return []; } }
-  function save(list){ localStorage.setItem('skillmap', JSON.stringify(list)); render(); }
+  function save(list){ try{ localStorage.setItem('skillmap', JSON.stringify(list)); }catch(e){} render(); }
+
+  function showToast(){
+    const el = document.getElementById('toast');
+    if(typeof gsap === 'undefined'){ return; }
+    gsap.killTweensOf(el);
+    gsap.timeline()
+      .to(el, { opacity:1, y:0, duration:0.35, ease:'back.out(2)' })
+      .to(el, { opacity:0, y:-14, duration:0.4, ease:'power1.in', delay:1.6 });
+  }
 
   function addSkill(){
     const name=document.getElementById('sk-name').value.trim();
@@ -265,6 +290,7 @@
     list.unshift({id:Date.now().toString(), name, level:curLevel, region});
     document.getElementById('sk-name').value=''; document.getElementById('sk-region').value='';
     save(list);
+    showToast();
   }
   document.getElementById('sk-add').addEventListener('click', addSkill);
   document.getElementById('sk-name').addEventListener('keydown', e=>{ if(e.key==='Enter') addSkill(); });
@@ -290,14 +316,18 @@
         d+=(i===0?'M':'L')+x.toFixed(1)+' '+y.toFixed(1)+' '; }
       return d+'Z';
     }
+    // Niveles bajos usan ámbar cálido (no verde) — así nunca se confunden con el terreno de fondo,
+    // y el color mismo ya dice "recién empezando" antes de leer el número.
+    const ringColor = level<=2 ? '#F0C877' : (level===3 ? '#B7E89A' : '#6FFFC4');
     const maxR=46, rings=[];
     for(let i=0;i<level;i++){
       const rad=maxR*(1-i/(level+0.4));
-      const op=0.4+ (i/level)*0.6;
-      rings.push(`<path d="${ring(rad)}" fill="none" stroke="#6FFFC4" stroke-width="1.6" opacity="${op.toFixed(2)}"/>`);
+      const op=0.45+ (i/level)*0.55;
+      rings.push(`<path d="${ring(rad)}" fill="none" stroke="${ringColor}" stroke-width="1.7" opacity="${op.toFixed(2)}"/>`);
     }
-    // halo detrás de todo el relieve para que nunca se pierda contra el terreno de fondo
-    const halo=`<ellipse cx="${c}" cy="${c*0.9}" rx="${maxR*0.95}" ry="${maxR*0.68}" fill="#0E1A17" opacity="0.55"/>`;
+    // halo detrás de todo el relieve para que nunca se pierda contra el terreno — más fuerte en niveles bajos, que tienen menos anillos
+    const haloOp = level<=2 ? 0.78 : 0.55;
+    const halo=`<ellipse cx="${c}" cy="${c*0.9}" rx="${maxR*1.05}" ry="${maxR*0.76}" fill="#0E1A17" opacity="${haloOp}"/>`;
     const peak=`<circle cx="${c}" cy="${c*0.86}" r="3.6" fill="#E0A63C"/><circle cx="${c}" cy="${c*0.86}" r="8" fill="none" stroke="#E0A63C" stroke-width="1.2" opacity="0.6"/><circle cx="${c}" cy="${c*0.86}" r="3.6" fill="none" stroke="#0E1A17" stroke-width="1"/>`;
     return `<svg width="${S}" height="${S*0.82}" viewBox="0 0 ${S} ${S*0.82}">${halo}${rings.join('')}${peak}</svg>`;
   }
@@ -347,5 +377,6 @@
   }
   render();
 </script>
+<div class="signature">Darío Calle</div>
 </body>
 </html>
