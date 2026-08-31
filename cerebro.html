@@ -6,6 +6,7 @@
 <title>Segundo cerebro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <style>
   :root{
     --bg:#05070F; --panel:#0C1020; --line:#1E2440;
@@ -84,9 +85,12 @@
   .key-row{display:flex; gap:8px; margin-bottom:12px;}
   .key-row input{flex:1;}
   .status{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--accent); min-height:16px; margin-top:8px;}
+  .btn, button{transition:transform 0.12s ease, box-shadow 0.12s ease;}
+  .btn:active, button:active{transform:scale(0.94);}
 </style>
 </head>
 <body>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;background:#05070F;pointer-events:none;"></div>
 
 <canvas id="stars"></canvas>
 
@@ -124,6 +128,7 @@
     <a href="errores.html">Errores</a>
     <a href="sesgos.html">Sesgos</a>
     <a href="cerebro.html" class="current">Cerebro</a>
+    <a href="habilidades.html">Habilidades</a>
   </div>
 
   <header>
@@ -265,6 +270,7 @@
     grid.querySelectorAll('[data-del]').forEach(el=> el.addEventListener('click', (ev)=>{
       ev.stopPropagation(); deleteNote(el.dataset.del);
     }));
+    if(typeof observeReveals === 'function') observeReveals('.note-card');
   }
 
   // ===== Preguntar a la IA =====
@@ -315,6 +321,50 @@
   });
 
   render();
+</script>
+
+<script>
+  // ===== Transición entre páginas (sin flash blanco) =====
+  window.addEventListener('load', ()=>{
+    gsap.to('#page-veil', { opacity:0, duration:0.5, delay:0.05, ease:'power1.out', onComplete:()=>{
+      document.getElementById('page-veil').style.pointerEvents = 'none';
+    }});
+  });
+  document.querySelectorAll('a[href$=".html"]').forEach(link=>{
+    link.addEventListener('click', function(e){
+      if(this.target === '_blank') return;
+      const href = this.getAttribute('href');
+      e.preventDefault();
+      gsap.to('#page-veil', { opacity:1, duration:0.32, ease:'power1.in', onComplete:()=>{ window.location.href = href; } });
+    });
+  });
+
+  // ===== Aparición al hacer scroll =====
+  const revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        gsap.to(entry.target, { opacity:1, y:0, duration:0.5, ease:'power2.out' });
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold:0.15 });
+
+  function observeReveals(selector){
+    document.querySelectorAll(selector).forEach(el=>{
+      if(el.dataset.revealed) return;
+      el.dataset.revealed = '1';
+      gsap.set(el, { opacity:0, y:14 });
+      revealObserver.observe(el);
+    });
+  }
+
+  // ===== Hover con física real en botones =====
+  document.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('mouseenter', ()=> gsap.to(btn, { scale:1.05, duration:0.2, ease:'back.out(2)' }));
+    btn.addEventListener('mouseleave', ()=> gsap.to(btn, { scale:1, duration:0.2, ease:'power2.out' }));
+  });
+
+  gsap.from('.panel', { opacity:0, y:22, duration:0.65, stagger:0.12, ease:'power2.out' });
 </script>
 </body>
 </html>
