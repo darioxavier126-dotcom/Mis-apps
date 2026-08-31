@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Detector de sesgos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
@@ -67,6 +67,9 @@
   .bias-node.active{border-color:var(--cyan); background:rgba(79,209,232,0.08); box-shadow:0 0 16px rgba(79,209,232,0.25);}
   .bias-node.active .dot{background:var(--cyan); box-shadow:0 0 8px var(--cyan);}
   .bias-node.active .bias-desc{color:var(--ink); max-height:70px; opacity:1; margin-top:6px;}
+  .bias-node.auto{border-style:dashed;}
+  .bias-node.auto::after{content:'detectado'; display:block; font-family:'IBM Plex Mono',monospace; font-size:8px;
+    text-transform:uppercase; letter-spacing:0.06em; color:var(--cyan); margin-top:4px;}
 
   .save-row{display:flex; justify-content:flex-end; margin-top:16px;}
   .btn{background:var(--violet); color:#fff; border:none; padding:11px 22px; border-radius:10px; font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.04em; cursor:pointer;}
@@ -102,7 +105,7 @@
   button, .btn, .pill, a{touch-action:manipulation;}
   button, .btn, .pill{transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1) !important;}
   .signature{position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:15;
-    font-family:"Mrs Saint Delafield",cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
+    font-family:"Petit Formal Script",cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
   .toast{position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:9998;
     background:rgba(79,209,232,0.14); border:1px solid var(--cyan); color:var(--cyan);
     font-family:'IBM Plex Mono',monospace; font-size:12px; padding:10px 18px; border-radius:999px;
@@ -168,7 +171,7 @@
   <header>
     <div class="eyebrow">Fase 0 · Sistema 4</div>
     <h1 class="typewriter-title" id="main-title">Detector de sesgos cognitivos</h1>
-    <p class="sub">Antes de una decisión importante, describe tu razonamiento y marca qué sesgos podrían estar influyéndolo. No decide por ti — te obliga a mirar la red completa antes de actuar.</p>
+    <p class="sub">Antes de una decisión importante, cuenta qué pasó — el texto enciende solo los sesgos que aplican. Toca cualquiera para corregirlo si hace falta.</p>
   </header>
 
   <div class="panel">
@@ -286,19 +289,38 @@
 
 <script>
   // ===== Lógica del detector =====
+  // Cada sesgo lleva sus propias palabras/frases gatillo — heurística simple por texto,
+  // no requiere IA ni clave de API. Techo conocido: no entiende contexto ni sarcasmo,
+  // solo coincidencia de frases; sirve para no partir de cero, no como diagnóstico exacto.
   const BIASES = [
-    {n:'Sesgo de confirmación', d:'Buscas solo lo que confirma lo que ya creías.'},
-    {n:'Costos hundidos', d:'Sigues en algo solo porque ya invertiste tiempo o dinero.'},
-    {n:'Anclaje', d:'Te guías demasiado por el primer dato que viste.'},
-    {n:'Disponibilidad', d:'Crees que algo es más probable solo porque lo recuerdas fácil.'},
-    {n:'Exceso de confianza', d:'Sobrestimas qué tan seguro estás de tener razón.'},
-    {n:'Sesgo de negatividad', d:'Le das más peso a lo malo que a lo bueno.'},
-    {n:'Efecto halo', d:'Algo te cae bien en un aspecto y asumes que todo lo demás también.'},
-    {n:'Aversión a la pérdida', d:'Te duele más perder que te alegra ganar lo mismo.'},
-    {n:'Statu quo', d:'Prefieres que siga igual solo porque es lo conocido.'},
-    {n:'Presión social', d:'Decides según lo que otros esperan, no lo que tú piensas.'}
+    {n:'Sesgo de confirmación', d:'Buscas solo lo que confirma lo que ya creías.',
+      k:['ya sabia','ya sabía','confirma','siempre he pensado','tenia razon','tenía razón','sabia que iba a','sabía que iba a','como esperaba']},
+    {n:'Costos hundidos', d:'Sigues en algo solo porque ya invertiste tiempo o dinero.',
+      k:['ya invert','ya gaste','ya gasté','ya lleve','ya llevo','no puedo parar ahora','seria un desperdicio','sería un desperdicio','ya perdi','ya perdí','despues de tanto','después de tanto']},
+    {n:'Anclaje', d:'Te guías demasiado por el primer dato que viste.',
+      k:['el primer','la primera oferta','me base en','me basé en','precio inicial','lo que me dijeron al principio','el primer numero','el primer número']},
+    {n:'Disponibilidad', d:'Crees que algo es más probable solo porque lo recuerdas fácil.',
+      k:['recuerdo que','la ultima vez','la última vez','me paso a mi','me pasó a mí','escuche de','escuché de','vi en redes','vi en las noticias','le paso a un amigo','le pasó a un amigo']},
+    {n:'Exceso de confianza', d:'Sobrestimas qué tan seguro estás de tener razón.',
+      k:['estoy seguro','se que va a funcionar','sé que va a funcionar','no hay forma de que falle','siempre me sale bien','no puede salir mal','esto es seguro']},
+    {n:'Sesgo de negatividad', d:'Le das más peso a lo malo que a lo bueno.',
+      k:['lo malo es','me preocupa','puede salir mal','solo veo los riesgos','tengo miedo de que','y si sale mal','lo peor que puede pasar']},
+    {n:'Efecto halo', d:'Algo te cae bien en un aspecto y asumes que todo lo demás también.',
+      k:['me cae bien','es buena persona','confio en el porque','confío en él porque','confio en ella porque','confío en ella porque','se ve profesional','parece confiable']},
+    {n:'Aversión a la pérdida', d:'Te duele más perder que te alegra ganar lo mismo.',
+      k:['no quiero perder','prefiero no arriesgar','me da miedo perder','no quiero que se acabe','no quiero quedarme sin']},
+    {n:'Statu quo', d:'Prefieres que siga igual solo porque es lo conocido.',
+      k:['prefiero que siga igual','no quiero cambiar','asi ha funcionado siempre','así ha funcionado siempre','por costumbre','mejor no muevo nada','siempre lo he hecho asi','siempre lo he hecho así']},
+    {n:'Presión social', d:'Decides según lo que otros esperan, no lo que tú piensas.',
+      k:['todos estan','todos están','que van a pensar','qué van a pensar','se espera que','por quedar bien','mis amigos dicen','mi familia dice','por no quedar mal']}
   ];
+  function normalizeText(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+  function classifyText(text){
+    const norm = normalizeText(text);
+    return BIASES.filter(b => (b.k||[]).some(kw => norm.includes(normalizeText(kw)))).map(b=>b.n);
+  }
   let selected = new Set();
+  let autoClassified = new Set(); // cuáles vinieron del texto, para distinguirlos visualmente
 
   const grid = document.getElementById('bias-grid');
   grid.innerHTML = BIASES.map(b=>`
@@ -314,9 +336,30 @@
       const b = el.dataset.bias;
       if(selected.has(b)){ selected.delete(b); el.classList.remove('active'); }
       else { selected.add(b); el.classList.add('active'); }
+      autoClassified.delete(b); // tocar a mano lo saca del modo "detectado automático"
       updateCenterNode();
     });
   });
+
+  // Auto-clasificación: escribes qué pasó y el propio texto enciende los sesgos que aplican —
+  // no hace falta ir marcando uno por uno. Puedes tocar cualquiera para corregirlo.
+  const dText = document.getElementById('d-text');
+  let classifyTimer;
+  dText.addEventListener('input', ()=>{
+    clearTimeout(classifyTimer);
+    classifyTimer = setTimeout(runAutoClassify, 350);
+  });
+  function runAutoClassify(){
+    const matches = classifyText(dText.value);
+    selected = new Set(matches);
+    autoClassified = new Set(matches);
+    grid.querySelectorAll('.bias-node').forEach(el=>{
+      const b = el.dataset.bias;
+      el.classList.toggle('active', selected.has(b));
+      el.classList.toggle('auto', autoClassified.has(b));
+    });
+    updateCenterNode();
+  }
 
   function loadEntries(){ try{ return JSON.parse(localStorage.getItem('biaslog')||'[]'); } catch(e){ return []; } }
   function saveEntries(entries){ try{ localStorage.setItem('biaslog', JSON.stringify(entries)); }catch(e){} render(); }
