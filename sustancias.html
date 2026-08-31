@@ -19,13 +19,13 @@
   body{font-family:'Inter',sans-serif; color:var(--ink); background:var(--paper); position:relative; overflow-x:hidden;}
 
   /* ===== Fondo: campo de gradiente en movimiento constante, con deriva de color continua ===== */
-  .mesh{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; animation:hueDrift 24s linear infinite;}
+  .mesh{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; animation:hueDrift 10s linear infinite;}
   .mesh span{position:absolute; border-radius:50%; filter:blur(60px); opacity:0.55; will-change:transform;}
-  .m1{width:54vw; height:54vw; max-width:640px; background:radial-gradient(circle, var(--teanina), transparent 68%); top:-16vw; left:-14vw; animation:drift1 9s ease-in-out infinite;}
-  .m2{width:46vw; height:46vw; max-width:560px; background:radial-gradient(circle, var(--omega), transparent 68%); bottom:-14vw; right:-12vw; animation:drift2 11s ease-in-out infinite;}
-  .m3{width:38vw; height:38vw; max-width:460px; background:radial-gradient(circle, var(--magnesio), transparent 68%); top:28vh; right:-10vw; animation:drift3 8s ease-in-out infinite;}
-  .m4{width:32vw; height:32vw; max-width:380px; background:radial-gradient(circle, var(--creatina), transparent 68%); bottom:18vh; left:-8vw; animation:drift1 13s ease-in-out infinite reverse;}
-  .m5{width:26vw; height:26vw; max-width:320px; background:radial-gradient(circle, var(--teanina), transparent 68%); top:6vh; left:30vw; animation:drift2 10s ease-in-out infinite reverse;}
+  .m1{width:54vw; height:54vw; max-width:640px; background:radial-gradient(circle, var(--teanina), transparent 68%); top:-16vw; left:-14vw; animation:drift1 4.5s ease-in-out infinite;}
+  .m2{width:46vw; height:46vw; max-width:560px; background:radial-gradient(circle, var(--omega), transparent 68%); bottom:-14vw; right:-12vw; animation:drift2 5.5s ease-in-out infinite;}
+  .m3{width:38vw; height:38vw; max-width:460px; background:radial-gradient(circle, var(--magnesio), transparent 68%); top:28vh; right:-10vw; animation:drift3 4s ease-in-out infinite;}
+  .m4{width:32vw; height:32vw; max-width:380px; background:radial-gradient(circle, var(--creatina), transparent 68%); bottom:18vh; left:-8vw; animation:drift1 6.5s ease-in-out infinite reverse;}
+  .m5{width:26vw; height:26vw; max-width:320px; background:radial-gradient(circle, var(--teanina), transparent 68%); top:6vh; left:30vw; animation:drift2 5s ease-in-out infinite reverse;}
   @keyframes drift1{0%,100%{transform:translate(0,0) scale(1) rotate(0deg);}50%{transform:translate(9vw,10vh) scale(1.22) rotate(30deg);}}
   @keyframes drift2{0%,100%{transform:translate(0,0) scale(1) rotate(0deg);}50%{transform:translate(-10vw,-8vh) scale(1.16) rotate(-25deg);}}
   @keyframes drift3{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-8vw,9vh) scale(0.85);}}
@@ -47,7 +47,7 @@
 
   /* ===== Hero: reloj de 24h + anillo de adherencia, con hora en vivo ===== */
   .hero{display:flex; flex-direction:column; align-items:center; text-align:center; margin-top:14px;}
-  .dial-wrap{position:relative; width:min(272px,72vw); margin:10px 0;}
+  .dial-wrap{position:relative; width:min(272px,72vw); margin:10px 0; cursor:pointer;}
   .dial-wrap svg{width:100%; height:100%; overflow:visible;}
   .dial-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
   .dial-clock{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-dim); display:flex; align-items:center; gap:5px; margin-bottom:2px;}
@@ -688,15 +688,36 @@
   }
   renderDial();
 
-  // Al cargar, abre automáticamente el momento más relevante (el atrasado más próximo, o el que sigue)
-  (function openRelevantMoment(){
+  // Momento más relevante ahora mismo: el atrasado más próximo, o si no hay atrasos, el que sigue
+  function findRelevantMoment(){
     const dosis = entry.dosis||{};
     const nowH = new Date().getHours() + new Date().getMinutes()/60;
     const overdue = ORDER.find(([k,h])=> !dosis[k] && nowH >= h);
     const pending = ORDER.find(([k])=> !dosis[k]);
-    const target = overdue || pending;
+    return overdue || pending;
+  }
+  function jumpToRelevant(){
+    const target = findRelevantMoment();
+    if(!target) return;
+    openMoment(target[3]);
+    const el = document.getElementById(target[3]);
+    el.scrollIntoView({behavior:'smooth', block:'center'});
+    el.querySelectorAll('.dose-row').forEach(r=> r.classList.add('flash'));
+    setTimeout(()=> el.querySelectorAll('.dose-row').forEach(r=> r.classList.remove('flash')), 1400);
+  }
+  // Al cargar, abre automáticamente el momento más relevante (sin hacer scroll todavía)
+  (function openRelevantMoment(){
+    const target = findRelevantMoment();
     if(target) openMoment(target[3]);
   })();
+  // "toca el reloj" en el mensaje de pendientes ahora sí hace algo: te lleva directo a esa toma
+  document.getElementById('dial-next').style.cursor = 'pointer';
+  document.getElementById('dial-next').addEventListener('click', jumpToRelevant);
+  document.querySelector('.dial-wrap').addEventListener('click', (e)=>{
+    if(e.target.closest('.moment-dot')) return; // los puntos ya tienen su propio handler
+    if(e.target.closest('#dial-next')) return; // evita doble disparo
+    jumpToRelevant();
+  });
 
   // ===== Recordatorios — mejor esfuerzo mientras esta pestaña siga abierta (o instalada como app);
   // ponytail: sin service worker, si cierras el navegador del todo no llega. Ceiling conocido, avisado en la UI.

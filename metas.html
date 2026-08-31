@@ -58,15 +58,11 @@
   .capture-row select:focus{outline:none; border-color:var(--brass);}
   .capture-row button{background:var(--brass); color:#0A0D12; border:none; border-radius:9px; cursor:pointer; font-size:13px; font-weight:600; padding:0 16px; white-space:nowrap;}
 
-  /* ===== FAB ===== */
-  .fab-stack{position:fixed; right:20px; bottom:26px; z-index:20; display:flex; flex-direction:column; gap:10px;}
-  .fab{width:52px; height:52px; border-radius:50%; border:1px solid var(--line); background:rgba(21,26,32,0.68);
-    backdrop-filter:blur(10px); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer;
-    position:relative; box-shadow:0 10px 26px -12px rgba(0,0,0,0.7);}
-  .fab svg{width:20px; height:20px;}
-  .fab:hover{border-color:var(--brass);}
-  .fab .badge{position:absolute; top:-4px; right:-4px; background:var(--brass); color:#0A0D12; font-size:9.5px; font-weight:600;
-    min-width:17px; height:17px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px;}
+  /* ===== Botón "Ver metas" — vive en la barra superior, no flotando encima del muelle de captura ===== */
+  .goals-btn{font-size:10.5px; text-decoration:none; color:#0A0D12; border:1px solid var(--brass);
+    padding:6px 11px; background:var(--brass); letter-spacing:0.03em; border-radius:6px; cursor:pointer; font-family:'IBM Plex Mono',monospace;}
+  .goals-btn:hover{background:#dab787;}
+  .goals-btn #goals-badge:not(:empty)::before{content:' ('; } .goals-btn #goals-badge:not(:empty)::after{content:')'; }
 
   /* ===== Drawer ===== */
   .drawer{position:fixed; z-index:30; top:80px; bottom:100px; right:20px; transform:translateX(440px); opacity:0;
@@ -110,12 +106,11 @@
     font-size:12px; padding:10px 18px; border-radius:999px; opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px;}
   .toast svg{width:14px; height:14px;}
 
-  button, .fab{transition:transform 0.12s ease;}
-  button:active, .fab:active{transform:scale(0.94);}
+  button{transition:transform 0.12s ease;}
+  button:active{transform:scale(0.94);}
 
   @media (max-width:640px){
-    .drawer{right:8px; left:8px; width:auto; top:72px; bottom:190px;}
-    .fab-stack{bottom:168px; right:16px;}
+    .drawer{right:8px; left:8px; width:auto; top:72px; bottom:100px;}
     .capture-dock{bottom:16px; padding:12px; width:calc(100vw - 32px);}
   }
   @media (max-width:360px){
@@ -125,8 +120,8 @@
 
   /* ===== Ajustes globales moviles ===== */
   h1, h2, .eyebrow, .brand, label{overflow-wrap:normal; word-break:keep-all; hyphens:none;}
-  button, .btn, .pill, .fab, a{touch-action:manipulation;}
-  button, .btn, .pill, .fab{transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1) !important;}
+  button, .btn, .pill, a{touch-action:manipulation;}
+  button, .btn, .pill{transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1) !important;}
   .signature{position:fixed; bottom:6px; left:14px; z-index:15;
     font-family:"Petit Formal Script",cursive; font-size:15px; opacity:0.35; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
 </style>
@@ -185,6 +180,7 @@
     <a href="cerebro.html">Cerebro</a>
     <a href="habilidades.html">Habilidades</a>
     <a href="sustancias.html">Protocolo</a>
+    <button class="goals-btn" id="open-goals">Ver metas <span id="goals-badge" style="display:none;"></span></button>
   </div>
 </div>
 
@@ -203,12 +199,6 @@
   </div>
 </div>
 
-<div class="fab-stack">
-  <button class="fab" id="open-goals" title="Ver metas">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg>
-    <span class="badge" id="goals-badge" style="display:none;">0</span>
-  </button>
-</div>
 
 <div class="drawer" id="goals-drawer">
   <div class="drawer-head"><h2>Tus rutas</h2><span class="drawer-close" data-close="goals-drawer">×</span></div>
@@ -278,7 +268,7 @@
     document.getElementById('empty-hint').style.display = goals.length ? 'none' : 'block';
     document.getElementById('empty-state').style.display = goals.length===0 ? 'block' : 'none';
     const badge = document.getElementById('goals-badge');
-    if(goals.length){ badge.style.display='flex'; badge.textContent = goals.length; } else { badge.style.display='none'; }
+    if(goals.length){ badge.style.display='inline'; badge.textContent = goals.length; } else { badge.style.display='none'; }
 
     document.getElementById('goals-list').innerHTML = goals.map(g=>{
       const n = g.checkpoints.length, doneN = g.checkpoints.filter(c=>c.done).length;
@@ -382,14 +372,26 @@
       routePoints.push(new THREE.Vector3(x, y, z));
     }
     const routeCurve = new THREE.CatmullRomCurve3(routePoints);
-    const tubeGeo = new THREE.TubeGeometry(routeCurve, 200, 0.14, 8, false);
-    const tubeMat = new THREE.MeshBasicMaterial({ color:0x5E9BD8, transparent:true, opacity:0.7 });
+    // Un solo camino, grueso y con halo — antes eran dos tubos finos que en celular
+    // se leían como líneas sueltas sin sentido, no como una ruta de montaña.
+    const tubeGeo = new THREE.TubeGeometry(routeCurve, 220, 0.32, 10, false);
+    const tubeMat = new THREE.MeshBasicMaterial({ color:0x5E9BD8, transparent:true, opacity:0.85 });
     scene.add(new THREE.Mesh(tubeGeo, tubeMat));
+    const haloGeo = new THREE.TubeGeometry(routeCurve, 220, 0.7, 10, false);
+    const haloMat = new THREE.MeshBasicMaterial({ color:0x5E9BD8, transparent:true, opacity:0.14, blending:THREE.AdditiveBlending, depthWrite:false });
+    scene.add(new THREE.Mesh(haloGeo, haloMat));
 
-    const routeCurve2 = new THREE.CatmullRomCurve3(routePoints.map(p => new THREE.Vector3(p.x, p.y-3, p.z-6)));
-    const tubeGeo2 = new THREE.TubeGeometry(routeCurve2, 200, 0.06, 6, false);
-    const tubeMat2 = new THREE.MeshBasicMaterial({ color:0xD9A441, transparent:true, opacity:0.22 });
-    scene.add(new THREE.Mesh(tubeGeo2, tubeMat2));
+    // Terreno de referencia debajo del camino — le da al ojo un "suelo" real, no solo curvas flotando
+    const groundGeo = new THREE.PlaneGeometry(70, 40, 40, 24);
+    groundGeo.rotateX(-Math.PI/2);
+    const gp = groundGeo.attributes.position;
+    for(let i=0;i<gp.count;i++){
+      const x=gp.getX(i), z=gp.getZ(i);
+      gp.setY(i, Math.sin(x*0.18)*2.2 + Math.cos(z*0.22)*1.8 - 12);
+    }
+    groundGeo.computeVertexNormals();
+    const groundMat = new THREE.MeshBasicMaterial({ color:0xD9A441, wireframe:true, transparent:true, opacity:0.16 });
+    scene.add(new THREE.Mesh(groundGeo, groundMat));
 
     function glowTex(hex){
       const c = document.createElement('canvas'); c.width = c.height = 64;
