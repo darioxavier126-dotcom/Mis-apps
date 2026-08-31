@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Special+Elite&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
 <style>
   :root{
     --paper:#D8CCA8; --paper-dark:#C9BC93; --paper2:#CBBD8E;
@@ -30,32 +31,15 @@
   }
   @keyframes grainShift{0%{transform:translate(0,0);}33%{transform:translate(-1%,1%);}66%{transform:translate(1%,-1%);}100%{transform:translate(0,0);}}
 
+  /* Líneas redactadas: lo que un expediente confidencial censura, no palabras decorativas flotando */
   .stains{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;}
-  .word{
-    position:absolute; font-family:'Special Elite',monospace; color:var(--red); text-transform:uppercase;
-    letter-spacing:0.08em; will-change:transform; white-space:nowrap;
-  }
-  .w1{font-size:64px; opacity:0.09; top:-4vh; left:-6vw; animation:driftA 15s ease-in-out infinite;}
-  .w2{font-size:46px; opacity:0.08; bottom:-2vh; right:-8vw; color:var(--ink); animation:driftB 19s ease-in-out infinite;}
-  .w3{font-size:38px; opacity:0.10; top:32vh; right:2vw; animation:driftA 13s ease-in-out infinite reverse;}
-  .w4{font-size:52px; opacity:0.08; bottom:8vh; left:4vw; color:var(--ink); animation:driftB 17s ease-in-out infinite reverse;}
-  .w5{font-size:30px; opacity:0.11; top:4vh; left:38vw; animation:driftA 21s ease-in-out infinite;}
-  .w6{font-size:40px; opacity:0.09; bottom:34vh; left:58vw; color:var(--ink); animation:driftB 12s ease-in-out infinite;}
-  @keyframes driftA{
-    0%{transform:translate(0,0) rotate(-3deg) scale(1);}
-    25%{transform:translate(38vw,20vh) rotate(4deg) scale(1.08);}
-    50%{transform:translate(16vw,48vh) rotate(-6deg) scale(0.94);}
-    75%{transform:translate(-12vw,16vh) rotate(3deg) scale(1.04);}
-    100%{transform:translate(0,0) rotate(-3deg) scale(1);}
-  }
-  @keyframes driftB{
-    0%{transform:translate(0,0) rotate(2deg) scale(1);}
-    30%{transform:translate(-34vw,-26vh) rotate(-5deg) scale(1.1);}
-    60%{transform:translate(-12vw,12vh) rotate(4deg) scale(0.92);}
-    100%{transform:translate(0,0) rotate(2deg) scale(1);}
-  }
+  .redact{position:absolute; height:13px; background:var(--ink); opacity:0.055; border-radius:1px;}
+  .r1{width:34%; top:8vh; left:4vw;} .r2{width:18%; top:8vh; left:42vw;}
+  .r3{width:22%; top:22vh; right:6vw;} .r4{width:40%; top:38vh; left:-2vw;}
+  .r5{width:15%; top:52vh; right:14vw;} .r6{width:28%; top:64vh; left:10vw;}
+  .r7{width:19%; top:76vh; right:4vw;} .r8{width:33%; top:88vh; left:30vw;}
 
-  .page{position:relative; z-index:1; max-width:800px; margin:0 auto; padding:50px 22px 90px;}
+  .page{position:relative; z-index:1; max-width:860px; margin:0 auto; padding:54px 24px 100px; counter-reset:folder-no;}
 
   .nav3{display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap;}
   .nav3 a{
@@ -65,7 +49,12 @@
   .nav3 a.current{background:var(--ink); color:var(--paper); border-color:var(--ink);}
   .nav3 a:hover{border-color:var(--red); color:var(--red);}
 
-  header{border-bottom:3px double var(--ink); padding-bottom:20px; margin-bottom:30px; position:relative;}
+  header{border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:34px; position:relative;}
+  header::after{
+    content:''; position:absolute; left:0; right:0; bottom:-6px; height:6px;
+    background-image:radial-gradient(circle, var(--paper) 2.2px, transparent 2.3px);
+    background-size:14px 6px; background-position:0 -3px;
+  }
   .case-no{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--red); margin-bottom:8px;}
   h1{font-family:'Special Elite',monospace; font-size:30px; color:var(--ink); letter-spacing:-0.01em;}
   .sub{color:var(--ink-soft); font-size:13px; margin-top:10px; max-width:520px; line-height:1.7;}
@@ -76,7 +65,12 @@
     letter-spacing:0.08em; opacity:0.75; border-radius:4px;
   }
 
-  .folder{background:var(--paper2); border:1px solid var(--line); box-shadow:2px 3px 0 rgba(43,36,24,0.08); padding:24px 24px 20px; margin-bottom:24px; position:relative;}
+  .folder{background:var(--paper2); border:1px solid var(--line); box-shadow:2px 3px 0 rgba(43,36,24,0.08); padding:24px 24px 20px; margin-bottom:24px; position:relative; counter-increment:folder-no;}
+  .folder::after{
+    content:"CASO Nº " counter(folder-no,decimal-leading-zero); position:absolute; top:-11px; left:22px;
+    background:var(--paper2); border:1px solid var(--line); border-bottom:none; padding:3px 10px 5px;
+    font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.08em; color:var(--ink-soft); border-radius:3px 3px 0 0;
+  }
   .folder h2{font-family:'Special Elite',monospace; font-size:16px; color:var(--ink); margin-bottom:16px;}
 
   .field label{display:block; font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-soft); margin-bottom:6px;}
@@ -133,7 +127,18 @@
 </style>
 </head>
 <body>
-<div id="page-veil" style="position:fixed;inset:0;z-index:9997;background:#D8CCA8;pointer-events:none;"></div>
+<script>
+  // Scroll suave (Lenis) — la misma libreria que usan los sitios premiados de Awwwards
+  if(typeof Lenis !== "undefined"){
+    try{
+      const lenis = new Lenis({ duration: 1.05, easing: t => Math.min(1, 1.001 - Math.pow(2, -10*t)) });
+      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+      requestAnimationFrame(raf);
+    }catch(e){}
+  }
+</script>
+
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#A8471F;transform:scale(80);"></div></div>
 
 <div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#2B2418; display:flex; align-items:center; justify-content:center; padding:24px;">
   <div style="background:#E8DEC6; border:1px solid #B8A97C; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
@@ -151,10 +156,10 @@
     const gate = document.getElementById('pin-gate');
     const input = document.getElementById('pin-input');
     const err = document.getElementById('pin-error');
-    if(localStorage.getItem('habit_unlocked') === 'yes'){ gate.style.display = 'none'; }
+    let unlocked=false; try{ unlocked = localStorage.getItem('habit_unlocked') === 'yes'; }catch(e){} if(unlocked){ gate.style.display = 'none'; }
     else { setTimeout(()=> input.focus(), 200); }
     function tryUnlock(){
-      if(input.value === CORRECT_PIN){ localStorage.setItem('habit_unlocked','yes'); gate.style.display='none'; }
+      if(input.value === CORRECT_PIN){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display='none'; }
       else { err.textContent = 'Código incorrecto'; input.value=''; input.focus(); }
     }
     document.getElementById('pin-submit').addEventListener('click', tryUnlock);
@@ -163,13 +168,9 @@
 </script>
 
 <canvas id="dust-canvas" style="position:fixed; inset:0; z-index:0;"></canvas>
-<div class="stains" style="opacity:0.6;">
-  <span class="word w1">CASO</span>
-  <span class="word w2">ARCHIVADO</span>
-  <span class="word w3">PATRÓN</span>
-  <span class="word w4">LECCIÓN</span>
-  <span class="word w5">EVIDENCIA</span>
-  <span class="word w6">EXPEDIENTE</span>
+<div class="stains">
+  <div class="redact r1"></div><div class="redact r2"></div><div class="redact r3"></div><div class="redact r4"></div>
+  <div class="redact r5"></div><div class="redact r6"></div><div class="redact r7"></div><div class="redact r8"></div>
 </div>
 
 <div class="page">
@@ -354,46 +355,44 @@
   });
 
 
-  gsap.from('.folder', { opacity:0, y:22, duration:0.65, stagger:0.12, ease:'power2.out' });
+  // (la entrada de .folder ahora la maneja el observer de scroll más abajo — evita doble animación)
 </script>
 
 <script>
   // ===== Transición entre páginas (sin flash blanco) =====
   window.addEventListener('load', ()=>{
-    gsap.to('#page-veil', { opacity:0, duration:0.5, delay:0.05, ease:'power1.out', onComplete:()=>{
-      document.getElementById('page-veil').style.pointerEvents = 'none';
-    }});
+    gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' });
   });
   document.querySelectorAll('a[href$=".html"]').forEach(link=>{
     link.addEventListener('click', function(e){
       if(this.target === '_blank') return;
       const href = this.getAttribute('href');
       e.preventDefault();
-      gsap.to('#page-veil', { opacity:1, duration:0.32, ease:'power1.in', onComplete:()=>{ window.location.href = href; } });
+      gsap.to('#veil-iris', { scale:80, duration:0.5, ease:'power3.inOut', onComplete:()=>{ window.location.href = href; } });
     });
   });
 
-  // ===== Aparición al hacer scroll =====
+  // ===== Aparición al hacer scroll — más dramática: escala + desenfoque que se aclara =====
   const revealObserver = new IntersectionObserver((entries)=>{
     entries.forEach(entry=>{
       if(entry.isIntersecting){
-        gsap.to(entry.target, { opacity:1, y:0, duration:0.5, ease:'power2.out' });
+        gsap.to(entry.target, { opacity:1, y:0, scale:1, filter:'blur(0px)', duration:0.65, ease:'power3.out' });
         revealObserver.unobserve(entry.target);
       }
     });
-  }, { threshold:0.15 });
+  }, { threshold:0.12 });
 
   function observeReveals(selector){
     document.querySelectorAll(selector).forEach(el=>{
       if(el.dataset.revealed) return;
       el.dataset.revealed = '1';
-      gsap.set(el, { opacity:0, y:14 });
+      gsap.set(el, { opacity:0, y:26, scale:0.96, filter:'blur(6px)' });
       revealObserver.observe(el);
     });
   }
   const revealWatcher = new MutationObserver(()=> observeReveals('.entry'));
   revealWatcher.observe(document.body, { childList:true, subtree:true });
-  observeReveals('.entry');
+  observeReveals('.entry, .folder, .pattern-tag');
 
   // ===== Hover con física real en botones =====
   document.querySelectorAll('button, .pill').forEach(btn=>{

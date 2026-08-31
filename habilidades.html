@@ -97,6 +97,17 @@
 </style>
 </head>
 <body>
+<script>
+  // Scroll suave (Lenis) — la misma libreria que usan los sitios premiados de Awwwards
+  if(typeof Lenis !== "undefined"){
+    try{
+      const lenis = new Lenis({ duration: 1.05, easing: t => Math.min(1, 1.001 - Math.pow(2, -10*t)) });
+      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+      requestAnimationFrame(raf);
+    }catch(e){}
+  }
+</script>
+
 
 <canvas id="terrain"></canvas>
 <div id="page-veil"></div>
@@ -117,10 +128,10 @@
     const gate = document.getElementById('pin-gate');
     const input = document.getElementById('pin-input');
     const err = document.getElementById('pin-error');
-    if(localStorage.getItem('habit_unlocked') === 'yes'){ gate.style.display = 'none'; }
+    let unlocked=false; try{ unlocked = localStorage.getItem('habit_unlocked') === 'yes'; }catch(e){} if(unlocked){ gate.style.display = 'none'; }
     else { setTimeout(()=> input.focus(), 200); }
     function tryUnlock(){
-      if(input.value === CORRECT_PIN){ localStorage.setItem('habit_unlocked','yes'); gate.style.display='none'; }
+      if(input.value === CORRECT_PIN){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display='none'; }
       else { err.textContent = 'PIN incorrecto'; input.value=''; input.focus(); }
     }
     document.getElementById('pin-submit').addEventListener('click', tryUnlock);
@@ -176,6 +187,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
 <script>
   // ===== Transición page-veil =====
   window.addEventListener('load', ()=> gsap.to('#page-veil', {opacity:0, duration:0.6, onComplete:()=>{document.getElementById('page-veil').style.display='none';}}));
@@ -201,7 +213,7 @@
     const geo = new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG);
     geo.rotateX(-Math.PI/2);
     const base = geo.attributes.position.array.slice();
-    const mat = new THREE.MeshBasicMaterial({color:0x3FD9A0, wireframe:true, transparent:true, opacity:0.22});
+    const mat = new THREE.MeshBasicMaterial({color:0x1E8C68, wireframe:true, transparent:true, opacity:0.13});
     const mesh = new THREE.Mesh(geo, mat);
     scene.add(mesh);
 
@@ -281,11 +293,13 @@
     const maxR=46, rings=[];
     for(let i=0;i<level;i++){
       const rad=maxR*(1-i/(level+0.4));
-      const op=0.25+ (i/level)*0.6;
-      rings.push(`<path d="${ring(rad)}" fill="none" stroke="#3FD9A0" stroke-width="1.4" opacity="${op.toFixed(2)}"/>`);
+      const op=0.4+ (i/level)*0.6;
+      rings.push(`<path d="${ring(rad)}" fill="none" stroke="#6FFFC4" stroke-width="1.6" opacity="${op.toFixed(2)}"/>`);
     }
-    const peak=`<circle cx="${c}" cy="${c*0.86}" r="3.4" fill="#E0A63C"/><circle cx="${c}" cy="${c*0.86}" r="7" fill="none" stroke="#E0A63C" stroke-width="1" opacity="0.5"/>`;
-    return `<svg width="${S}" height="${S*0.82}" viewBox="0 0 ${S} ${S*0.82}">${rings.join('')}${peak}</svg>`;
+    // halo detrás de todo el relieve para que nunca se pierda contra el terreno de fondo
+    const halo=`<ellipse cx="${c}" cy="${c*0.9}" rx="${maxR*0.95}" ry="${maxR*0.68}" fill="#0E1A17" opacity="0.55"/>`;
+    const peak=`<circle cx="${c}" cy="${c*0.86}" r="3.6" fill="#E0A63C"/><circle cx="${c}" cy="${c*0.86}" r="8" fill="none" stroke="#E0A63C" stroke-width="1.2" opacity="0.6"/><circle cx="${c}" cy="${c*0.86}" r="3.6" fill="none" stroke="#0E1A17" stroke-width="1"/>`;
+    return `<svg width="${S}" height="${S*0.82}" viewBox="0 0 ${S} ${S*0.82}">${halo}${rings.join('')}${peak}</svg>`;
   }
 
   function render(){
@@ -295,13 +309,15 @@
     document.getElementById('stat-peak').textContent = list.filter(s=>s.level===5).length;
     document.getElementById('stat-new').textContent = list.filter(s=>s.level<=2).length;
 
-    // agrupar por región
+    // agrupar por región, y ordenar de Dominio a Curioso: primero las regiones más avanzadas
     const groups={};
     list.forEach(s=>{ (groups[s.region]=groups[s.region]||[]).push(s); });
     const root=document.getElementById('atlas-root'); root.innerHTML='';
-    Object.keys(groups).forEach(reg=>{
+    const regionAvg = reg => groups[reg].reduce((s,x)=>s+x.level,0)/groups[reg].length;
+    const orderedRegions = Object.keys(groups).sort((a,b)=> regionAvg(b)-regionAvg(a));
+    orderedRegions.forEach(reg=>{
       const items=groups[reg].sort((a,b)=>b.level-a.level);
-      const avg=(items.reduce((s,x)=>s+x.level,0)/items.length).toFixed(1);
+      const avg=regionAvg(reg).toFixed(1);
       const el=document.createElement('div'); el.className='region';
       el.innerHTML=`<div class="region-name">${reg}<span>alt. media ${avg}</span></div>
         <div class="atlas">${items.map(s=>`

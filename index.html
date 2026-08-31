@@ -5,45 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rastreador de hábitos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Caveat:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
 <style>
   :root{
-    --cream:#F7F2E7; --navy:#14213D; --gold:#B08D57; --gold-soft:#D9BD8C;
-    --white:#FFFFFF; --ink:#15151A; --ink-soft:#5B5F6B; --line:rgba(20,33,61,0.10);
+    --cream:#F6F1E4; --paper-hi:#FFFCF6; --navy:#16233F; --gold:#B58A46; --gold-soft:#E4C989;
+    --ember:#C4623A; --white:#FFFFFF; --ink:#1B1B17; --ink-soft:#5B5450; --line:rgba(22,35,63,0.13);
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   html,body{height:100%;}
   body{font-family:'IBM Plex Sans',sans-serif; color:var(--ink); min-height:100vh; position:relative; background:var(--cream); overflow-x:hidden;}
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.5;
+    background:radial-gradient(ellipse at 50% -10%, rgba(181,138,70,0.10), transparent 55%),
+               radial-gradient(ellipse at 100% 110%, rgba(22,35,63,0.06), transparent 50%);
+  }
 
-  .aurora{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;}
-  .blob{position:absolute; border-radius:50%; filter:blur(55px); will-change:transform;}
-  .b1{width:46vw; height:46vw; max-width:640px; max-height:640px; background:radial-gradient(circle, var(--gold-soft), transparent 70%); opacity:0.6; top:-10vh; left:-10vw; animation:sweepA 17s ease-in-out infinite;}
-  .b2{width:40vw; height:40vw; max-width:560px; max-height:560px; background:radial-gradient(circle, var(--navy), transparent 70%); opacity:0.28; bottom:-15vh; right:-10vw; animation:sweepB 21s ease-in-out infinite;}
-  .b3{width:34vw; height:34vw; max-width:460px; max-height:460px; background:radial-gradient(circle, var(--white), transparent 70%); opacity:0.55; top:5vh; right:-5vw; animation:sweepC 14s ease-in-out infinite;}
-  .b4{width:30vw; height:30vw; max-width:400px; max-height:400px; background:radial-gradient(circle, var(--gold), transparent 70%); opacity:0.32; bottom:0vh; left:-5vw; animation:sweepD 19s ease-in-out infinite;}
-  .b5{width:26vw; height:26vw; max-width:340px; max-height:340px; background:radial-gradient(circle, var(--navy), transparent 70%); opacity:0.18; top:40vh; left:40vw; animation:sweepA 23s ease-in-out infinite reverse;}
-  .b6{width:22vw; height:22vw; max-width:300px; max-height:300px; background:radial-gradient(circle, var(--gold-soft), transparent 70%); opacity:0.4; top:60vh; right:20vw; animation:sweepC 16s ease-in-out infinite reverse;}
-  .b7{width:36vw; height:36vw; max-width:480px; max-height:480px; background:radial-gradient(circle, var(--gold), transparent 70%); opacity:0.28; top:15vh; left:35vw; animation:sweepB 20s ease-in-out infinite; animation-delay:-4s;}
-  .b8{width:28vw; height:28vw; max-width:380px; max-height:380px; background:radial-gradient(circle, var(--white), transparent 70%); opacity:0.5; bottom:20vh; left:20vw; animation:sweepD 15s ease-in-out infinite; animation-delay:-7s;}
-  .b9{width:32vw; height:32vw; max-width:420px; max-height:420px; background:radial-gradient(circle, var(--navy), transparent 70%); opacity:0.22; top:-5vh; right:30vw; animation:sweepA 18s ease-in-out infinite; animation-delay:-9s;}
-  .b10{width:24vw; height:24vw; max-width:320px; max-height:320px; background:radial-gradient(circle, var(--gold-soft), transparent 70%); opacity:0.45; bottom:-8vh; right:40vw; animation:sweepC 22s ease-in-out infinite; animation-delay:-3s;}
-  .b11{width:20vw; height:20vw; max-width:280px; max-height:280px; background:radial-gradient(circle, var(--gold), transparent 70%); opacity:0.35; top:75vh; left:60vw; animation:sweepB 13s ease-in-out infinite reverse; animation-delay:-5s;}
-  .b12{width:30vw; height:30vw; max-width:400px; max-height:400px; background:radial-gradient(circle, var(--white), transparent 70%); opacity:0.3; top:35vh; right:-8vw; animation:sweepD 24s ease-in-out infinite reverse; animation-delay:-11s;}
-
-  @keyframes sweepA{0%{transform:translate(0,0) scale(1) rotate(0deg);}25%{transform:translate(60vw,20vh) scale(1.2) rotate(30deg);}50%{transform:translate(30vw,70vh) scale(0.85) rotate(-15deg);}75%{transform:translate(-10vw,30vh) scale(1.1) rotate(10deg);}100%{transform:translate(0,0) scale(1) rotate(0deg);}}
-  @keyframes sweepB{0%{transform:translate(0,0) scale(1);}30%{transform:translate(-55vw,-40vh) scale(1.25);}60%{transform:translate(-25vw,10vh) scale(0.8);}100%{transform:translate(0,0) scale(1);}}
-  @keyframes sweepC{0%{transform:translate(0,0) scale(1);}40%{transform:translate(-50vw,45vh) scale(1.15);}70%{transform:translate(20vw,10vh) scale(0.75);}100%{transform:translate(0,0) scale(1);}}
-  @keyframes sweepD{0%{transform:translate(0,0) scale(1) rotate(0deg);}35%{transform:translate(45vw,-35vh) scale(1.3) rotate(-20deg);}70%{transform:translate(65vw,15vh) scale(0.9) rotate(15deg);}100%{transform:translate(0,0) scale(1) rotate(0deg);}}
+  /* Lomo de cuaderno: la costura del diario, no decoración — marca el margen de lectura */
+  .spine{position:fixed; top:0; bottom:0; left:calc(50% - 390px); width:34px; z-index:1; pointer-events:none; display:none;}
+  .spine::before{content:''; position:absolute; left:14px; top:0; bottom:0; width:1px; background:linear-gradient(var(--gold-soft), var(--gold), var(--gold-soft));}
+  .spine::after{content:''; position:absolute; left:11px; top:0; bottom:0; width:1px; background:var(--line);}
+  @media (min-width:900px){ .spine{display:block;} .page{margin-left:calc(50% - 356px); margin-right:auto;} }
 
   .page{position:relative; z-index:1; max-width:780px; margin:0 auto; padding:52px 22px 90px;}
   header{margin-bottom:30px;}
-  .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); margin-bottom:8px;}
-  h1{font-family:'Fraunces',serif; font-weight:600; font-size:30px; color:var(--navy);}
-  .sub{color:var(--ink-soft); font-size:14px; margin-top:8px; max-width:500px; line-height:1.5;}
+  .eyebrow{font-family:'Caveat',cursive; font-weight:600; font-size:20px; letter-spacing:0.01em; color:var(--ember); margin-bottom:2px;}
+  h1{font-family:'Fraunces',serif; font-optical-sizing:auto; font-weight:600; font-size:32px; color:var(--navy); letter-spacing:-0.01em;}
+  .sub{color:var(--ink-soft); font-size:14px; margin-top:8px; max-width:500px; line-height:1.55;}
 
-  .glass{background:rgba(255,255,255,0.66); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.75); border-radius:18px; box-shadow:0 12px 40px rgba(20,33,61,0.08); padding:26px 26px 22px; margin-bottom:20px;}
+  .glass{background:linear-gradient(180deg, var(--paper-hi), rgba(255,252,246,0.86)); border:1px solid rgba(22,35,63,0.08); border-radius:4px; box-shadow:0 1px 0 var(--paper-hi) inset, 0 14px 30px -18px rgba(22,35,63,0.28); padding:26px 26px 22px; margin-bottom:20px; position:relative;}
+  .glass::before{content:''; position:absolute; left:0; top:14px; bottom:14px; width:3px; background:var(--gold-soft); border-radius:0 3px 3px 0; opacity:0.7;}
   .glass h2{font-family:'Fraunces',serif; font-size:17px; font-weight:600; color:var(--navy); margin-bottom:18px;}
 
   .quick-row{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:20px;}
@@ -93,7 +86,7 @@
   .session-chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;}
   .session-chip{display:flex; align-items:center; gap:6px; font-size:11.5px; padding:5px 6px 5px 11px; border-radius:999px; background:rgba(20,33,61,0.07); color:var(--ink-soft);}
   .session-chip .x{cursor:pointer; width:16px; height:16px; border-radius:50%; background:rgba(20,33,61,0.15); display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--ink);}
-  .session-chip .x:hover{background:var(--brick,#8A4A3D); color:#fff;}
+  .session-chip .x:hover{background:var(--ember); color:#fff;}
 
   .toggle-more{display:inline-flex; align-items:center; gap:6px; margin-top:6px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--gold); cursor:pointer;}
   .more-panel{display:none; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line);}
@@ -105,12 +98,13 @@
   button.primary{background:var(--navy); color:#fff; border:none; padding:12px 24px; border-radius:10px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:0.04em; cursor:pointer;}
   button.primary:hover{background:#0F1930;}
 
-  .viz-grid{display:flex; flex-direction:column; gap:16px;}
-  .viz-row{display:grid; grid-template-columns:90px 1fr 70px; align-items:center; gap:12px;}
-  .viz-label{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; color:var(--ink-soft);}
-  .viz-track{height:10px; background:rgba(20,33,61,0.08); border-radius:6px; overflow:hidden;}
-  .viz-fill{height:100%; border-radius:6px;}
-  .viz-val{font-family:'Fraunces',serif; font-size:15px; color:var(--navy); text-align:right;}
+  /* ===== RUEDA DEL DÍA: anillos concéntricos, promedio de 7 días ===== */
+  .wheel-wrap{display:flex; align-items:center; gap:26px; flex-wrap:wrap;}
+  .wheel-legend{flex:1; min-width:180px; display:flex; flex-direction:column; gap:10px;}
+  .wl-row{display:flex; align-items:center; gap:10px; font-size:12.5px;}
+  .wl-dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+  .wl-label{color:var(--ink-soft); flex:1;}
+  .wl-val{font-family:'Fraunces',serif; font-size:15px; color:var(--navy);}
 
   .day-card{display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-bottom:1px solid var(--line); gap:10px;}
   .day-card:last-child{border-bottom:none;}
@@ -121,28 +115,45 @@
   .energy-dot-sm{width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:5px;}
   .day-right{display:flex; align-items:center; gap:10px;}
   .del-btn{cursor:pointer; width:22px; height:22px; border-radius:50%; background:rgba(20,33,61,0.08); display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--ink-soft);}
-  .del-btn:hover{background:#8A4A3D; color:#fff;}
+  .del-btn:hover{background:var(--ember); color:#fff;}
   .empty{color:var(--ink-soft); font-size:13px; padding:20px 4px; text-align:center;}
   .note{font-size:11.5px; color:var(--ink-soft); margin-top:14px; line-height:1.6;}
   .note b{color:var(--navy);}
 
+  .nav1{display:flex; gap:7px; flex-wrap:wrap;}
+  .nav1 a{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none;
+    border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.55); white-space:nowrap; border-radius:3px;}
+  .nav1 a.current{background:var(--navy); color:var(--cream); border-color:var(--navy);}
+  .nav1 a:hover{border-color:var(--ember); color:var(--ember);}
+
   @media (max-width:520px){
     .quick-row{grid-template-columns:1fr;}
     .acc-row{grid-template-columns:1fr; }
-    .viz-row{grid-template-columns:70px 1fr 55px;}
+    .wheel-wrap{justify-content:center;}
   }
 </style>
 </head>
 <body>
-<div id="page-veil" style="position:fixed;inset:0;z-index:9997;background:#F7F2E7;pointer-events:none;"></div>
+<script>
+  // Scroll suave (Lenis) — la misma libreria que usan los sitios premiados de Awwwards
+  if(typeof Lenis !== "undefined"){
+    try{
+      const lenis = new Lenis({ duration: 1.05, easing: t => Math.min(1, 1.001 - Math.pow(2, -10*t)) });
+      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+      requestAnimationFrame(raf);
+    }catch(e){}
+  }
+</script>
 
-<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#14213D; display:flex; align-items:center; justify-content:center; padding:24px;">
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#C4623A;transform:scale(80);"></div></div>
+
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#16233F; display:flex; align-items:center; justify-content:center; padding:24px;">
   <div style="background:rgba(255,255,255,0.08); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.15); border-radius:18px; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
-    <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#D9BD8C; margin-bottom:14px;">Acceso privado</div>
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#E4C989; margin-bottom:14px;">Acceso privado</div>
     <div style="font-family:'Fraunces',serif; font-weight:600; font-size:20px; color:#F7F2E7; margin-bottom:22px;">Ingresa tu PIN</div>
     <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border-radius:10px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#F7F2E7; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
     <div id="pin-error" style="color:#D97B8F; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
-    <button id="pin-submit" style="width:100%; padding:13px; border:none; border-radius:10px; background:#B08D57; color:#fff; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em; cursor:pointer;">Entrar</button>
+    <button id="pin-submit" style="width:100%; padding:13px; border:none; border-radius:10px; background:#B58A46; color:#fff; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em; cursor:pointer;">Entrar</button>
   </div>
 </div>
 
@@ -153,7 +164,9 @@
     const input = document.getElementById('pin-input');
     const err = document.getElementById('pin-error');
 
-    if(localStorage.getItem('habit_unlocked') === 'yes'){
+    let unlocked = false;
+    try{ unlocked = localStorage.getItem('habit_unlocked') === 'yes'; }catch(e){}
+    if(unlocked){
       gate.style.display = 'none';
     } else {
       setTimeout(()=> input.focus(), 200);
@@ -161,7 +174,7 @@
 
     function tryUnlock(){
       if(input.value === CORRECT_PIN){
-        localStorage.setItem('habit_unlocked', 'yes');
+        try{ localStorage.setItem('habit_unlocked', 'yes'); }catch(e){}
         gate.style.display = 'none';
       } else {
         err.textContent = 'PIN incorrecto';
@@ -175,10 +188,7 @@
 </script>
 
 <canvas id="orb-canvas" style="position:fixed; inset:0; z-index:0;"></canvas>
-<div class="aurora" style="opacity:0.35;">
-  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
-
-</div>
+<div class="spine"></div>
 
 <div class="page">
   <header style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
@@ -187,12 +197,13 @@
       <h1 class="typewriter-title" id="main-title">Rastreador de hábitos</h1>
       <p class="sub">Registro visual, no cuestionario. Abre solo lo que vas a llenar hoy.</p>
     </div>
-    <div style="display:flex; gap:8px;">
-      <a href="metas.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Metas</a>
-      <a href="errores.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Errores</a>
-      <a href="sesgos.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Sesgos</a>
-      <a href="cerebro.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Cerebro</a>
-      <a href="habilidades.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--navy); text-decoration:none; border:1px solid var(--line); padding:7px 13px; background:rgba(255,255,255,0.5); white-space:nowrap;">Habilidades</a>
+    <div class="nav1">
+      <a href="index.html" class="current">Hábitos</a>
+      <a href="metas.html">Metas</a>
+      <a href="errores.html">Errores</a>
+      <a href="sesgos.html">Sesgos</a>
+      <a href="cerebro.html">Cerebro</a>
+      <a href="habilidades.html">Habilidades</a>
     </div>
   </header>
 
@@ -326,13 +337,29 @@
   </div>
 
   <div class="glass">
-    <h2>Últimos 7 días</h2>
-    <div class="viz-grid">
-      <div class="viz-row"><span class="viz-label">Sueño</span><div class="viz-track"><div class="viz-fill" id="viz-sleep" style="width:0%; background:#3E5C76;"></div></div><span class="viz-val" id="val-sleep">—</span></div>
-      <div class="viz-row"><span class="viz-label">Ejercicio</span><div class="viz-track"><div class="viz-fill" id="viz-exercise" style="width:0%; background:var(--gold);"></div></div><span class="viz-val" id="val-exercise">—</span></div>
-      <div class="viz-row"><span class="viz-label">Trabajo</span><div class="viz-track"><div class="viz-fill" id="viz-work" style="width:0%; background:#5B5F6B;"></div></div><span class="viz-val" id="val-work">—</span></div>
-      <div class="viz-row"><span class="viz-label">Estudio</span><div class="viz-track"><div class="viz-fill" id="viz-study" style="width:0%; background:var(--navy);"></div></div><span class="viz-val" id="val-study">—</span></div>
-      <div class="viz-row"><span class="viz-label">Energía</span><div class="viz-track"><div class="viz-fill" id="viz-energy" style="width:0%;"></div></div><span class="viz-val" id="val-energy">—</span></div>
+    <h2>La rueda de tu semana</h2>
+    <div class="wheel-wrap">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <g transform="rotate(-90 90 90)">
+          <circle cx="90" cy="90" r="80" fill="none" stroke="var(--line)" stroke-width="9"/>
+          <circle cx="90" cy="90" r="80" fill="none" stroke="#3E5C76" stroke-width="9" stroke-linecap="round" id="arc-sleep" stroke-dasharray="502.4" stroke-dashoffset="502.4"/>
+          <circle cx="90" cy="90" r="64" fill="none" stroke="var(--line)" stroke-width="9"/>
+          <circle cx="90" cy="90" r="64" fill="none" stroke="var(--gold)" stroke-width="9" stroke-linecap="round" id="arc-exercise" stroke-dasharray="402.1" stroke-dashoffset="402.1"/>
+          <circle cx="90" cy="90" r="48" fill="none" stroke="var(--line)" stroke-width="9"/>
+          <circle cx="90" cy="90" r="48" fill="none" stroke="var(--ink-soft)" stroke-width="9" stroke-linecap="round" id="arc-work" stroke-dasharray="301.6" stroke-dashoffset="301.6"/>
+          <circle cx="90" cy="90" r="32" fill="none" stroke="var(--line)" stroke-width="9"/>
+          <circle cx="90" cy="90" r="32" fill="none" stroke="var(--navy)" stroke-width="9" stroke-linecap="round" id="arc-study" stroke-dasharray="201.1" stroke-dashoffset="201.1"/>
+          <circle cx="90" cy="90" r="16" fill="none" stroke="var(--line)" stroke-width="9"/>
+          <circle cx="90" cy="90" r="16" fill="none" stroke="var(--ember)" stroke-width="9" stroke-linecap="round" id="arc-energy" stroke-dasharray="100.5" stroke-dashoffset="100.5"/>
+        </g>
+      </svg>
+      <div class="wheel-legend">
+        <div class="wl-row"><span class="wl-dot" style="background:#3E5C76;"></span><span class="wl-label">Sueño</span><span class="wl-val" id="val-sleep">—</span></div>
+        <div class="wl-row"><span class="wl-dot" style="background:var(--gold);"></span><span class="wl-label">Ejercicio</span><span class="wl-val" id="val-exercise">—</span></div>
+        <div class="wl-row"><span class="wl-dot" style="background:var(--ink-soft);"></span><span class="wl-label">Trabajo</span><span class="wl-val" id="val-work">—</span></div>
+        <div class="wl-row"><span class="wl-dot" style="background:var(--navy);"></span><span class="wl-label">Estudio</span><span class="wl-val" id="val-study">—</span></div>
+        <div class="wl-row"><span class="wl-dot" style="background:var(--ember);"></span><span class="wl-label">Energía</span><span class="wl-val" id="val-energy">—</span></div>
+      </div>
     </div>
   </div>
 
@@ -392,14 +419,36 @@
   const energyColors = {1:'#B23B3B',2:'#C97B4A',3:'#C9A63D',4:'#7FA65A',5:'#3F7D4A'};
   const energyWords = {1:'muy baja',2:'baja',3:'media',4:'alta',5:'muy alta'};
 
-  function renderEnergy(){
+  function renderEnergy(prevVal){
+    const toggledLo = prevVal!==undefined ? Math.min(prevVal, energyVal) : null;
+    const toggledHi = prevVal!==undefined ? Math.max(prevVal, energyVal) : null;
     document.querySelectorAll('.energy-seg').forEach(seg=>{
       const v=parseInt(seg.dataset.v);
       seg.style.background = v<=energyVal ? energyColors[v] : 'rgba(20,33,61,0.08)';
+      // pulso solo en los segmentos que acaban de cambiar de estado (encender o apagar)
+      if(prevVal!==undefined && prevVal!==energyVal && v>toggledLo && v<=toggledHi){
+        gsap.fromTo(seg, {scale:1.18}, {scale:1, duration:0.35, ease:'back.out(2.5)'});
+      }
     });
     document.getElementById('energy-readout').textContent = energyVal+' / 5 — '+energyWords[energyVal];
   }
-  document.querySelectorAll('.energy-seg').forEach(seg=> seg.addEventListener('click', ()=>{ energyVal=parseInt(seg.dataset.v); renderEnergy(); }));
+
+  // Arrastre + tap sobre toda la barra — se comporta como un slider real, no solo clic por segmento
+  const energyTrack = document.getElementById('energy-track');
+  let draggingEnergy = false;
+  function segFromPointer(clientX){
+    const rect = energyTrack.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(0.999, (clientX - rect.left) / rect.width));
+    return Math.floor(ratio*5) + 1;
+  }
+  function setEnergyFromPointer(clientX){
+    const v = segFromPointer(clientX);
+    if(v !== energyVal){ const prev = energyVal; energyVal = v; renderEnergy(prev); }
+  }
+  energyTrack.addEventListener('pointerdown', (e)=>{ draggingEnergy = true; energyTrack.setPointerCapture(e.pointerId); setEnergyFromPointer(e.clientX); });
+  energyTrack.addEventListener('pointermove', (e)=>{ if(draggingEnergy) setEnergyFromPointer(e.clientX); });
+  energyTrack.addEventListener('pointerup', ()=> draggingEnergy = false);
+  energyTrack.addEventListener('pointercancel', ()=> draggingEnergy = false);
   renderEnergy();
 
   function stepper(idVal, minus, plus, min, max, step, get, set){
@@ -601,9 +650,18 @@
     computeViz(entries.slice(0,7));
   }
 
+  // Cada anillo: dasharray = 2*PI*r (precalculado en el SVG). offset 0 = círculo completo, offset=dasharray = vacío.
+  function setArc(id, pct){
+    const el = document.getElementById(id);
+    const full = parseFloat(el.getAttribute('stroke-dasharray'));
+    const clamped = Math.max(0, Math.min(1, pct));
+    el.style.transition = 'stroke-dashoffset 0.7s ease';
+    el.setAttribute('stroke-dashoffset', (full * (1 - clamped)).toFixed(1));
+  }
+
   function resetViz(){
     ['sleep','exercise','work','study','energy'].forEach(k=>{
-      document.getElementById('viz-'+k).style.width='0%';
+      setArc('arc-'+k, 0);
       document.getElementById('val-'+k).textContent='—';
     });
   }
@@ -622,16 +680,15 @@
     }));
     const en = avg(last7.map(e=>e.energy||0));
 
-    document.getElementById('viz-sleep').style.width = Math.min(100,(s/10)*100)+'%';
+    setArc('arc-sleep', s/10);
     document.getElementById('val-sleep').textContent = s.toFixed(1)+'h';
-    document.getElementById('viz-exercise').style.width = Math.min(100,(ex/60)*100)+'%';
+    setArc('arc-exercise', ex/60);
     document.getElementById('val-exercise').textContent = Math.round(ex)+'m';
-    document.getElementById('viz-work').style.width = Math.min(100,(wk/8)*100)+'%';
+    setArc('arc-work', wk/8);
     document.getElementById('val-work').textContent = wk.toFixed(1)+'h';
-    document.getElementById('viz-study').style.width = Math.min(100,(st/6)*100)+'%';
+    setArc('arc-study', st/6);
     document.getElementById('val-study').textContent = st.toFixed(1)+'h';
-    document.getElementById('viz-energy').style.width = (en/5)*100+'%';
-    document.getElementById('viz-energy').style.background = energyColors[Math.round(en)]||'#C9A63D';
+    setArc('arc-energy', en/5);
     document.getElementById('val-energy').textContent = en.toFixed(1)+'/5';
   }
 
@@ -693,9 +750,9 @@
   }
 
   const ribbonColors = [
-    ['rgba(217,189,140,0.55)','rgba(176,141,87,0.35)'],
-    ['rgba(255,255,255,0.4)','rgba(217,189,140,0.25)'],
-    ['rgba(176,141,87,0.5)','rgba(255,255,255,0.2)']
+    ['rgba(228,201,137,0.55)','rgba(181,138,70,0.35)'],
+    ['rgba(196,98,58,0.4)','rgba(228,201,137,0.22)'],
+    ['rgba(181,138,70,0.5)','rgba(196,98,58,0.18)']
   ];
 
   const ribbons = [];
@@ -745,40 +802,38 @@
 <script>
   // ===== Transición entre páginas (sin flash blanco) =====
   window.addEventListener('load', ()=>{
-    gsap.to('#page-veil', { opacity:0, duration:0.5, delay:0.05, ease:'power1.out', onComplete:()=>{
-      document.getElementById('page-veil').style.pointerEvents = 'none';
-    }});
+    gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' });
   });
   document.querySelectorAll('a[href$=".html"]').forEach(link=>{
     link.addEventListener('click', function(e){
       if(this.target === '_blank') return;
       const href = this.getAttribute('href');
       e.preventDefault();
-      gsap.to('#page-veil', { opacity:1, duration:0.32, ease:'power1.in', onComplete:()=>{ window.location.href = href; } });
+      gsap.to('#veil-iris', { scale:80, duration:0.5, ease:'power3.inOut', onComplete:()=>{ window.location.href = href; } });
     });
   });
 
-  // ===== Aparición al hacer scroll =====
+  // ===== Aparición al hacer scroll — más dramática: escala + desenfoque que se aclara =====
   const revealObserver = new IntersectionObserver((entries)=>{
     entries.forEach(entry=>{
       if(entry.isIntersecting){
-        gsap.to(entry.target, { opacity:1, y:0, duration:0.5, ease:'power2.out' });
+        gsap.to(entry.target, { opacity:1, y:0, scale:1, filter:'blur(0px)', duration:0.65, ease:'power3.out' });
         revealObserver.unobserve(entry.target);
       }
     });
-  }, { threshold:0.15 });
+  }, { threshold:0.12 });
 
   function observeReveals(selector){
     document.querySelectorAll(selector).forEach(el=>{
       if(el.dataset.revealed) return;
       el.dataset.revealed = '1';
-      gsap.set(el, { opacity:0, y:14 });
+      gsap.set(el, { opacity:0, y:26, scale:0.96, filter:'blur(6px)' });
       revealObserver.observe(el);
     });
   }
   const revealWatcher = new MutationObserver(()=> observeReveals('.day-card'));
   revealWatcher.observe(document.body, { childList:true, subtree:true });
-  observeReveals('.day-card');
+  observeReveals('.day-card, .glass, .accordion');
 
   // ===== Hover con física real en botones =====
   document.querySelectorAll('button, .pill').forEach(btn=>{

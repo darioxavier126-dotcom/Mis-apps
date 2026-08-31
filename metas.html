@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Panel de metas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -10,126 +10,121 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <style>
   :root{
-    --bg:#0B0D10; --panel:#14171C; --line:#262B33;
-    --ink:#EDEFEA; --ink-dim:#8A9099;
+    --bg:#0A0D12; --panel:#151A20; --line:#262E36;
+    --ink:#EDEFEA; --ink-dim:#8A9099; --brass:#C9A46B;
     --h1y:#5E9BD8; --h3y:#D9A441; --h5y:#C25B4F;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   html,body{height:100%;}
-  body{
-    background:var(--bg); color:var(--ink); font-family:'IBM Plex Mono',monospace;
-    min-height:100vh; position:relative; overflow-x:hidden;
-    background-image:
-      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-    background-size: 34px 34px;
-    animation: gridDrift 50s linear infinite;
+  body{background:var(--bg); color:var(--ink); font-family:'IBM Plex Mono',monospace; height:100dvh; overflow:hidden; position:relative;}
+
+  canvas#route-canvas{position:fixed; inset:0; z-index:0; display:block;}
+  svg.compass{position:fixed; bottom:-14vw; right:-14vw; width:52vw; height:52vw; max-width:640px; max-height:640px;
+    z-index:0; pointer-events:none; opacity:0.08; animation:spinSlow 220s linear infinite;}
+  @keyframes spinSlow{ to{ transform:rotate(360deg); } }
+
+  /* ===== HUD flotante ===== */
+  .hud-top{position:fixed; top:0; left:0; right:0; z-index:20; display:flex; justify-content:space-between;
+    align-items:center; padding:18px 20px; gap:12px; flex-wrap:wrap;
+    background:linear-gradient(rgba(10,13,18,0.75), transparent); pointer-events:none;}
+  .hud-top > *{pointer-events:auto;}
+  .brand{font-size:11px; letter-spacing:0.18em; color:var(--brass);}
+  .brand b{color:var(--ink); font-weight:600;}
+  .nav1{display:flex; gap:6px; flex-wrap:wrap;}
+  .nav1 a{font-size:10.5px; text-decoration:none; color:var(--ink-dim); border:1px solid var(--line);
+    padding:6px 11px; background:rgba(21,26,32,0.55); letter-spacing:0.03em; border-radius:6px;}
+  .nav1 a.current{background:var(--brass); color:#0A0D12; border-color:var(--brass);}
+  .nav1 a:hover{border-color:var(--brass); color:var(--brass);}
+
+  .empty-hint{position:fixed; top:56%; left:50%; transform:translate(-50%,-50%); z-index:5; text-align:center;
+    font-size:13px; color:var(--ink-dim); pointer-events:none; line-height:1.6;}
+
+  /* ===== Muelle de captura ===== */
+  .capture-dock{position:fixed; left:50%; transform:translateX(-50%); bottom:26px; z-index:20;
+    width:min(600px, 92vw); background:rgba(21,26,32,0.62); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border:1px solid var(--line); border-radius:16px; padding:14px 16px; box-shadow:0 20px 50px -20px rgba(0,0,0,0.7);}
+  .capture-eyebrow{font-size:9.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--brass); margin-bottom:10px; text-align:center;}
+  .capture-row{display:grid; grid-template-columns:1.5fr 1fr 1fr auto; gap:8px;}
+  .capture-row input, .capture-row select{
+    padding:10px 10px; border:1px solid var(--line); border-radius:9px; background:rgba(10,13,18,0.6); color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:12px;
   }
-  @keyframes gridDrift{
-    0%{background-position: 0 0, 0 0;}
-    100%{background-position: 340px 220px, 340px 220px;}
-  }
+  .capture-row input:focus, .capture-row select:focus{outline:none; border-color:var(--brass);}
+  .capture-row button{background:var(--brass); color:#0A0D12; border:none; border-radius:9px; cursor:pointer; font-size:16px; font-weight:600;}
 
-  .contours{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;}
-  .contour{position:absolute; border-radius:50%; border:1px solid rgba(94,155,216,0.14); will-change:transform;}
-  .c1{width:60vw; height:60vw; max-width:820px; max-height:820px; top:-30vw; left:-25vw; animation:rotateSlow 90s linear infinite;}
-  .c1::before{content:""; position:absolute; inset:70px; border-radius:50%; border:1px solid rgba(94,155,216,0.10);}
-  .c1::after{content:""; position:absolute; inset:150px; border-radius:50%; border:1px solid rgba(94,155,216,0.08);}
-  .c2{width:50vw; height:50vw; max-width:680px; max-height:680px; bottom:-28vw; right:-20vw; border-color:rgba(217,164,65,0.13); animation:rotateSlow 70s linear infinite reverse;}
-  .c2::before{content:""; position:absolute; inset:60px; border-radius:50%; border:1px solid rgba(217,164,65,0.09);}
-  .c2::after{content:""; position:absolute; inset:130px; border-radius:50%; border:1px solid rgba(217,164,65,0.07);}
-  .c3{width:36vw; height:36vw; max-width:480px; max-height:480px; top:30vh; right:-15vw; border-color:rgba(194,91,79,0.12); animation:rotateSlow 60s linear infinite;}
-  .c3::before{content:""; position:absolute; inset:50px; border-radius:50%; border:1px solid rgba(194,91,79,0.08);}
+  /* ===== FAB ===== */
+  .fab-stack{position:fixed; right:20px; bottom:26px; z-index:20; display:flex; flex-direction:column; gap:10px;}
+  .fab{width:52px; height:52px; border-radius:50%; border:1px solid var(--line); background:rgba(21,26,32,0.68);
+    backdrop-filter:blur(10px); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer;
+    position:relative; box-shadow:0 10px 26px -12px rgba(0,0,0,0.7);}
+  .fab svg{width:20px; height:20px;}
+  .fab:hover{border-color:var(--brass);}
+  .fab .badge{position:absolute; top:-4px; right:-4px; background:var(--brass); color:#0A0D12; font-size:9.5px; font-weight:600;
+    min-width:17px; height:17px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px;}
 
-  @keyframes rotateSlow{
-    0%{transform:rotate(0deg);}
-    100%{transform:rotate(360deg);}
-  }
+  /* ===== Drawer ===== */
+  .drawer{position:fixed; z-index:30; top:80px; bottom:100px; right:20px; transform:translateX(440px); opacity:0;
+    width:min(400px, 90vw); background:rgba(15,19,24,0.74); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--line); border-radius:18px; box-shadow:0 30px 70px -20px rgba(0,0,0,0.8);
+    display:flex; flex-direction:column; pointer-events:none;}
+  .drawer.open{pointer-events:auto;}
+  .drawer-head{display:flex; justify-content:space-between; align-items:center; padding:16px 18px; border-bottom:1px solid var(--line); flex-shrink:0;}
+  .drawer-head h2{font-family:'Fraunces',serif; font-size:15.5px; font-weight:600;}
+  .drawer-close{cursor:pointer; color:var(--ink-dim); font-size:18px; line-height:1; padding:4px;}
+  .drawer-close:hover{color:var(--brass);}
+  .drawer-body{padding:14px 16px 18px; overflow-y:auto;}
 
-  .page{max-width:820px; margin:0 auto; padding:52px 22px 90px; position:relative; z-index:1;}
-
-  header{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:34px; padding-bottom:26px; border-bottom:1px solid var(--line);}
-  .eyebrow{font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--h3y); margin-bottom:10px;}
-  h1{font-family:'Fraunces',serif; font-weight:600; font-size:28px; color:var(--ink); letter-spacing:-0.01em;}
-  .sub{color:var(--ink-dim); font-size:13px; margin-top:8px; max-width:480px; line-height:1.6;}
-  .back-link{font-size:11px; color:var(--ink); text-decoration:none; border:1px solid var(--line); padding:8px 14px; white-space:nowrap;}
-  .back-link:hover{border-color:var(--h1y);}
-
-  .overview{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-bottom:30px;}
-  .ov{background:var(--panel); padding:18px; text-align:center;}
-  .ov span{display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-dim); margin-bottom:8px;}
-  .ov b{font-family:'Fraunces',serif; font-size:26px; color:var(--ink); font-weight:600;}
-
-  .panel{border:1px solid var(--line); background:var(--panel); padding:24px 22px; margin-bottom:26px;}
-  .panel h2{font-family:'Fraunces',serif; font-size:16px; font-weight:600; color:var(--ink); margin-bottom:18px; letter-spacing:-0.005em;}
-
-  .form-row{display:grid; grid-template-columns:1.6fr 1fr 1fr; gap:12px; margin-bottom:14px;}
-  label{display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-dim); margin-bottom:7px;}
-  input[type=text], select{
-    width:100%; padding:10px 11px; border:1px solid var(--line); background:#0E1116; color:var(--ink);
-    font-family:'IBM Plex Mono',monospace; font-size:12.5px;
-  }
-  input[type=text]:focus, select:focus{outline:none; border-color:var(--h1y);}
-  .btn{background:transparent; border:1px solid var(--h1y); color:var(--h1y); padding:10px 20px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:0.04em; cursor:pointer; text-transform:uppercase;}
-  .btn:hover{background:var(--h1y); color:#0B0D10;}
-  .row-end{display:flex; justify-content:flex-end;}
-
-  /* ===== RUTA DE META ===== */
-  .goal{border:1px solid var(--line); margin-bottom:16px; background:#0E1116;}
-  .goal-head{display:flex; justify-content:space-between; align-items:flex-start; padding:18px 20px 4px;}
-  .goal-title{font-family:'Fraunces',serif; font-size:17px; font-weight:600; color:var(--ink);}
-  .goal-tags{margin-top:6px; display:flex; gap:8px;}
-  .tag{font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em; padding:3px 9px; border:1px solid var(--line); color:var(--ink-dim);}
-  .goal-del{cursor:pointer; color:var(--ink-dim); font-size:15px;}
+  .goal-row{border-bottom:1px solid var(--line); padding:12px 2px; cursor:pointer;}
+  .goal-row:last-child{border-bottom:none;}
+  .goal-row-head{display:flex; justify-content:space-between; align-items:center; gap:8px;}
+  .goal-row-head b{font-family:'Fraunces',serif; font-size:14px; font-weight:600; color:var(--ink);}
+  .goal-row .tag{font-size:9px; text-transform:uppercase; letter-spacing:0.05em; padding:2px 7px; border:1px solid var(--line); color:var(--ink-dim); border-radius:4px;}
+  .goal-row-track{height:4px; background:var(--line); border-radius:2px; margin-top:9px; overflow:hidden;}
+  .goal-row-fill{height:100%; border-radius:2px; transition:width 0.4s ease;}
+  .goal-row-pct{font-size:9.5px; color:var(--ink-dim); margin-top:6px;}
+  .goal-del{cursor:pointer; color:var(--ink-dim); font-size:14px;}
   .goal-del:hover{color:var(--h5y);}
 
-  .route-wrap{padding:26px 20px 20px;}
-  .route-track{position:relative; height:3px; background:var(--line); border-radius:2px; margin:0 8px;}
-  .route-fill{position:absolute; top:0; left:0; height:100%; border-radius:2px;}
-  .route-flag{position:absolute; right:-8px; top:50%; transform:translateY(-50%); font-size:14px;}
-  .route-node{
-    position:absolute; top:50%; width:13px; height:13px; border-radius:50%;
-    background:var(--bg); border:2px solid var(--line); transform:translate(-50%,-50%); cursor:pointer;
-  }
-  .route-node.done{background:var(--h1y); border-color:var(--h1y);}
-  .route-labels{display:flex; justify-content:space-between; margin-top:14px; font-size:9.5px; color:var(--ink-dim); text-transform:uppercase;}
-
-  .checkpoint-log{margin-top:20px; display:flex; flex-direction:column; gap:0;}
-  .cp{display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--line); font-size:12.5px;}
-  .cp:first-child{border-top:none;}
-  .cp input[type=checkbox]{accent-color:var(--h1y); width:15px; height:15px; cursor:pointer; flex-shrink:0;}
+  .goal-detail{margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); display:none;}
+  .goal-row.expanded .goal-detail{display:block;}
+  .cp{display:flex; align-items:center; gap:8px; padding:7px 0; font-size:12px;}
+  .cp input[type=checkbox]{accent-color:var(--brass); width:14px; height:14px; cursor:pointer; flex-shrink:0;}
   .cp .txt{flex:1; color:var(--ink);}
   .cp.done .txt{color:var(--ink-dim); text-decoration:line-through;}
-  .cp .del{cursor:pointer; color:var(--ink-dim); font-size:13px;}
-  .cp .del:hover{color:var(--h5y);}
+  .cp .del{cursor:pointer; color:var(--ink-dim); font-size:12px;}
+  .add-cp{display:flex; gap:6px; margin-top:6px;}
+  .add-cp input{flex:1; padding:7px 9px; border:1px solid var(--line); background:#0A0D12; color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:11px; border-radius:6px;}
+  .add-cp button{background:transparent; border:1px solid var(--line); color:var(--ink-dim); padding:7px 11px; font-size:10px; cursor:pointer; border-radius:6px;}
+  .add-cp button:hover{border-color:var(--brass); color:var(--brass);}
 
-  .add-cp{display:flex; gap:8px; margin-top:14px;}
-  .add-cp input{flex:1; padding:8px 10px; border:1px solid var(--line); background:#0B0D10; color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:11.5px;}
-  .add-cp button{background:transparent; border:1px solid var(--line); color:var(--ink-dim); padding:8px 14px; font-size:10.5px; cursor:pointer; text-transform:uppercase;}
-  .add-cp button:hover{border-color:var(--h3y); color:var(--h3y);}
+  .empty{color:var(--ink-dim); font-size:12px; padding:16px 2px; text-align:center;}
 
-  .empty{color:var(--ink-dim); font-size:12.5px; padding:20px 4px; text-align:center;}
+  .toast{position:fixed; top:80px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:40;
+    background:rgba(201,164,107,0.14); border:1px solid var(--brass); color:var(--brass);
+    font-size:12px; padding:10px 18px; border-radius:999px; opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px;}
+  .toast svg{width:14px; height:14px;}
 
-  @media (max-width:560px){
-    .form-row, .overview{grid-template-columns:1fr;}
-  }  .btn, button{transition:transform 0.12s ease, box-shadow 0.12s ease;}
-  .btn:active, button:active{transform:scale(0.94);}
-  .goal, .panel{transition:transform 0.18s ease;}
-  .goal:hover{transform:translateY(-2px);}
-  .typewriter-title span{display:inline-block; opacity:0; animation:letterPop 0.32s ease forwards;}
-  @keyframes letterPop{0%{opacity:0; transform:translateY(8px) scale(0.85);}60%{opacity:1; transform:translateY(-2px) scale(1.04);}100%{opacity:1; transform:translateY(0) scale(1);}}
+  button, .fab{transition:transform 0.12s ease;}
+  button:active, .fab:active{transform:scale(0.94);}
+
+  @media (max-width:640px){
+    .drawer{right:8px; left:8px; width:auto; top:72px; bottom:160px;}
+    .fab-stack{bottom:130px;}
+    .capture-dock{bottom:20px; padding:12px;}
+    .capture-row{grid-template-columns:1fr 1fr; gap:7px;}
+    .capture-row input[type=text]{grid-column:1 / -1;}
+  }
 </style>
 </head>
 <body>
-<div id="page-veil" style="position:fixed;inset:0;z-index:9997;background:#0B0D10;pointer-events:none;"></div>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#C9A46B;transform:scale(80);"></div></div>
 
-<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0B0D10; display:flex; align-items:center; justify-content:center; padding:24px;">
-  <div style="background:#14171C; border:1px solid #262B33; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0A0D12; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div style="background:#151A20; border:1px solid #262E36; padding:36px 30px; max-width:340px; width:100%; text-align:center; border-radius:12px;">
     <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#D9A441; margin-bottom:14px;">Acceso privado</div>
     <div style="font-family:'Fraunces',serif; font-weight:600; font-size:20px; color:#EDEFEA; margin-bottom:22px;">Ingresa tu PIN</div>
-    <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border:1px solid #262B33; background:#0B0D10; color:#EDEFEA; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
+    <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border-radius:8px; border:1px solid #262E36; background:#0A0D12; color:#EDEFEA; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
     <div id="pin-error" style="color:#C25B4F; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
-    <button id="pin-submit" style="width:100%; padding:13px; border:none; background:#D9A441; color:#0B0D10; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em; cursor:pointer;">Entrar</button>
+    <button id="pin-submit" style="width:100%; padding:13px; border:none; border-radius:8px; background:#D9A441; color:#0A0D12; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em; cursor:pointer;">Entrar</button>
   </div>
 </div>
 
@@ -139,10 +134,12 @@
     const gate = document.getElementById('pin-gate');
     const input = document.getElementById('pin-input');
     const err = document.getElementById('pin-error');
-    if(localStorage.getItem('habit_unlocked') === 'yes'){ gate.style.display = 'none'; }
+    let unlocked = false;
+    try{ unlocked = localStorage.getItem('habit_unlocked') === 'yes'; }catch(e){}
+    if(unlocked){ gate.style.display = 'none'; }
     else { setTimeout(()=> input.focus(), 200); }
     function tryUnlock(){
-      if(input.value === CORRECT_PIN){ localStorage.setItem('habit_unlocked','yes'); gate.style.display='none'; }
+      if(input.value === CORRECT_PIN){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display='none'; }
       else { err.textContent = 'PIN incorrecto'; input.value=''; input.focus(); }
     }
     document.getElementById('pin-submit').addEventListener('click', tryUnlock);
@@ -150,70 +147,76 @@
   })();
 </script>
 
-<canvas id="route-canvas" style="position:fixed; inset:0; z-index:0;"></canvas>
-<div class="contours" style="opacity:0.5;">
-  <div class="contour c1"></div>
-  <div class="contour c2"></div>
-  <div class="contour c3"></div>
+<canvas id="route-canvas"></canvas>
+<svg class="compass" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="94" fill="none" stroke="#C9A46B" stroke-width="0.6"/>
+  <circle cx="100" cy="100" r="70" fill="none" stroke="#C9A46B" stroke-width="0.4"/>
+  <g stroke="#C9A46B" stroke-width="0.5">
+    <line x1="100" y1="6" x2="100" y2="194"/><line x1="6" y1="100" x2="194" y2="100"/>
+    <line x1="30" y1="30" x2="170" y2="170"/><line x1="170" y1="30" x2="30" y2="170"/>
+  </g>
+  <path d="M100 20 L108 100 L100 180 L92 100 Z" fill="#C9A46B"/>
+</svg>
+
+<div class="hud-top">
+  <div class="brand">FASE 0 · SISTEMA 2 — <b>PANEL DE METAS</b></div>
+  <div class="nav1">
+    <a href="index.html">Hábitos</a>
+    <a href="metas.html" class="current">Metas</a>
+    <a href="errores.html">Errores</a>
+    <a href="sesgos.html">Sesgos</a>
+    <a href="cerebro.html">Cerebro</a>
+    <a href="habilidades.html">Habilidades</a>
+  </div>
 </div>
 
-<div class="page">
-  <header>
-    <div>
-      <div class="eyebrow">Fase 0 · Sistema 2</div>
-      <h1 class="typewriter-title" id="main-title">Panel de metas</h1>
-      <p class="sub">Cada meta es una ruta. Los checkpoints son el camino — no la revisas a diario, la revisas cuando toca avanzar.</p>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <a class="back-link" href="index.html">Hábitos</a>
-      <a class="back-link" href="errores.html">Errores</a>
-      <a class="back-link" href="sesgos.html">Sesgos</a>
-      <a class="back-link" href="cerebro.html">Cerebro</a>
-      <a class="back-link" href="habilidades.html">Habilidades</a>
-    </div>
-  </header>
+<div class="empty-hint" id="empty-hint">Aún no hay rutas trazadas.<br>Traza la primera abajo — se vuelve un campamento real en la montaña.</div>
 
-  <div class="overview">
-    <div class="ov"><span>Metas activas</span><b id="ov-total">0</b></div>
-    <div class="ov"><span>Checkpoints</span><b id="ov-checkpoints">0</b></div>
-    <div class="ov"><span>Avance global</span><b id="ov-done">0%</b></div>
+<div class="capture-dock">
+  <div class="capture-eyebrow">Trazar nueva ruta</div>
+  <div class="capture-row">
+    <input type="text" id="g-title" placeholder="Ej: Vivir del freelance">
+    <select id="g-horizon"><option value="1 año">1 año</option><option value="3 años">3 años</option><option value="5 años">5 años</option></select>
+    <select id="g-category"><option value="Carrera">Carrera</option><option value="Estudios">Estudios</option><option value="Personal">Personal</option><option value="Financiero">Financiero</option></select>
+    <button id="add-goal">↵</button>
   </div>
-
-  <div class="panel">
-    <h2>Trazar nueva ruta</h2>
-    <div class="form-row">
-      <div><label>Meta</label><input type="text" id="g-title" placeholder="Ej: Vivir del freelance"></div>
-      <div><label>Horizonte</label>
-        <select id="g-horizon"><option value="1 año">1 año</option><option value="3 años">3 años</option><option value="5 años">5 años</option></select>
-      </div>
-      <div><label>Categoría</label>
-        <select id="g-category"><option value="Carrera">Carrera</option><option value="Estudios">Estudios</option><option value="Personal">Personal</option><option value="Financiero">Financiero</option></select>
-      </div>
-    </div>
-    <div class="row-end"><button class="btn" id="add-goal">Agregar</button></div>
-  </div>
-
-  <div id="goals-list"></div>
-  <div class="empty" id="empty-state" style="display:none;">Aún no hay rutas trazadas. Agrega la primera arriba.</div>
 </div>
 
-<script>
-  (function(){
-    const el = document.getElementById('main-title');
-    const text = el.textContent;
-    el.innerHTML = text.split('').map((ch,i)=>
-      `<span style="animation-delay:${i*0.03}s">${ch===' '?'&nbsp;':ch}</span>`
-    ).join('');
-  })();
-</script>
+<div class="fab-stack">
+  <button class="fab" id="open-goals" title="Ver metas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg>
+    <span class="badge" id="goals-badge" style="display:none;">0</span>
+  </button>
+</div>
+
+<div class="drawer" id="goals-drawer">
+  <div class="drawer-head"><h2>Tus rutas</h2><span class="drawer-close" data-close="goals-drawer">×</span></div>
+  <div class="drawer-body">
+    <div id="goals-list"></div>
+    <div class="empty" id="empty-state" style="display:none;">Aún no hay rutas trazadas.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span id="toast-text">Ruta trazada</span></div>
 
 <script>
-  const horizonColor = {'1 año':'var(--h1y)', '3 años':'var(--h3y)', '5 años':'var(--h5y)'};
+  const horizonColor = {'1 año':'#5E9BD8', '3 años':'#D9A441', '5 años':'#C25B4F'};
 
   function loadGoals(){ try{ return JSON.parse(localStorage.getItem('goals')||'[]'); } catch(e){ return []; } }
-  function saveGoals(goals){ localStorage.setItem('goals', JSON.stringify(goals)); render(); }
+  function saveGoals(goals){ try{ localStorage.setItem('goals', JSON.stringify(goals)); }catch(e){} render(); }
 
-  document.getElementById('add-goal').addEventListener('click', ()=>{
+  function showToast(text){
+    document.getElementById('toast-text').textContent = text;
+    const el = document.getElementById('toast');
+    gsap.killTweensOf(el);
+    gsap.timeline()
+      .to(el, { opacity:1, y:0, duration:0.35, ease:'back.out(2)' })
+      .to(el, { opacity:0, y:-14, duration:0.4, ease:'power1.in', delay:1.6 });
+  }
+
+  document.getElementById('add-goal').addEventListener('click', addGoal);
+  document.getElementById('g-title').addEventListener('keydown', e=>{ if(e.key==='Enter') addGoal(); });
+  function addGoal(){
     const title = document.getElementById('g-title').value.trim();
     if(!title) return;
     const goals = loadGoals();
@@ -225,7 +228,8 @@
     });
     document.getElementById('g-title').value = '';
     saveGoals(goals);
-  });
+    showToast('Ruta trazada: ' + title);
+  }
 
   function addCheckpoint(id, text){
     if(!text.trim()) return;
@@ -242,201 +246,205 @@
   }
   function deleteGoal(id){ saveGoals(loadGoals().filter(g=>g.id!==id)); }
 
+  let expandedId = null;
+  let relightGoals; // lo define el fondo 3D — enciende un campamento por meta
+
   function render(){
     const goals = loadGoals();
-    const list = document.getElementById('goals-list');
+    document.getElementById('empty-hint').style.display = goals.length ? 'none' : 'block';
     document.getElementById('empty-state').style.display = goals.length===0 ? 'block' : 'none';
+    const badge = document.getElementById('goals-badge');
+    if(goals.length){ badge.style.display='flex'; badge.textContent = goals.length; } else { badge.style.display='none'; }
 
-    let totalCp=0, doneCp=0;
-    goals.forEach(g=>{ totalCp += g.checkpoints.length; doneCp += g.checkpoints.filter(c=>c.done).length; });
-    document.getElementById('ov-total').textContent = goals.length;
-    document.getElementById('ov-checkpoints').textContent = totalCp;
-    document.getElementById('ov-done').textContent = totalCp>0 ? Math.round((doneCp/totalCp)*100)+'%' : '0%';
-
-    list.innerHTML = goals.map(g=>{
-      const n = g.checkpoints.length;
-      const doneN = g.checkpoints.filter(c=>c.done).length;
-      const pct = n>0 ? (doneN/n)*100 : 0;
-      const color = horizonColor[g.horizon] || 'var(--h1y)';
-
-      const nodes = g.checkpoints.map((c,i)=>{
-        const pos = n>1 ? (i/(n-1))*100 : 50;
-        return `<div class="route-node ${c.done?'done':''}" style="left:${pos}%; ${c.done?`border-color:${color}; background:${color};`:''}" title="${c.text}" data-toggle="${g.id}|${i}"></div>`;
-      }).join('');
-
+    document.getElementById('goals-list').innerHTML = goals.map(g=>{
+      const n = g.checkpoints.length, doneN = g.checkpoints.filter(c=>c.done).length;
+      const pct = n>0 ? Math.round((doneN/n)*100) : 0;
+      const color = horizonColor[g.horizon] || '#5E9BD8';
+      const isOpen = expandedId===g.id;
       return `
-      <div class="goal">
-        <div class="goal-head">
-          <div>
-            <div class="goal-title">${g.title}</div>
-            <div class="goal-tags"><span class="tag">${g.horizon}</span><span class="tag">${g.category}</span></div>
-          </div>
+      <div class="goal-row ${isOpen?'expanded':''}" data-id="${g.id}">
+        <div class="goal-row-head">
+          <div><b>${g.title}</b> <span class="tag">${g.horizon}</span> <span class="tag">${g.category}</span></div>
           <span class="goal-del" data-del-goal="${g.id}">×</span>
         </div>
-        <div class="route-wrap">
-          <div class="route-track">
-            <div class="route-fill" style="width:${pct}%; background:${color};"></div>
-            ${nodes}
-            <span class="route-flag">▸</span>
-          </div>
-          <div class="route-labels"><span>Hoy</span><span>${doneN}/${n} checkpoints</span><span>${g.title.length>18? g.title.slice(0,18)+'…' : g.title}</span></div>
-
-          <div class="checkpoint-log">
-            ${g.checkpoints.map((c,i)=>`
-              <div class="cp ${c.done?'done':''}">
-                <input type="checkbox" ${c.done?'checked':''} data-cp-toggle="${g.id}|${i}">
-                <span class="txt">${c.text}</span>
-                <span class="del" data-cp-del="${g.id}|${i}">×</span>
-              </div>
-            `).join('')}
-          </div>
-
+        <div class="goal-row-track"><div class="goal-row-fill" style="width:${pct}%; background:${color};"></div></div>
+        <div class="goal-row-pct">${doneN}/${n} checkpoints · ${pct}%</div>
+        <div class="goal-detail">
+          ${g.checkpoints.map((c,i)=>`
+            <div class="cp ${c.done?'done':''}">
+              <input type="checkbox" ${c.done?'checked':''} data-cp-toggle="${g.id}|${i}">
+              <span class="txt">${c.text}</span>
+              <span class="del" data-cp-del="${g.id}|${i}">×</span>
+            </div>`).join('') || '<div class="empty" style="padding:6px 0;">Sin checkpoints todavía.</div>'}
           <div class="add-cp">
-            <input type="text" placeholder="Nuevo checkpoint..." data-newcp="${g.id}">
-            <button data-addcp="${g.id}">Agregar</button>
+            <input type="text" placeholder="Nuevo checkpoint…" data-newcp="${g.id}">
+            <button data-addcp="${g.id}">+</button>
           </div>
         </div>
       </div>`;
     }).join('');
 
-    list.querySelectorAll('[data-del-goal]').forEach(el=> el.addEventListener('click', ()=> deleteGoal(el.dataset.delGoal)));
-    list.querySelectorAll('[data-toggle]').forEach(el=> el.addEventListener('click', ()=>{
-      const [gid, idx] = el.dataset.toggle.split('|'); toggleCheckpoint(gid, parseInt(idx));
+    const list = document.getElementById('goals-list');
+    list.querySelectorAll('.goal-row-head').forEach(h=> h.addEventListener('click', (e)=>{
+      if(e.target.closest('[data-del-goal]')) return;
+      const row = h.closest('.goal-row');
+      expandedId = expandedId===row.dataset.id ? null : row.dataset.id;
+      render();
     }));
-    list.querySelectorAll('[data-cp-toggle]').forEach(el=> el.addEventListener('change', ()=>{
-      const [gid, idx] = el.dataset.cpToggle.split('|'); toggleCheckpoint(gid, parseInt(idx));
-    }));
-    list.querySelectorAll('[data-cp-del]').forEach(el=> el.addEventListener('click', ()=>{
-      const [gid, idx] = el.dataset.cpDel.split('|'); deleteCheckpoint(gid, parseInt(idx));
-    }));
-    list.querySelectorAll('[data-addcp]').forEach(btn=> btn.addEventListener('click', ()=>{
+    list.querySelectorAll('[data-del-goal]').forEach(el=> el.addEventListener('click', (e)=>{ e.stopPropagation(); deleteGoal(el.dataset.delGoal); }));
+    list.querySelectorAll('[data-cp-toggle]').forEach(el=> el.addEventListener('change', ()=>{ const [gid,idx]=el.dataset.cpToggle.split('|'); toggleCheckpoint(gid, parseInt(idx)); }));
+    list.querySelectorAll('[data-cp-del]').forEach(el=> el.addEventListener('click', (e)=>{ e.stopPropagation(); const [gid,idx]=el.dataset.cpDel.split('|'); deleteCheckpoint(gid, parseInt(idx)); }));
+    list.querySelectorAll('[data-addcp]').forEach(btn=> btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
       const gid = btn.dataset.addcp;
       const inp = list.querySelector(`[data-newcp="${gid}"]`);
       addCheckpoint(gid, inp.value); inp.value='';
     }));
+
+    if(typeof relightGoals === 'function') relightGoals(goals.map(g=>({id:g.id, pct: g.checkpoints.length ? doneRatio(g) : 0, color: horizonColor[g.horizon]||'#5E9BD8'})));
   }
+  function doneRatio(g){ return g.checkpoints.filter(c=>c.done).length / g.checkpoints.length; }
+
+  // ===== Drawer =====
+  function openDrawer(id){
+    const el = document.getElementById(id);
+    el.classList.add('open');
+    gsap.to(el, { opacity:1, x:0, duration:0.4, ease:'power3.out' });
+  }
+  function closeDrawer(id){
+    const el = document.getElementById(id);
+    if(!el.classList.contains('open')) return;
+    el.classList.remove('open');
+    gsap.to(el, { opacity:0, x:440, duration:0.3, ease:'power2.in' });
+  }
+  document.getElementById('open-goals').addEventListener('click', ()=> openDrawer('goals-drawer'));
+  document.querySelectorAll('[data-close]').forEach(el=> el.addEventListener('click', ()=> closeDrawer(el.dataset.close)));
 
   render();
 </script>
+
 <script>
-  // ===== Camino de montaña real en 3D, con waypoints que laten =====
-  const routeCanvas = document.getElementById('route-canvas');
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(58, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 6, 34);
-  camera.lookAt(0,0,0);
-  const renderer = new THREE.WebGLRenderer({ canvas: routeCanvas, antialias:true, alpha:true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-  const routePoints = [];
-  const N = 80;
-  for(let i=0; i<N; i++){
-    const x = (i/(N-1)) * 60 - 30;
-    const y = Math.sin(i*0.25) * 4 + Math.sin(i*0.07) * 6;
-    const z = Math.cos(i*0.18) * 5 - 4;
-    routePoints.push(new THREE.Vector3(x, y, z));
-  }
-  const routeCurve = new THREE.CatmullRomCurve3(routePoints);
-  const tubeGeo = new THREE.TubeGeometry(routeCurve, 200, 0.12, 8, false);
-  const tubeMat = new THREE.MeshBasicMaterial({ color:0x5E9BD8, transparent:true, opacity:0.5 });
-  scene.add(new THREE.Mesh(tubeGeo, tubeMat));
-
-  const routeCurve2 = new THREE.CatmullRomCurve3(routePoints.map(p => new THREE.Vector3(p.x, p.y-3, p.z-6)));
-  const tubeGeo2 = new THREE.TubeGeometry(routeCurve2, 200, 0.06, 6, false);
-  const tubeMat2 = new THREE.MeshBasicMaterial({ color:0xD9A441, transparent:true, opacity:0.22 });
-  scene.add(new THREE.Mesh(tubeGeo2, tubeMat2));
-
-  function glowTex(hex){
-    const c = document.createElement('canvas'); c.width = c.height = 64;
-    const ctx = c.getContext('2d');
-    const g = ctx.createRadialGradient(32,32,0,32,32,32);
-    g.addColorStop(0,'rgba(255,255,255,1)');
-    g.addColorStop(0.4, hex);
-    g.addColorStop(1,'rgba(255,255,255,0)');
-    ctx.fillStyle = g; ctx.fillRect(0,0,64,64);
-    return new THREE.CanvasTexture(c);
-  }
-
-  const waypointColors = ['rgba(94,155,216,0.9)','rgba(217,164,65,0.9)','rgba(194,91,79,0.9)'];
-  const waypoints = [];
-  const WP_COUNT = 9;
-  for(let i=0; i<WP_COUNT; i++){
-    const t = (i+0.5) / WP_COUNT;
-    const p = routeCurve.getPointAt(t);
-    const color = waypointColors[i % waypointColors.length];
-    const mat = new THREE.SpriteMaterial({ map:glowTex(color), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending });
-    const sprite = new THREE.Sprite(mat);
-    sprite.scale.set(1.6,1.6,1);
-    sprite.position.copy(p);
-    scene.add(sprite);
-    waypoints.push({ sprite, phase: Math.random()*Math.PI*2, baseScale:1.6 });
-  }
-
-  const rClock = new THREE.Clock();
-  function animateRoute(){
-    requestAnimationFrame(animateRoute);
-    const t = rClock.getElapsedTime();
-    for(const w of waypoints){
-      const s = w.baseScale + Math.sin(t*1.4 + w.phase) * 0.35;
-      w.sprite.scale.set(s, s, 1);
-    }
-    scene.rotation.y = Math.sin(t*0.04) * 0.12;
-    camera.position.y = 6 + Math.sin(t*0.06) * 1.5;
-    renderer.render(scene, camera);
-  }
-  animateRoute();
-  window.addEventListener('resize', ()=>{
-    camera.aspect = window.innerWidth/window.innerHeight;
-    camera.updateProjectionMatrix();
+  // ===== Fondo: camino de montaña real en 3D — cada meta es un campamento sobre la ruta =====
+  (function(){
+    const routeCanvas = document.getElementById('route-canvas');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(58, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 6, 30);
+    camera.lookAt(0,0,0);
+    const renderer = new THREE.WebGLRenderer({ canvas: routeCanvas, antialias:true, alpha:true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-  });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-  gsap.from('.panel, .goal', { opacity:0, y:20, duration:0.6, stagger:0.1, ease:'power2.out' });
+    const routePoints = [];
+    const N = 80;
+    for(let i=0; i<N; i++){
+      const x = (i/(N-1)) * 60 - 30;
+      const y = Math.sin(i*0.25) * 4 + Math.sin(i*0.07) * 6;
+      const z = Math.cos(i*0.18) * 5 - 4;
+      routePoints.push(new THREE.Vector3(x, y, z));
+    }
+    const routeCurve = new THREE.CatmullRomCurve3(routePoints);
+    const tubeGeo = new THREE.TubeGeometry(routeCurve, 200, 0.14, 8, false);
+    const tubeMat = new THREE.MeshBasicMaterial({ color:0x5E9BD8, transparent:true, opacity:0.7 });
+    scene.add(new THREE.Mesh(tubeGeo, tubeMat));
+
+    const routeCurve2 = new THREE.CatmullRomCurve3(routePoints.map(p => new THREE.Vector3(p.x, p.y-3, p.z-6)));
+    const tubeGeo2 = new THREE.TubeGeometry(routeCurve2, 200, 0.06, 6, false);
+    const tubeMat2 = new THREE.MeshBasicMaterial({ color:0xD9A441, transparent:true, opacity:0.22 });
+    scene.add(new THREE.Mesh(tubeGeo2, tubeMat2));
+
+    function glowTex(hex){
+      const c = document.createElement('canvas'); c.width = c.height = 64;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(32,32,0,32,32,32);
+      g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.4, hex); g.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(0,0,64,64);
+      return new THREE.CanvasTexture(c);
+    }
+
+    // Campamentos ambientales decorativos, siempre presentes y tenues
+    const ambientColors = ['rgba(94,155,216,0.55)','rgba(217,164,65,0.55)','rgba(194,91,79,0.55)'];
+    const AMB_COUNT = 10;
+    for(let i=0; i<AMB_COUNT; i++){
+      const t = (i+0.5)/AMB_COUNT;
+      const p = routeCurve.getPointAt(t);
+      const mat = new THREE.SpriteMaterial({ map:glowTex(ambientColors[i%3]), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, opacity:0.5 });
+      const sprite = new THREE.Sprite(mat); sprite.scale.set(1.0,1.0,1); sprite.position.copy(p);
+      scene.add(sprite);
+    }
+
+    // Campamentos reales — uno por meta, se encienden y crecen según el progreso
+    const MAX_GOALS = 14;
+    const goalSprites = [];
+    for(let i=0; i<MAX_GOALS; i++){
+      const mat = new THREE.SpriteMaterial({ map:glowTex('rgba(255,255,255,1)'), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, opacity:0 });
+      const sprite = new THREE.Sprite(mat); sprite.scale.set(0.001,0.001,1); sprite.position.set(0,-999,0);
+      scene.add(sprite); goalSprites.push({sprite, mat, phase:Math.random()*Math.PI*2});
+    }
+    function hashId(id){ let h=2166136261; for(let i=0;i<id.length;i++){ h^=id.charCodeAt(i); h=Math.imul(h,16777619);} return (h>>>0); }
+    let activeGoals = [];
+    relightGoals = function(goals){
+      activeGoals = goals.slice(0, MAX_GOALS);
+      goalSprites.forEach((gs, i)=>{
+        const data = activeGoals[i];
+        if(!data){ gs.mat.opacity = 0; gs.sprite.position.set(0,-999,0); return; }
+        const t = 0.08 + (hashId(data.id) % 1000)/1000 * 0.84;
+        const p = routeCurve.getPointAt(t);
+        gs.sprite.position.copy(p);
+        gs.mat.opacity = 1;
+        gs.mat.map = hexToRgba(data.color);
+        gs.baseScale = 1.3 + data.pct*1.6;
+      });
+    };
+    function hexToRgba(hex){
+      const n = parseInt(hex.replace('#',''),16);
+      const r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+      const c=document.createElement('canvas'); c.width=c.height=64;
+      const ctx=c.getContext('2d');
+      const grad=ctx.createRadialGradient(32,32,0,32,32,32);
+      grad.addColorStop(0,'rgba(255,255,255,1)'); grad.addColorStop(0.4,`rgba(${r},${g},${b},1)`); grad.addColorStop(1,`rgba(${r},${g},${b},0)`);
+      ctx.fillStyle=grad; ctx.fillRect(0,0,64,64);
+      return new THREE.CanvasTexture(c);
+    }
+
+    function resize(){
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    window.addEventListener('resize', resize);
+
+    const rClock = new THREE.Clock();
+    function animateRoute(){
+      requestAnimationFrame(animateRoute);
+      const t = rClock.getElapsedTime();
+      goalSprites.forEach(gs=>{
+        if(gs.mat.opacity>0 && gs.baseScale){
+          const s = gs.baseScale + Math.sin(t*1.6 + gs.phase)*0.28;
+          gs.sprite.scale.set(s, s, 1);
+        }
+      });
+      scene.rotation.y = Math.sin(t*0.035) * 0.1;
+      camera.position.y = 6 + Math.sin(t*0.05) * 1.3;
+      renderer.render(scene, camera);
+    }
+    animateRoute();
+    render();
+  })();
 </script>
 
 <script>
   // ===== Transición entre páginas (sin flash blanco) =====
   window.addEventListener('load', ()=>{
-    gsap.to('#page-veil', { opacity:0, duration:0.5, delay:0.05, ease:'power1.out', onComplete:()=>{
-      document.getElementById('page-veil').style.pointerEvents = 'none';
-    }});
+    gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' });
   });
   document.querySelectorAll('a[href$=".html"]').forEach(link=>{
     link.addEventListener('click', function(e){
       if(this.target === '_blank') return;
       const href = this.getAttribute('href');
       e.preventDefault();
-      gsap.to('#page-veil', { opacity:1, duration:0.32, ease:'power1.in', onComplete:()=>{ window.location.href = href; } });
+      gsap.to('#veil-iris', { scale:80, duration:0.5, ease:'power3.inOut', onComplete:()=>{ window.location.href = href; } });
     });
-  });
-
-  // ===== Aparición al hacer scroll =====
-  const revealObserver = new IntersectionObserver((entries)=>{
-    entries.forEach(entry=>{
-      if(entry.isIntersecting){
-        gsap.to(entry.target, { opacity:1, y:0, duration:0.5, ease:'power2.out' });
-        revealObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold:0.15 });
-
-  function observeReveals(selector){
-    document.querySelectorAll(selector).forEach(el=>{
-      if(el.dataset.revealed) return;
-      el.dataset.revealed = '1';
-      gsap.set(el, { opacity:0, y:14 });
-      revealObserver.observe(el);
-    });
-  }
-  const revealWatcher = new MutationObserver(()=> observeReveals('.goal'));
-  revealWatcher.observe(document.body, { childList:true, subtree:true });
-  observeReveals('.goal');
-
-  // ===== Hover con física real en botones =====
-  document.querySelectorAll('button, .pill').forEach(btn=>{
-    btn.addEventListener('mouseenter', ()=> gsap.to(btn, { scale:1.05, duration:0.2, ease:'back.out(2)' }));
-    btn.addEventListener('mouseleave', ()=> gsap.to(btn, { scale:1, duration:0.2, ease:'power2.out' }));
   });
 </script>
 

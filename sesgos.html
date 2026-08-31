@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
 <style>
   :root{
     --bg:#0A0812; --panel:#140F22; --line:#2A2244;
@@ -47,11 +48,12 @@
   /* ===== RED DE NODOS DE SESGOS ===== */
   .network-diagram{position:relative; padding:30px 10px; margin:10px 0;}
   .center-node{
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    width:64px; height:64px; border-radius:50%; background:radial-gradient(circle, var(--violet), #4B2FA0);
-    display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:9px;
-    text-align:center; color:#fff; box-shadow:0 0 30px rgba(139,108,240,0.6); z-index:2; padding:4px;
+    width:78px; height:78px; border-radius:50%; background:radial-gradient(circle, var(--violet), #4B2FA0);
+    display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:9.5px;
+    text-align:center; color:#fff; box-shadow:0 0 30px rgba(139,108,240,0.55); z-index:2; padding:4px;
+    margin:0 auto 22px; line-height:1.4; transition:box-shadow 0.3s ease, background 0.3s ease;
   }
+  .center-node.active{background:radial-gradient(circle, var(--cyan), #1E7A8C); box-shadow:0 0 40px rgba(79,209,232,0.6);}
   .bias-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; position:relative; z-index:2;}
   .bias-node{
     border:1px solid var(--line); border-radius:12px; padding:14px 14px; cursor:pointer; text-align:center;
@@ -68,10 +70,12 @@
   .btn{background:var(--violet); color:#fff; border:none; padding:11px 22px; border-radius:10px; font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.04em; cursor:pointer;}
   .btn:hover{background:#7657DE;}
 
-  .freq-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;}
-  .freq-item{border:1px solid var(--line); border-radius:10px; padding:12px 14px; background:rgba(10,8,18,0.4);}
-  .freq-item span{font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; color:var(--ink-dim); letter-spacing:0.04em;}
-  .freq-item b{font-family:'Fraunces',serif; font-size:22px; color:var(--pink); display:block; margin-top:4px;}
+  .freq-grid{display:flex; flex-direction:column; gap:10px;}
+  .freq-item{display:grid; grid-template-columns:150px 1fr 30px; align-items:center; gap:10px;}
+  .freq-item span{font-size:12px; color:var(--ink-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .freq-track{height:7px; background:var(--line); border-radius:4px; overflow:hidden;}
+  .freq-fill{height:100%; border-radius:4px;}
+  .freq-item b{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--pink); text-align:right;}
 
   .entry{border-bottom:1px solid var(--line); padding:14px 2px;}
   .entry:last-child{border-bottom:none;}
@@ -89,10 +93,22 @@
   .panel{transition:transform 0.18s ease;}
   .typewriter-title span{display:inline-block; opacity:0; animation:letterPop 0.32s ease forwards;}
   @keyframes letterPop{0%{opacity:0; transform:translateY(8px) scale(0.85);}60%{opacity:1; transform:translateY(-2px) scale(1.04);}100%{opacity:1; transform:translateY(0) scale(1);}}
+  @media (max-width:480px){ .freq-item{grid-template-columns:96px 1fr 26px;} .freq-item span{font-size:11px;} }
 </style>
 </head>
 <body>
-<div id="page-veil" style="position:fixed;inset:0;z-index:9997;background:#0A0812;pointer-events:none;"></div>
+<script>
+  // Scroll suave (Lenis) — la misma libreria que usan los sitios premiados de Awwwards
+  if(typeof Lenis !== "undefined"){
+    try{
+      const lenis = new Lenis({ duration: 1.05, easing: t => Math.min(1, 1.001 - Math.pow(2, -10*t)) });
+      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+      requestAnimationFrame(raf);
+    }catch(e){}
+  }
+</script>
+
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#8B6CF0;transform:scale(80);"></div></div>
 
 <canvas id="net"></canvas>
 
@@ -112,10 +128,10 @@
     const gate = document.getElementById('pin-gate');
     const input = document.getElementById('pin-input');
     const err = document.getElementById('pin-error');
-    if(localStorage.getItem('habit_unlocked') === 'yes'){ gate.style.display = 'none'; }
+    let unlocked=false; try{ unlocked = localStorage.getItem('habit_unlocked') === 'yes'; }catch(e){} if(unlocked){ gate.style.display = 'none'; }
     else { setTimeout(()=> input.focus(), 200); }
     function tryUnlock(){
-      if(input.value === CORRECT_PIN){ localStorage.setItem('habit_unlocked','yes'); gate.style.display='none'; }
+      if(input.value === CORRECT_PIN){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display='none'; }
       else { err.textContent = 'PIN incorrecto'; input.value=''; input.focus(); }
     }
     document.getElementById('pin-submit').addEventListener('click', tryUnlock);
@@ -144,6 +160,7 @@
     <textarea id="d-text" placeholder="Ej: Voy a aceptar este cliente aunque paga poco, porque ya invertí 3 llamadas hablando con él..."></textarea>
 
     <div class="network-diagram">
+      <div class="center-node" id="center-node">Sin<br>sesgos<br>marcados</div>
       <div class="bias-grid" id="bias-grid"></div>
     </div>
 
@@ -270,11 +287,17 @@
   grid.innerHTML = BIASES.map(b=>`
     <div class="bias-node" data-bias="${b.n}"><div class="dot"></div><b>${b.n}</b><p class="bias-desc">${b.d}</p></div>
   `).join('');
+  const centerNode = document.getElementById('center-node');
+  function updateCenterNode(){
+    if(selected.size===0){ centerNode.innerHTML = 'Sin<br>sesgos<br>marcados'; centerNode.classList.remove('active'); }
+    else { centerNode.innerHTML = `${selected.size}<br>sesgo${selected.size>1?'s':''}<br>activo${selected.size>1?'s':''}`; centerNode.classList.add('active'); }
+  }
   grid.querySelectorAll('.bias-node').forEach(el=>{
     el.addEventListener('click', ()=>{
       const b = el.dataset.bias;
       if(selected.has(b)){ selected.delete(b); el.classList.remove('active'); }
       else { selected.add(b); el.classList.add('active'); }
+      updateCenterNode();
     });
   });
 
@@ -293,6 +316,7 @@
     document.getElementById('d-text').value = '';
     selected = new Set();
     grid.querySelectorAll('.bias-node').forEach(el=> el.classList.remove('active'));
+    updateCenterNode();
     saveEntries(entries);
   });
 
@@ -305,9 +329,12 @@
     const freq = {};
     entries.forEach(e=> (e.biases||[]).forEach(b=> freq[b] = (freq[b]||0)+1));
     const sorted = Object.entries(freq).sort((a,b)=> b[1]-a[1]).slice(0,6);
-    document.getElementById('freq-grid').innerHTML = sorted.length ? sorted.map(([b,c])=>`
-      <div class="freq-item"><span>${b}</span><b>${c}×</b></div>
-    `).join('') : '<div class="empty">Aún no hay suficientes datos para ver patrones.</div>';
+    const maxCount = sorted.length ? sorted[0][1] : 1;
+    document.getElementById('freq-grid').innerHTML = sorted.length ? sorted.map(([b,c],i)=>{
+      const pct = Math.max(8, (c/maxCount)*100);
+      const hue = 265 - (i/(sorted.length-1||1))*95; // violeta -> rosa a lo largo del ranking
+      return `<div class="freq-item"><span>${b}</span><div class="freq-track"><div class="freq-fill" style="width:${pct}%; background:hsl(${hue},72%,64%);"></div></div><b>${c}×</b></div>`;
+    }).join('') : '<div class="empty">Aún no hay suficientes datos para ver patrones.</div>';
 
     document.getElementById('entries-list').innerHTML = entries.slice(0,15).map(e=>`
       <div class="entry">
@@ -327,16 +354,14 @@
 <script>
   // ===== Transición entre páginas (sin flash blanco) =====
   window.addEventListener('load', ()=>{
-    gsap.to('#page-veil', { opacity:0, duration:0.5, delay:0.05, ease:'power1.out', onComplete:()=>{
-      document.getElementById('page-veil').style.pointerEvents = 'none';
-    }});
+    gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' });
   });
   document.querySelectorAll('a[href$=".html"]').forEach(link=>{
     link.addEventListener('click', function(e){
       if(this.target === '_blank') return;
       const href = this.getAttribute('href');
       e.preventDefault();
-      gsap.to('#page-veil', { opacity:1, duration:0.32, ease:'power1.in', onComplete:()=>{ window.location.href = href; } });
+      gsap.to('#veil-iris', { scale:80, duration:0.5, ease:'power3.inOut', onComplete:()=>{ window.location.href = href; } });
     });
   });
 
