@@ -3,145 +3,116 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0A0906">
-<title>Tendencias</title>
+<meta name="theme-color" content="#0A2027">
+<title>Cápsulas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Domine:wght@500;700&family=Nunito:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
 <style>
   :root{
-    --bg:#0A0906; --panel:#14110A; --line:rgba(245,184,65,0.16);
-    --ink:#F3E9D2; --ink-dim:#8A7C5C; --amber:#F5B841; --amber-hi:#FFD37A; --alert:#F5735B;
+    --bg:#0A2027; --ink:#EAF6F2; --ink-dim:#7FA3A0; --coral:#FF8B6B; --coral-hi:#FFA98D; --peach:#FFE4C7; --cyan:#5FE0D0;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
-  body{background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh; position:relative; overflow-x:hidden;}
-  /* Salón de tablero: franjas cálidas muy tenues moviéndose de fondo */
-  body::before{content:''; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.5;
-    background:repeating-linear-gradient(0deg, rgba(245,184,65,0.03) 0 2px, transparent 2px 5px);
-    animation:scan 8s linear infinite;}
-  @keyframes scan{to{background-position:0 40px;}}
+  body{background:var(--bg); color:var(--ink); font-family:'Nunito',sans-serif; min-height:100vh; position:relative; overflow-x:hidden;}
+  canvas#globe{position:fixed; inset:0; z-index:0; display:block;}
   body::after{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
-    background:radial-gradient(ellipse at 50% -10%, rgba(245,184,65,0.08), transparent 55%);}
+    background:radial-gradient(ellipse at 50% 22%, transparent 20%, rgba(10,32,39,0.85) 78%);}
 
-  .page{position:relative; z-index:1; max-width:720px; margin:0 auto; padding:20px 18px 100px;}
+  .page{position:relative; z-index:1; max-width:640px; margin:0 auto; padding:20px 18px 90px;}
 
-  .nav1{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:26px;}
-  .nav1 a{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-decoration:none; color:var(--ink-dim);
-    border:1px solid var(--line); padding:6px 11px; background:rgba(20,17,10,0.6); letter-spacing:0.03em; border-radius:2px;}
-  .nav1 a.current{background:var(--amber); color:#0A0906; border-color:var(--amber);}
-  .nav1 a:hover{border-color:var(--amber); color:var(--amber);}
+  .nav1{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:22px; justify-content:center;}
+  .nav1 a{font-family:'IBM Plex Mono',monospace; font-size:10px; text-decoration:none; color:var(--ink-dim);
+    border:1px solid rgba(255,255,255,0.14); padding:5px 10px; background:rgba(255,255,255,0.04); letter-spacing:0.02em; border-radius:999px;}
+  .nav1 a.current{background:var(--coral); color:#3A2A1E; border-color:var(--coral);}
+  .nav1 a:hover{border-color:var(--coral); color:var(--coral);}
 
-  .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:var(--amber); margin-bottom:8px;}
-  h1{font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:32px; letter-spacing:0.02em; text-transform:uppercase; line-height:1;}
-  .sub{color:var(--ink-dim); font-size:13.5px; line-height:1.6; margin-top:12px; max-width:520px;}
+  header{text-align:center;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.22em; text-transform:uppercase; color:var(--cyan);}
+  h1{font-family:'Domine',serif; font-weight:700; font-size:32px; margin-top:8px;}
+  .sub{color:var(--ink-dim); font-size:13px; margin-top:8px; max-width:420px; margin-left:auto; margin-right:auto; line-height:1.55;}
 
-  section{margin-top:34px;}
-  h2{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:15px; text-transform:uppercase; letter-spacing:0.12em; margin-bottom:14px; color:var(--amber); display:flex; align-items:center; gap:10px;}
-  h2::before{content:'▸'; color:var(--ink-dim);}
+  section{margin-top:30px;}
+  h2{font-family:'Domine',serif; font-weight:700; font-size:18px; margin-bottom:14px; text-align:center;}
 
-  .compose{border:1px solid var(--line); background:rgba(20,17,10,0.7); border-radius:6px; padding:18px;}
-  .field label{display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-dim); margin-bottom:9px;}
-  .field .hint{font-size:11px; color:var(--ink-dim); margin-top:9px; line-height:1.5;}
+  /* ===== Temas ===== */
+  .compose{border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.05); backdrop-filter:blur(10px); border-radius:18px; padding:18px;}
+  .field label{display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-dim); margin-bottom:9px;}
   .chip-input{display:flex; gap:8px;}
-  .chip-input input{flex:1; padding:10px 12px; border:1px solid var(--line); border-radius:5px; background:rgba(10,9,6,0.6); color:var(--ink); font-family:'DM Mono',monospace; font-size:13px;}
-  .chip-input input:focus{outline:none; border-color:var(--amber);}
-  .chip-input button{background:rgba(245,184,65,0.14); color:var(--amber); border:1px solid var(--amber); border-radius:5px; width:42px; font-size:18px; cursor:pointer;}
+  .chip-input input{flex:1; padding:11px 13px; border:1px solid rgba(255,255,255,0.14); border-radius:10px; background:rgba(10,32,39,0.5); color:var(--ink); font-family:'Nunito',sans-serif; font-size:13.5px;}
+  .chip-input input:focus{outline:none; border-color:var(--coral);}
+  .chip-input button{background:rgba(255,139,107,0.16); color:var(--coral); border:1px solid var(--coral); border-radius:10px; width:44px; font-size:18px; cursor:pointer;}
   .temas{display:flex; flex-wrap:wrap; gap:7px; margin-top:11px;}
-  .tema{display:flex; align-items:center; gap:7px; font-family:'DM Mono',monospace; font-size:12px; padding:6px 10px; background:rgba(245,184,65,0.08); border:1px solid var(--line); border-radius:999px; color:var(--ink);}
+  .tema{display:flex; align-items:center; gap:7px; font-size:12.5px; padding:6px 11px; background:rgba(95,224,208,0.1); border:1px solid rgba(95,224,208,0.3); border-radius:999px; color:var(--ink);}
   .tema .x{color:var(--ink-dim); cursor:pointer;}
-  .tema .x:hover{color:var(--alert);}
+  .tema .x:hover{color:var(--coral);}
+  .hint{font-size:11px; color:var(--ink-dim); margin-top:10px; line-height:1.5; text-align:center;}
 
   .save-row{display:flex; justify-content:center; margin-top:16px;}
-  .btn{background:var(--amber); color:#0A0906; border:none; padding:13px 30px; border-radius:4px; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:0.08em; cursor:pointer;}
-  .btn:hover{background:var(--amber-hi);}
+  .btn{background:var(--coral); color:#3A2A1E; border:none; padding:13px 28px; border-radius:999px; font-family:'Nunito',sans-serif; font-weight:800; font-size:13px; cursor:pointer;}
+  .btn:hover{background:var(--coral-hi);}
   .btn:disabled{opacity:0.55; cursor:default;}
+  .scan-status{text-align:center; margin-top:12px; min-height:16px; font-size:12px; color:var(--ink-dim);}
 
-  /* ===== Tablero split-flap ===== */
-  .board{border:1px solid var(--line); border-radius:6px; overflow:hidden; background:linear-gradient(180deg, rgba(20,17,10,0.85), rgba(10,9,6,0.85));}
-  .board-header{display:grid; grid-template-columns:1fr 92px 74px; gap:10px; padding:11px 16px; border-bottom:1px solid var(--line);
-    font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-dim); background:rgba(245,184,65,0.05);}
-  .board-header .r{text-align:right;}
-  .rows{perspective:800px;}
-  .row{border-bottom:1px solid rgba(245,184,65,0.08); cursor:pointer; transform-origin:50% 0;}
-  .row:last-child{border-bottom:none;}
-  .row-main{display:grid; grid-template-columns:1fr 92px 74px; gap:10px; padding:14px 16px; align-items:center;}
-  .row:hover .row-main{background:rgba(245,184,65,0.05);}
-  .row-signal{font-family:'DM Mono',monospace; font-size:14px; color:var(--ink); line-height:1.3; letter-spacing:-0.01em;}
-  .row-area{font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; padding:3px 7px; border-radius:3px; text-align:center; align-self:center; justify-self:start;}
-  .row-impact{display:flex; gap:3px; justify-content:flex-end; align-items:center;}
-  .row-impact i{width:7px; height:16px; border-radius:1px; background:rgba(245,184,65,0.14);}
-  .row-detail{max-height:0; overflow:hidden; transition:max-height 0.4s ease; background:rgba(10,9,6,0.5);}
-  .row.open .row-detail{max-height:900px;}
-  .detail-inner{padding:4px 16px 18px;}
-  .detail-sec{font-family:'IBM Plex Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.1em; color:var(--amber); margin:14px 0 6px;}
-  .detail-text{font-size:13.5px; line-height:1.6; color:var(--ink);}
-  .detail-text.accion{padding-left:12px; border-left:2px solid var(--amber);}
-  .detail-src{display:inline-block; margin-top:12px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--amber); text-decoration:none; border-bottom:1px dotted var(--amber);}
-  .row-del{color:var(--ink-dim); cursor:pointer; font-size:15px; padding-left:8px;}
-  .row-del:hover{color:var(--alert);}
-
-  .board-empty{padding:40px 20px; text-align:center; color:var(--ink-dim); font-size:13px; line-height:1.7; font-family:'DM Mono',monospace;}
-
-  .stat-row{display:flex; gap:22px; margin-top:16px; justify-content:center;}
+  .stat-row{display:flex; gap:24px; justify-content:center; margin-top:18px;}
   .stat{text-align:center;}
-  .stat b{font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:24px; display:block; line-height:1; color:var(--amber);}
-  .stat span{font-family:'IBM Plex Mono',monospace; font-size:8.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-dim); display:block; margin-top:5px;}
+  .stat b{font-family:'Domine',serif; font-size:22px; display:block; line-height:1; color:var(--cyan);}
+  .stat span{font-family:'IBM Plex Mono',monospace; font-size:8.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-dim); display:block; margin-top:5px;}
 
-  button, .btn{transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1);}
+  /* ===== Cápsulas: una a la vez ===== */
+  .deck{position:relative; margin-top:8px;}
+  .capsule{background:var(--peach); color:#3A2A1E; border-radius:26px; padding:28px 24px; box-shadow:0 30px 70px -20px rgba(0,0,0,0.55); position:relative;}
+  .cap-area{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; background:rgba(255,139,107,0.18); color:#C24A2A; padding:5px 11px; border-radius:999px; margin-bottom:14px;}
+  .cap-del{position:absolute; top:22px; right:22px; color:#B08558; cursor:pointer; font-size:16px;}
+  .cap-del:hover{color:#C24A2A;}
+  .cap-title{font-family:'Domine',serif; font-weight:700; font-size:22px; line-height:1.28; padding-right:22px;}
+  .cap-sec{font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.07em; color:#B08558; margin-top:17px; margin-bottom:6px;}
+  .cap-txt{font-size:14px; line-height:1.65; color:#4A3A2C;}
+  .cap-action{background:#3A2A1E; color:var(--peach); border-radius:14px; padding:12px 14px; margin-top:6px; font-size:13.5px; line-height:1.55;}
+  .cap-fuente{display:inline-block; margin-top:14px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#8A6A48; text-decoration:underline;}
+  .cap-impacto{position:absolute; top:24px; right:52px; display:flex; gap:2px;}
+  .cap-impacto i{width:5px; height:11px; border-radius:1px; background:rgba(58,42,30,0.14);}
+  .cap-impacto i.on{background:#C24A2A;}
+
+  .nav-row{display:flex; justify-content:center; align-items:center; gap:16px; margin-top:22px;}
+  .nav-btn{width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16); color:var(--ink); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center;}
+  .nav-btn:hover{background:var(--coral); border-color:var(--coral); color:#3A2A1E;}
+  .nav-btn:disabled{opacity:0.3; cursor:default;}
+  .progress{display:flex; gap:6px; flex-wrap:wrap; justify-content:center; max-width:140px;}
+  .dot{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.2); cursor:pointer;}
+  .dot.active{background:var(--coral); width:20px; border-radius:4px;}
+
+  .empty-deck{border:1px dashed rgba(255,255,255,0.2); border-radius:20px; padding:40px 20px; text-align:center; color:var(--ink-dim); font-size:13px; line-height:1.7;}
+
+  button, .btn, .dot, .nav-btn{transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1);}
   button:active, .btn:active{transform:scale(0.94);}
-  button, a, input, select{touch-action:manipulation;}
-  h1,h2,label{overflow-wrap:normal; word-break:keep-all; hyphens:none;}
+  button, a, input{touch-action:manipulation;}
+  h1,h2{overflow-wrap:normal; word-break:keep-all; hyphens:none;}
 
   .signature{position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:15;
     font-family:'Petit Formal Script',cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
   .toast{position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:9998;
-    background:rgba(245,184,65,0.16); border:1px solid var(--amber); color:var(--amber-hi);
-    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:10px 18px; border-radius:3px;
+    background:rgba(255,139,107,0.18); border:1px solid var(--coral); color:var(--coral-hi);
+    font-family:'Nunito',sans-serif; font-weight:700; font-size:12.5px; padding:10px 18px; border-radius:999px;
     opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px; max-width:90vw;}
-  .toast svg{width:14px; height:14px; flex-shrink:0;}
 
-  @media (max-width:480px){
-    h1{font-size:26px;}
-    .board-header, .row-main{grid-template-columns:1fr 66px 58px; gap:7px;}
-    .row-signal{font-size:13px;}
-    .row-impact i{width:5px; height:14px;}
-  }
+  @media (max-width:480px){ h1{font-size:26px;} .cap-title{font-size:19px;} }
 </style>
 </head>
 <body>
-<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#F5B841;transform:scale(80);"></div></div>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#FF8B6B;transform:scale(80);"></div></div>
 
-<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0A0906; display:flex; align-items:center; justify-content:center; padding:24px;">
-  <div style="background:#14110A; border:1px solid rgba(245,184,65,0.18); border-radius:8px; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
-    <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#F5B841; margin-bottom:14px;">Acceso privado</div>
-    <div style="font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:22px; text-transform:uppercase; color:#F3E9D2; margin-bottom:6px;">Bienvenido, Darío</div>
-    <div style="font-size:12px; color:#8A7C5C; margin-bottom:20px;">Ingresa tu PIN para continuar</div>
-    <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border-radius:6px; border:1px solid rgba(245,184,65,0.2); background:#0A0906; color:#F3E9D2; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
-    <div id="pin-error" style="color:#F5735B; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
-    <button id="pin-submit" style="width:100%; padding:13px; border:none; border-radius:6px; background:#F5B841; color:#0A0906; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.06em; cursor:pointer;">Entrar</button>
+<canvas id="globe"></canvas>
+
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0A2027; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div style="text-align:center; max-width:280px;">
+    <div style="font-family:'Domine',serif; font-weight:700; color:#FF8B6B; font-size:22px; margin-bottom:18px;">Cápsulas</div>
+    <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="PIN" style="width:100%; padding:14px; text-align:center; font-size:22px; letter-spacing:0.4em; border-radius:14px; border:1px solid rgba(255,139,107,0.3); background:rgba(255,255,255,0.06); color:#EAF6F2; font-family:'IBM Plex Mono',monospace;">
+    <button id="pin-submit" style="width:100%; margin-top:12px; padding:14px; border-radius:14px; border:none; background:#FF8B6B; color:#3A2A1E; font-weight:800; font-family:'Nunito',sans-serif; cursor:pointer;">Entrar</button>
+    <div id="pin-error" style="color:#FF8B6B; font-size:12px; margin-top:10px; min-height:16px;"></div>
   </div>
 </div>
-
-<script>
-  (function(){
-    const CORRECT_PIN = '3751';
-    const gate = document.getElementById('pin-gate');
-    const input = document.getElementById('pin-input');
-    const err = document.getElementById('pin-error');
-    let unlocked = false;
-    try{ unlocked = localStorage.getItem('habit_unlocked') === 'yes'; }catch(e){}
-    if(unlocked){ gate.style.display = 'none'; }
-    else { setTimeout(()=> input.focus(), 200); }
-    function tryUnlock(){
-      if(input.value === CORRECT_PIN){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display='none'; }
-      else { err.textContent = 'PIN incorrecto'; input.value=''; input.focus(); }
-    }
-    document.getElementById('pin-submit').addEventListener('click', tryUnlock);
-    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryUnlock(); });
-  })();
-</script>
 
 <div class="page">
   <div class="nav1">
@@ -155,80 +126,83 @@
     <a href="sustancias.html">Protocolo</a>
     <a href="comprimir.html">Compresor</a>
     <a href="sparring.html">Sparring</a>
-    <a href="tendencias.html" class="current">Tendencias</a>
+    <a href="tendencias.html" class="current">Cápsulas</a>
     <a href="voz.html">Mi voz</a>
+    <a href="inversiones.html">Inversiones</a>
+    <a href="pizarra.html">Pizarra</a>
   </div>
 
   <header>
-    <div class="eyebrow">Fase 2 · Sistema 9</div>
-    <h1>Tablero de<br>tendencias</h1>
-    <p class="sub">El mundo no te habla en tu idioma. Das tus temas una vez y la IA escanea internet por ti — trae las señales reales del momento y las traduce a lo único que importa: qué significan para tu carrera, tu freelance y Ecuador, y qué haces al respecto.</p>
+    <div class="eyebrow">Tu mundo, en cápsulas</div>
+    <h1>Cápsulas</h1>
+    <p class="sub">Das tus temas una vez y la IA escanea internet por ti. Cada señal llega como una cápsula fácil de leer — una a la vez, directo a lo que te importa.</p>
     <div class="stat-row">
-      <div class="stat"><b id="stat-total">0</b><span>En el tablero</span></div>
+      <div class="stat"><b id="stat-total">0</b><span>Cápsulas</span></div>
       <div class="stat"><b id="stat-hi">0</b><span>Alto impacto</span></div>
       <div class="stat"><b id="stat-act">0</b><span>Con jugada</span></div>
     </div>
   </header>
 
-  <section id="config">
+  <section>
     <h2>Mis temas</h2>
     <div class="compose">
       <div class="field">
         <label>Qué quiero vigilar</label>
         <div class="chip-input"><input type="text" id="c-tema" placeholder="Un tema… (Enter para agregar)" autocomplete="off"><button id="c-tema-add">+</button></div>
         <div class="temas" id="temas-list"></div>
-        <div class="hint">La IA busca en internet tendencias reales y actuales de estos temas y las traduce a tu perfil.</div>
+        <div class="hint">La IA busca en internet tendencias reales de estos temas y las traduce a tu perfil.</div>
       </div>
       <div class="save-row"><button class="btn" id="scan-btn">⚡ Escanear el mundo</button></div>
-      <div class="hint" id="scan-status" style="text-align:center; margin-top:12px; min-height:16px;"></div>
+      <div class="scan-status" id="scan-status"></div>
     </div>
   </section>
 
-  <section id="tablero">
-    <h2>Señales en el tablero</h2>
-    <div class="board">
-      <div class="board-header"><span>Señal</span><span>Área</span><span class="r">Impacto</span></div>
-      <div class="rows" id="rows"></div>
-      <div class="board-empty" id="empty-state">TABLERO VACÍO<br>Pulsa "Escanear el mundo" para recibir señales.</div>
+  <section>
+    <h2>Tus cápsulas</h2>
+    <div class="deck" id="deck"></div>
+    <div class="nav-row" id="nav-row" style="display:none;">
+      <div class="nav-btn" id="prev-btn">‹</div>
+      <div class="progress" id="progress"></div>
+      <div class="nav-btn" id="next-btn">›</div>
     </div>
   </section>
 </div>
 
-<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span id="toast-text">Listo</span></div>
+<div class="toast" id="toast"><span id="toast-text">Listo</span></div>
 <div class="signature">Darío Calle</div>
 
 <script>
-  if(typeof Lenis !== 'undefined'){
-    try{
-      const lenis = new Lenis({ duration: 1.05, easing: t => Math.min(1, 1.001 - Math.pow(2, -10*t)) });
-      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
-      requestAnimationFrame(raf);
-    }catch(e){}
-  }
-</script>
+  // ===== PIN =====
+  (function(){
+    try{ if(localStorage.getItem('habit_unlocked') === 'yes'){ document.getElementById('pin-gate').remove(); } }catch(e){}
+    const submit = document.getElementById('pin-submit');
+    const input = document.getElementById('pin-input');
+    const err = document.getElementById('pin-error');
+    function tryPin(){
+      if(input.value === '3751'){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} document.getElementById('pin-gate').remove(); }
+      else { err.textContent = 'PIN incorrecto'; input.value=''; }
+    }
+    submit.addEventListener('click', tryPin);
+    input.addEventListener('keydown', e=>{ if(e.key==='Enter') tryPin(); });
+  })();
 
-<script>
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function showToast(text){
+    document.getElementById('toast-text').textContent = text;
+    const el = document.getElementById('toast');
+    gsap.killTweensOf(el);
+    gsap.timeline().to(el,{opacity:1,y:0,duration:0.35,ease:'back.out(2)'}).to(el,{opacity:0,y:-14,duration:0.4,ease:'power1.in',delay:2.0});
+  }
+
   // ===== Datos =====
   function load(){ try{ return JSON.parse(localStorage.getItem('tendencias')||'[]'); }catch(e){ return []; } }
-  function save(list){ try{ localStorage.setItem('tendencias', JSON.stringify(list)); }catch(e){} render(); }
-  function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function save(list){ try{ localStorage.setItem('tendencias', JSON.stringify(list)); }catch(e){} }
 
   const DEFAULT_TEMAS = ['IA y automatización','Freelance / Upwork','Negocios internacionales','Ecuador','Mercados y dólar'];
   function loadTemas(){ try{ const t=JSON.parse(localStorage.getItem('tendencias_temas')||'null'); return Array.isArray(t)&&t.length?t:DEFAULT_TEMAS.slice(); }catch(e){ return DEFAULT_TEMAS.slice(); } }
   function saveTemas(t){ try{ localStorage.setItem('tendencias_temas', JSON.stringify(t)); }catch(e){} renderTemas(); }
   let temas = loadTemas();
 
-  const AREA_COLOR = {Carrera:'#8BD0F5', Freelance:'#F5B841', Ecuador:'#7CE8A0', 'Tecnología':'#C89BF5', Mercados:'#F5A15B', 'Geopolítica':'#F5735B', General:'#B8A97C'};
-  function areaColor(a){ return AREA_COLOR[a] || AREA_COLOR.General; }
-
-  function showToast(text){
-    if(text) document.getElementById('toast-text').textContent = text;
-    const el = document.getElementById('toast');
-    gsap.killTweensOf(el);
-    gsap.timeline().to(el,{opacity:1,y:0,duration:0.35,ease:'back.out(2)'}).to(el,{opacity:0,y:-14,duration:0.4,ease:'power1.in',delay:2.0});
-  }
-
-  // ===== Temas (chips) =====
   function renderTemas(){
     document.getElementById('temas-list').innerHTML = temas.map((t,i)=>`<span class="tema">${escapeHtml(t)}<span class="x" data-tema="${i}">×</span></span>`).join('');
     document.querySelectorAll('[data-tema]').forEach(x=> x.addEventListener('click', ()=>{ temas.splice(+x.dataset.tema,1); saveTemas(temas); }));
@@ -238,7 +212,7 @@
   document.getElementById('c-tema').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addTema(); } });
   renderTemas();
 
-  // ===== IA + búsqueda de Google: escanear el mundo (Gemini con grounding) =====
+  // ===== IA + búsqueda de Google (Gemini con grounding) =====
   const GEMINI_MODEL = 'gemini-3.6-flash';
   function getApiKey(){
     try{ let k = localStorage.getItem('gemini_api_key'); if(k) return k; }catch(e){}
@@ -269,6 +243,9 @@
     return (cand.content.parts||[]).map(p=> p.text||'').join('\n');
   }
 
+  let current = 0;
+  let arrivalIds = []; // ids recién llegados de un escaneo — se animan al entrar
+
   document.getElementById('scan-btn').addEventListener('click', async ()=>{
     if(!temas.length){ showToast('Agrega al menos un tema'); return; }
     const btn = document.getElementById('scan-btn');
@@ -285,75 +262,119 @@
       if(!Array.isArray(arr) || !arr.length) throw new Error('No se pudo leer la respuesta');
       const list = load();
       const existing = new Set(list.map(t=> (t.title||'').toLowerCase().trim()));
-      let added=0;
+      let added=0; const nuevas=[];
       arr.forEach(o=>{
         if(!o || !o.title) return;
         if(existing.has(o.title.toLowerCase().trim())) return;
-        list.unshift({
+        const item = {
           id: Date.now().toString()+Math.floor(Math.random()*1000),
           title:o.title, area:o.area||'General',
           impacto: Math.max(1,Math.min(5, parseInt(o.impacto)||3)),
           significa:o.significa||'', accion:o.accion||'', fuente:o.fuente||'',
-          date: hoy, isNew:true
-        });
-        added++;
+          date: hoy
+        };
+        list.unshift(item); nuevas.push(item); added++;
       });
       save(list);
-      status.textContent = added ? '' : 'Sin señales nuevas — ya estaban en el tablero.';
-      showToast(added ? ('▸ '+added+' señales nuevas') : 'Sin novedades');
+      arrivalIds = nuevas.map(n=>n.id);
+      current = 0; // arranca en la más nueva
+      status.textContent = added ? '' : 'Sin señales nuevas — ya estaban en tus cápsulas.';
+      showToast(added ? ('▸ '+added+' cápsulas nuevas llegando…') : 'Sin novedades');
+      render(true);
     }catch(e){ status.textContent=''; showToast('Error: '+e.message); }
     finally{ btn.disabled=false; btn.textContent=prev; }
   });
 
-  function deleteTrend(id){ save(load().filter(t=>t.id!==id)); }
-  let openId = null;
+  function deleteCapsule(id){
+    const list = load().filter(t=>t.id!==id);
+    save(list);
+    if(current >= list.length) current = Math.max(0, list.length-1);
+    render();
+  }
 
-  function render(){
+  function goTo(i){ const list=load(); if(i<0||i>=list.length) return; current=i; render(); }
+
+  function render(justArrived){
     const list = load();
     document.getElementById('stat-total').textContent = list.length;
     document.getElementById('stat-hi').textContent = list.filter(t=>t.impacto>=4).length;
     document.getElementById('stat-act').textContent = list.filter(t=>t.accion).length;
-    document.getElementById('empty-state').style.display = list.length ? 'none' : 'block';
 
-    const rowsEl = document.getElementById('rows');
-    rowsEl.innerHTML = list.map(t=>{
-      const isOpen = openId===t.id;
-      const col = areaColor(t.area);
-      const dots = [1,2,3,4,5].map(i=>`<i style="background:${i<=t.impacto?col:'rgba(245,184,65,0.14)'}"></i>`).join('');
-      return `
-      <div class="row ${isOpen?'open':''}" data-id="${t.id}" ${t.isNew?'data-new="1"':''}>
-        <div class="row-main">
-          <div class="row-signal">${escapeHtml(t.title)}</div>
-          <div class="row-area" style="color:${col}; background:${col}22; border:1px solid ${col}55;">${escapeHtml(t.area||'General')}</div>
-          <div class="row-impact">${dots}<span class="row-del" data-del="${t.id}">×</span></div>
-        </div>
-        <div class="row-detail">
-          <div class="detail-inner">
-            ${t.significa ? `<div class="detail-sec">Qué significa para mí</div><div class="detail-text">${escapeHtml(t.significa)}</div>` : ''}
-            ${t.accion ? `<div class="detail-sec">Qué hago</div><div class="detail-text accion">${escapeHtml(t.accion)}</div>` : ''}
-            ${t.fuente ? `<a class="detail-src" href="${escapeHtml(t.fuente)}" target="_blank" rel="noopener">▸ ver la noticia</a>` : ''}
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-
-    // Animación split-flap para filas nuevas
-    const newRows = Array.from(rowsEl.querySelectorAll('[data-new]'));
-    if(newRows.length){
-      gsap.from(newRows, { rotationX:-92, opacity:0, transformOrigin:'50% 0%', duration:0.5, stagger:0.09, ease:'back.out(1.5)' });
-      const list2 = load(); list2.forEach(t=> delete t.isNew);
-      try{ localStorage.setItem('tendencias', JSON.stringify(list2)); }catch(e){}
+    const deckEl = document.getElementById('deck');
+    const navRow = document.getElementById('nav-row');
+    if(!list.length){
+      deckEl.innerHTML = '<div class="empty-deck">Aún no hay cápsulas.<br>Agrega tus temas arriba y pulsa "Escanear el mundo".</div>';
+      navRow.style.display = 'none';
+      return;
     }
+    navRow.style.display = 'flex';
+    const t = list[current];
+    const dots = [1,2,3,4,5].map(i=>`<i class="${i<=t.impacto?'on':''}"></i>`).join('');
+    deckEl.innerHTML = `
+      <div class="capsule" id="active-capsule">
+        <div class="cap-area">${escapeHtml(t.area||'General')}</div>
+        <div class="cap-impacto">${dots}</div>
+        <span class="cap-del" data-del="${t.id}">×</span>
+        <div class="cap-title">${escapeHtml(t.title)}</div>
+        ${t.significa ? `<div class="cap-sec">Qué significa para mí</div><div class="cap-txt">${escapeHtml(t.significa)}</div>` : ''}
+        ${t.accion ? `<div class="cap-sec">Qué hago</div><div class="cap-action">${escapeHtml(t.accion)}</div>` : ''}
+        ${t.fuente ? `<a class="cap-fuente" href="${escapeHtml(t.fuente)}" target="_blank" rel="noopener">Ver la fuente ↗</a>` : ''}
+      </div>`;
+    document.getElementById('progress').innerHTML = list.map((x,i)=>`<div class="dot ${i===current?'active':''}" data-go="${i}"></div>`).join('');
+    document.querySelectorAll('[data-go]').forEach(d=> d.addEventListener('click', ()=> goTo(+d.dataset.go)));
+    document.querySelector('[data-del]').addEventListener('click', (e)=>{ e.stopPropagation(); deleteCapsule(t.id); });
+    document.getElementById('prev-btn').disabled = current===0;
+    document.getElementById('next-btn').disabled = current===list.length-1;
 
-    rowsEl.querySelectorAll('.row').forEach(r=>{
-      r.addEventListener('click', (e)=>{
-        if(e.target.closest('[data-del]') || e.target.closest('.detail-src')) return;
-        openId = openId===r.dataset.id ? null : r.dataset.id; render();
-      });
-    });
-    rowsEl.querySelectorAll('[data-del]').forEach(x=> x.addEventListener('click', e=>{ e.stopPropagation(); deleteTrend(x.dataset.del); }));
+    // Animación de "llegada" — la cápsula entra como si acabara de aparecer en este momento
+    const cap = document.getElementById('active-capsule');
+    if(justArrived && arrivalIds.includes(t.id)){
+      gsap.from(cap, { y:60, opacity:0, scale:0.9, rotation:-2, duration:0.7, ease:'back.out(1.5)' });
+    } else {
+      gsap.from(cap, { opacity:0, y:16, duration:0.35, ease:'power2.out' });
+    }
   }
+
+  document.getElementById('prev-btn').addEventListener('click', ()=> goTo(current-1));
+  document.getElementById('next-btn').addEventListener('click', ()=> goTo(current+1));
   render();
+
+  // ===== Fondo: globo 3D girando, decorativo, nunca interactivo =====
+  const canvas = document.getElementById('globe');
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth, innerHeight);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 100);
+  camera.position.z = 7;
+
+  const globe = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(2.6, 3),
+    new THREE.MeshBasicMaterial({ color:0x5FE0D0, wireframe:true, transparent:true, opacity:0.32 })
+  );
+  scene.add(globe);
+
+  const dotGeo = new THREE.BufferGeometry();
+  const N=90; const pos = new Float32Array(N*3);
+  for(let i=0;i<N;i++){
+    const phi = Math.acos(2*Math.random()-1), theta = Math.random()*Math.PI*2, r = 2.62;
+    pos[i*3] = r*Math.sin(phi)*Math.cos(theta);
+    pos[i*3+1] = r*Math.sin(phi)*Math.sin(theta);
+    pos[i*3+2] = r*Math.cos(phi);
+  }
+  dotGeo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  const dots3d = new THREE.Points(dotGeo, new THREE.PointsMaterial({ color:0xFF8B6B, size:0.06, transparent:true, opacity:0.85 }));
+  scene.add(dots3d);
+
+  function animateGlobe(t){
+    globe.rotation.y = t*0.00012;
+    dots3d.rotation.y = t*0.00012;
+    globe.rotation.x = Math.sin(t*0.0002)*0.15;
+    renderer.render(scene, camera);
+    requestAnimationFrame(animateGlobe);
+  }
+  requestAnimationFrame(animateGlobe);
+  addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
 </script>
 
 <script>
@@ -367,11 +388,6 @@
       gsap.to('#veil-iris', { scale:80, duration:0.5, ease:'power3.inOut', onComplete:()=>{ window.location.href = href; } });
     });
   });
-  const revealObserver = new IntersectionObserver((entries)=>{
-    entries.forEach(entry=>{ if(entry.isIntersecting){ gsap.to(entry.target, { opacity:1, y:0, duration:0.6, ease:'power3.out' }); revealObserver.unobserve(entry.target); } });
-  }, { threshold:0.08 });
-  document.querySelectorAll('section').forEach(el=>{ gsap.set(el, { opacity:0, y:26 }); revealObserver.observe(el); });
 </script>
-
 </body>
 </html>
