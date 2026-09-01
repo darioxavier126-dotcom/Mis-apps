@@ -486,17 +486,22 @@
     answerEl.classList.remove('show');
 
     try{
-      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        body: JSON.stringify({
-          systemInstruction:{parts:[{text:'Respondes preguntas del usuario usando solo sus notas personales. Si no hay información suficiente, dilo claramente en vez de inventar.'}]},
-          contents: [{ role:'user', parts:[{ text:`Estas son mis notas personales:\n\n${context}\n\n---\n\nPregunta: ${question}` }] }],
-          generationConfig:{ maxOutputTokens:900 }
-        })
-      });
-      const data = await res.json();
-      if(data.error){ statusEl.textContent = 'Error: ' + data.error.message; return; }
+      let data;
+      for(let intento=0; intento<3; intento++){
+        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify({
+            systemInstruction:{parts:[{text:'Respondes preguntas del usuario usando solo sus notas personales. Si no hay información suficiente, dilo claramente en vez de inventar.'}]},
+            contents: [{ role:'user', parts:[{ text:`Estas son mis notas personales:\n\n${context}\n\n---\n\nPregunta: ${question}` }] }],
+            generationConfig:{ maxOutputTokens:900 }
+          })
+        });
+        data = await res.json();
+        if(data.error && data.error.code===503 && intento<2){ await new Promise(r=>setTimeout(r, 1500*(intento+1))); continue; }
+        break;
+      }
+      if(data.error){ statusEl.textContent = data.error.code===503 ? 'Google tiene el modelo saturado ahora mismo — intenta de nuevo en un minuto.' : ('Error: ' + data.error.message); return; }
       const cand = data.candidates && data.candidates[0];
       const text = (cand && cand.content && cand.content.parts||[]).map(p=> p.text||'').join('\n');
       answerEl.textContent = text || 'Sin respuesta.';
