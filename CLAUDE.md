@@ -24,7 +24,7 @@
 - **Persistencia:** `localStorage` del navegador, clave propia por app (tabla abajo). Los datos NO se sincronizan entre dispositivos: viven solo en el navegador donde se usaron. **Todo acceso a localStorage va envuelto en try/catch** (hay entornos que lo bloquean y rompían el PIN).
 - No hay backend ni build para estas apps — son `.html` autocontenidos.
 
-## Las 8 apps construidas
+## Las 11 apps construidas
 
 | Archivo | Nombre | Identidad visual | Fondo | Clave localStorage |
 |---|---|---|---|---|
@@ -35,6 +35,10 @@
 | `cerebro.html` | Segundo cerebro | Azul espacio, dorado estelar | **Cerebro 3D** de neuronas + sinapsis a pantalla completa | `brain` (+ `brain_api_key`) |
 | `habilidades.html` | Mapa de habilidades | Verde esmeralda / ámbar, atlas topográfico | Terreno de curvas de nivel 3D | `skillmap` |
 | `sustancias.html` | Protocolo (suplementación) | Crema clínica, acento por compuesto, **reloj de 24h** | Gradientes de color en movimiento | `sustancias:YYYY-MM-DD` (+ `sustancias_day1`, `sustancias_horarios`, `sustancias_reminders_on`) |
+| `comprimir.html` | Compresor de libros/cursos | Negro óptico, espectro, **prisma/destilación** | Prisma 3D: luz blanca → espectro (three.js) | `biblioteca` |
+| `sparring.html` | Sparring de tesis | Carmín vs acero, **cuadrilátero/boxeo** | Ring 2D: chispas que chocan en el centro | `sparring` (**IA**: ataca la tesis y juzga réplicas) |
+| `tendencias.html` | Traductor de tendencias | Ámbar sobre negro, **tablero de aeropuerto (split-flap)** | Franjas de salón + filas que voltean | `tendencias` (+ `tendencias_temas`) (**IA + búsqueda web**: escanea el mundo) |
+| `voz.html` | Escribir con mi voz | Tinta-noche, **caligrafía viva** | Tinta fluyendo en campo de flujo (canvas 2D) | `voz_perfil`, `voz_textos` (**IA**: aprende tu estilo y reescribe) |
 | `comprimir.html` | Compresor de libros/cursos | Negro óptico, espectro, **prisma/destilación** | Prisma 3D: luz blanca → espectro (three.js) | `biblioteca` |
 
 ## Patrones compartidos (reutilizar, no reinventar)
@@ -70,17 +74,17 @@
 ### Fase 1 — El núcleo ✅ COMPLETA
 5. ✅ Segundo cerebro
 
-### Fase 2 — Capas sobre el núcleo (EN CURSO)
+### Fase 2 — Capas sobre el núcleo ✅ COMPLETA
 6. ✅ Mapa de habilidades
 7. ✅ Compresor de libros/cursos
-8. ⏳ Sparring de tesis y argumentos ← **SIGUE AQUÍ**
-9. Traductor de tendencias globales
-10. Sistema de escritura con su voz
+8. ✅ Sparring de tesis y argumentos
+9. ✅ Traductor de tendencias globales
+10. ✅ Sistema de escritura con su voz
 
 *(Bonus fuera del plan, completo: `sustancias.html` — Protocolo de suplementación.)*
 
-### Fase 3 — Vida diaria automatizada
-11. Planificador semanal · 12. Asistente de trámites · 13. Dashboard de vida · 14. Motor de decisiones repetitivas · 15. Simulador de decisiones importantes
+### Fase 3 — Vida diaria automatizada (SIGUE AQUÍ)
+11. ⏳ Planificador semanal automático ← **SIGUE AQUÍ** · 12. Asistente de trámites/documentos · 13. Dashboard de vida unificado · 14. Motor de decisiones repetitivas · 15. Simulador de decisiones importantes
 
 ### Fase 4 — Crecimiento profesional
 16. Entrenador de negociación · 17. Entrenador de presentaciones · 18. Simulador de entrevistas · 19. Idiomas a medida · 20. Portafolio dinámico
