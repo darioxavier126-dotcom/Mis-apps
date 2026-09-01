@@ -832,9 +832,8 @@
 
 <script>
   // ===== Transición entre páginas (sin flash blanco) =====
-  window.addEventListener('load', ()=>{
-    gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' });
-  });
+  function playIrisIn(){ gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' }); }
+  if(document.readyState === 'complete'){ playIrisIn(); } else { window.addEventListener('load', playIrisIn); }
   document.querySelectorAll('a[href$=".html"]').forEach(link=>{
     link.addEventListener('click', function(e){
       if(this.target === '_blank') return;
