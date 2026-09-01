@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Pizarra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Space+Mono:wght@400;700&family=Petit+Formal+Script&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+  :root{
+    --bg:#173229; --panel:#1E4235; --line:rgba(255,255,255,0.12);
+    --chalk:#EDE9DC; --chalk-dim:#8FA89B; --yellow:#F0D264; --pink:#F09EB0; --blue:#8AC4E8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:var(--bg); color:var(--chalk); font-family:'Space Mono',monospace; min-height:100vh; position:relative; overflow-x:hidden;}
+  #dust{position:fixed; inset:0; z-index:0; pointer-events:none;}
+  body::after{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.05), transparent 60%);
+    box-shadow:inset 0 0 140px rgba(0,0,0,0.5);}
+
+  .page{position:relative; z-index:1; max-width:680px; margin:0 auto; padding:20px 20px 100px;}
+
+  .nav1{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:24px;}
+  .nav1 a{font-family:'Space Mono',monospace; font-size:10.5px; text-decoration:none; color:var(--chalk-dim);
+    border:1px solid var(--line); padding:6px 11px; background:rgba(0,0,0,0.18); letter-spacing:0.03em; border-radius:4px;}
+  .nav1 a.current{background:var(--yellow); color:#173229; border-color:var(--yellow);}
+  .nav1 a:hover{border-color:var(--yellow); color:var(--yellow);}
+
+  .eyebrow{font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:var(--yellow);}
+  h1{font-family:'Kalam',cursive; font-weight:700; font-size:42px; margin-top:8px; transform:rotate(-0.6deg);}
+  .sub{color:var(--chalk-dim); font-size:13px; line-height:1.6; margin-top:12px; max-width:480px;}
+
+  section{margin-top:34px;}
+  h2{font-family:'Kalam',cursive; font-weight:700; font-size:21px; margin-bottom:14px; color:var(--blue); transform:rotate(-0.4deg);}
+
+  .dropzone{border:2px dashed rgba(237,233,220,0.35); border-radius:6px; padding:30px 20px; text-align:center; cursor:pointer;}
+  .dropzone:hover{border-color:var(--yellow);}
+  .dropzone .icon{font-size:28px;}
+  .dropzone p{margin-top:10px; font-size:12.5px; color:var(--chalk-dim);}
+  .dropzone.has-file{border-style:solid; border-color:var(--yellow);}
+  #audio-input{display:none;}
+
+  .field{margin-top:14px;}
+  .field label{display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--chalk-dim); margin-bottom:6px;}
+  input[type=text], select{width:100%; padding:11px 13px; border:1px solid var(--line); border-radius:6px; background:rgba(0,0,0,0.2); color:var(--chalk); font-family:'Space Mono',monospace; font-size:13px;}
+  input:focus, select:focus{outline:none; border-color:var(--yellow);}
+  .chip-input{display:flex; gap:8px;}
+  .chip-input button{background:rgba(240,210,100,0.16); color:var(--yellow); border:1px solid var(--yellow); border-radius:6px; width:42px; font-size:18px; cursor:pointer;}
+  .materias{display:flex; flex-wrap:wrap; gap:7px; margin-top:9px;}
+  .materia-chip{font-size:11px; padding:5px 10px; border-radius:999px; border:1px solid var(--line); background:rgba(0,0,0,0.2); color:var(--chalk-dim); cursor:pointer;}
+  .materia-chip.active{background:var(--yellow); color:#173229; border-color:var(--yellow); font-weight:700;}
+
+  .save-row{display:flex; justify-content:center; margin-top:16px;}
+  .btn{background:var(--yellow); color:#173229; border:none; padding:13px 28px; border-radius:6px; font-family:'Space Mono',monospace; font-weight:700; font-size:12.5px; cursor:pointer;}
+  .btn:disabled{opacity:0.5; cursor:default;}
+  .status-line{font-size:11px; color:var(--chalk-dim); text-align:center; margin-top:12px; line-height:1.5;}
+
+  .filter-row{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px;}
+  .filter-chip{font-size:11px; padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:rgba(0,0,0,0.18); color:var(--chalk-dim); cursor:pointer;}
+  .filter-chip.active{background:var(--blue); color:#173229; border-color:var(--blue); font-weight:700;}
+
+  .card{border:1px solid var(--line); border-radius:8px; background:rgba(0,0,0,0.18); padding:18px; margin-bottom:14px; position:relative; cursor:pointer;}
+  .card::before{content:''; position:absolute; top:10px; left:-1px; bottom:10px; width:3px; background:var(--pink); border-radius:2px;}
+  .card-del{position:absolute; top:14px; right:14px; color:var(--chalk-dim); font-size:15px; cursor:pointer;}
+  .card-del:hover{color:#F5735B;}
+  .card-title{font-family:'Kalam',cursive; font-size:19px; font-weight:700; padding-right:20px;}
+  .card-meta{font-size:10.5px; color:var(--chalk-dim); margin-top:4px;}
+  .card-body{max-height:0; overflow:hidden; transition:max-height 0.4s ease;}
+  .card.open .card-body{max-height:900px; margin-top:14px;}
+  .card-sec{font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--yellow); margin-top:14px; margin-bottom:6px;}
+  .card-txt{font-size:13px; line-height:1.6; color:var(--chalk); white-space:pre-wrap;}
+  .card ul{margin:0; padding-left:18px;}
+  .card li{margin-bottom:5px; font-size:13px; line-height:1.5;}
+  .quote{font-style:italic; color:var(--blue); border-left:2px solid var(--blue); padding-left:10px; margin-top:6px; font-size:12.5px;}
+
+  .empty{color:var(--chalk-dim); font-size:12.5px; text-align:center; padding:26px 0; line-height:1.6;}
+
+  button, .btn, .card, .materia-chip, .filter-chip{transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1);}
+  button:active, .btn:active{transform:scale(0.94);}
+  button, a, input, select{touch-action:manipulation;}
+  h1,h2,label{overflow-wrap:normal; word-break:keep-all; hyphens:none;}
+
+  .signature{position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:15;
+    font-family:'Petit Formal Script',cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--chalk-dim);}
+  .toast{position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:9998;
+    background:rgba(240,210,100,0.16); border:1px solid var(--yellow); color:var(--yellow);
+    font-family:'Space Mono',monospace; font-size:12px; padding:10px 18px; border-radius:3px;
+    opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px; max-width:90vw;}
+
+  @media (max-width:480px){ h1{font-size:32px;} }
+</style>
+</head>
+<body>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#F0D264;transform:scale(80);"></div></div>
+
+<canvas id="dust"></canvas>
+
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#173229; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div style="text-align:center; max-width:280px;">
+    <div style="font-family:'Kalam',cursive; font-weight:700; color:#F0D264; font-size:22px; margin-bottom:18px;">Pizarra</div>
+    <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="PIN" style="width:100%; padding:14px; text-align:center; font-size:22px; letter-spacing:0.4em; border-radius:8px; border:1px solid rgba(240,210,100,0.3); background:rgba(0,0,0,0.25); color:#EDE9DC; font-family:'Space Mono',monospace;">
+    <button id="pin-submit" style="width:100%; margin-top:12px; padding:14px; border-radius:8px; border:none; background:#F0D264; color:#173229; font-weight:700; font-family:'Space Mono',monospace; cursor:pointer;">Entrar</button>
+    <div id="pin-error" style="color:#F5735B; font-size:12px; margin-top:10px; min-height:16px;"></div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="nav1">
+    <a href="hub.html">◇ Inicio</a>
+    <a href="pizarra.html" class="current">Pizarra</a>
+  </div>
+
+  <div class="eyebrow">Grabador de clases</div>
+  <h1>Pizarra</h1>
+  <p class="sub">Graba la clase con la app de Notas de voz de siempre, y sube ese archivo aquí — la IA transcribe, resume y saca los puntos clave y citas textuales.</p>
+
+  <section>
+    <h2>Nueva clase</h2>
+    <div class="dropzone" id="dropzone">
+      <div class="icon">🎙️</div>
+      <p id="dropzone-text">Toca para subir el audio (.m4a, .mp3 — hasta ~3 horas)</p>
+      <input type="file" id="audio-input" accept="audio/*">
+    </div>
+    <div class="field">
+      <label>Materia</label>
+      <div class="chip-input"><input type="text" id="new-materia" placeholder="Escribe o elige abajo"><button id="add-materia">+</button></div>
+      <div class="materias" id="materias-list"></div>
+    </div>
+    <div class="save-row"><button class="btn" id="process-btn" disabled>Procesar clase</button></div>
+    <div class="status-line" id="status-line"></div>
+  </section>
+
+  <section>
+    <h2>Tus clases</h2>
+    <div class="filter-row" id="filter-row"></div>
+    <div id="clases-list"></div>
+    <div class="empty" id="empty-state" style="display:none;">Aún no has procesado ninguna clase.</div>
+  </section>
+</div>
+
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+<div class="signature">Darío Calle</div>
+
+<script>
+  // ===== PIN =====
+  (function(){
+    try{ if(localStorage.getItem('habit_unlocked') === 'yes'){ document.getElementById('pin-gate').remove(); } }catch(e){}
+    const submit = document.getElementById('pin-submit');
+    const input = document.getElementById('pin-input');
+    const err = document.getElementById('pin-error');
+    function tryPin(){
+      if(input.value === '3751'){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} document.getElementById('pin-gate').remove(); }
+      else { err.textContent = 'PIN incorrecto'; input.value=''; }
+    }
+    submit.addEventListener('click', tryPin);
+    input.addEventListener('keydown', e=>{ if(e.key==='Enter') tryPin(); });
+  })();
+
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    gsap.killTweensOf(t);
+    gsap.timeline()
+      .set(t, { opacity:1, y:-14 })
+      .to(t, { y:0, duration:0.35, ease:'back.out(2)' })
+      .to(t, { opacity:1, duration:1.6 })
+      .to(t, { opacity:0, y:-14, duration:0.35, ease:'power2.in' });
+  }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // ===== Materias =====
+  function loadMaterias(){ try{ return JSON.parse(localStorage.getItem('pizarra_materias')||'null') || ['General']; }catch(e){ return ['General']; } }
+  function saveMaterias(m){ try{ localStorage.setItem('pizarra_materias', JSON.stringify(m)); }catch(e){} }
+  let materias = loadMaterias();
+  let materiaActiva = materias[0];
+  let filtroActivo = 'Todas';
+
+  function renderMaterias(){
+    document.getElementById('materias-list').innerHTML = materias.map(m=>
+      `<span class="materia-chip ${m===materiaActiva?'active':''}" data-m="${escapeHtml(m)}">${escapeHtml(m)}</span>`
+    ).join('');
+    document.querySelectorAll('.materia-chip').forEach(c=> c.addEventListener('click', ()=>{ materiaActiva = c.dataset.m; renderMaterias(); }));
+  }
+  document.getElementById('add-materia').addEventListener('click', ()=>{
+    const v = document.getElementById('new-materia').value.trim();
+    if(!v) return;
+    if(!materias.includes(v)) materias.push(v);
+    saveMaterias(materias); materiaActiva = v; document.getElementById('new-materia').value='';
+    renderMaterias(); renderFilters();
+  });
+  renderMaterias();
+
+  // ===== Subir audio =====
+  let selectedFile = null;
+  document.getElementById('dropzone').addEventListener('click', ()=> document.getElementById('audio-input').click());
+  document.getElementById('audio-input').addEventListener('change', (e)=>{
+    selectedFile = e.target.files[0];
+    if(selectedFile){
+      document.getElementById('dropzone').classList.add('has-file');
+      document.getElementById('dropzone-text').textContent = '✓ ' + selectedFile.name;
+      document.getElementById('process-btn').disabled = false;
+    }
+  });
+
+  // ===== Datos de clases =====
+  function loadClases(){ try{ return JSON.parse(localStorage.getItem('pizarra')||'[]'); }catch(e){ return []; } }
+  function saveClases(list){ try{ localStorage.setItem('pizarra', JSON.stringify(list)); }catch(e){} }
+  let openId = null;
+
+  function deleteClase(id){ saveClases(loadClases().filter(c=>c.id!==id)); render(); }
+
+  function renderFilters(){
+    const list = loadClases();
+    const usadas = ['Todas', ...new Set(list.map(c=>c.materia))];
+    document.getElementById('filter-row').innerHTML = usadas.map(m=>
+      `<span class="filter-chip ${filtroActivo===m?'active':''}" data-f="${escapeHtml(m)}">${escapeHtml(m)}</span>`
+    ).join('');
+    document.querySelectorAll('.filter-chip').forEach(c=> c.addEventListener('click', ()=>{ filtroActivo = c.dataset.f; render(); }));
+  }
+
+  function render(){
+    renderFilters();
+    let list = loadClases();
+    if(filtroActivo !== 'Todas') list = list.filter(c=>c.materia===filtroActivo);
+    document.getElementById('empty-state').style.display = list.length ? 'none' : 'block';
+    document.getElementById('clases-list').innerHTML = list.map(c=>{
+      const isOpen = openId===c.id;
+      return `
+      <div class="card ${isOpen?'open':''}" data-id="${c.id}">
+        <span class="card-del" data-del="${c.id}">×</span>
+        <div class="card-title">${escapeHtml(c.titulo)}</div>
+        <div class="card-meta">${escapeHtml(c.materia)} · ${escapeHtml(c.archivo)} · ${new Date(c.fecha).toLocaleDateString('es-EC')}</div>
+        <div class="card-body">
+          <div class="card-sec">Resumen</div>
+          <div class="card-txt">${escapeHtml(c.resumen)}</div>
+          ${c.puntos && c.puntos.length ? `<div class="card-sec">Puntos clave</div><ul>${c.puntos.map(p=>`<li>${escapeHtml(p)}</li>`).join('')}</ul>` : ''}
+          ${c.cita ? `<div class="card-sec">Cita textual</div><div class="quote">"${escapeHtml(c.cita)}"</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    document.querySelectorAll('.card').forEach(el=>{
+      el.addEventListener('click', (e)=>{
+        if(e.target.closest('[data-del]')) return;
+        openId = openId===el.dataset.id ? null : el.dataset.id; render();
+      });
+    });
+    document.querySelectorAll('[data-del]').forEach(x=> x.addEventListener('click', e=>{ e.stopPropagation(); deleteClase(x.dataset.del); }));
+  }
+  render();
+
+  // ===== IA: subir el archivo a Gemini (Files API) y pedir el resumen =====
+  const GEMINI_MODEL = 'gemini-3.6-flash';
+  function getApiKey(){
+    try{ let k = localStorage.getItem('gemini_api_key'); if(k) return k; }catch(e){}
+    const k = prompt('Pega tu clave de API de Google AI Studio (aistudio.google.com → Get API key). Gratis.\nSe guarda solo en este dispositivo.');
+    if(k){ try{ localStorage.setItem('gemini_api_key', k.trim()); }catch(e){} return k.trim(); }
+    return null;
+  }
+
+  async function uploadToGemini(apiKey, file, statusEl){
+    statusEl.textContent = 'Subiendo audio (' + Math.round(file.size/1024/1024) + ' MB)…';
+    const startRes = await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files?key='+apiKey, {
+      method:'POST',
+      headers:{
+        'X-Goog-Upload-Protocol':'resumable', 'X-Goog-Upload-Command':'start',
+        'X-Goog-Upload-Header-Content-Length': file.size, 'X-Goog-Upload-Header-Content-Type': file.type||'audio/mpeg',
+        'Content-Type':'application/json'
+      },
+      body: JSON.stringify({ file:{ display_name: file.name } })
+    });
+    if(!startRes.ok) throw new Error('No se pudo iniciar la subida a Gemini');
+    const uploadUrl = startRes.headers.get('X-Goog-Upload-URL');
+    if(!uploadUrl) throw new Error('Google no devolvió una URL de subida');
+
+    const uploadRes = await fetch(uploadUrl, {
+      method:'POST',
+      headers:{ 'Content-Length': file.size, 'X-Goog-Upload-Offset':'0', 'X-Goog-Upload-Command':'upload, finalize' },
+      body: file
+    });
+    const fileInfo = await uploadRes.json();
+    if(!uploadRes.ok || !fileInfo.file) throw new Error('No se pudo terminar la subida a Gemini');
+    return fileInfo.file; // {uri, mimeType, name, state}
+  }
+
+  async function waitForActive(apiKey, name, statusEl){
+    for(let i=0;i<20;i++){
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/'+name+'?key='+apiKey);
+      const data = await res.json();
+      if(data.state === 'ACTIVE') return data;
+      if(data.state === 'FAILED') throw new Error('Google no pudo procesar el audio');
+      statusEl.textContent = 'Google está preparando el audio…';
+      await new Promise(r=>setTimeout(r, 3000));
+    }
+    throw new Error('El audio tardó demasiado en procesarse');
+  }
+
+  document.getElementById('process-btn').addEventListener('click', async ()=>{
+    if(!selectedFile) return;
+    const apiKey = getApiKey(); if(!apiKey) return;
+    const btn = document.getElementById('process-btn'); const statusEl = document.getElementById('status-line');
+    btn.disabled = true;
+    try{
+      const uploaded = await uploadToGemini(apiKey, selectedFile, statusEl);
+      const fileData = uploaded.state==='ACTIVE' ? uploaded : await waitForActive(apiKey, uploaded.name, statusEl);
+
+      statusEl.textContent = 'Escuchando y resumiendo la clase… (puede tardar varios minutos en clases largas)';
+      const sys = 'Eres un asistente que resume clases universitarias grabadas en audio. Responde SOLO con un JSON, sin texto alrededor, con esta forma exacta: {"titulo":"tema principal de la clase en pocas palabras","resumen":"resumen de 4-6 frases","puntos":["punto clave 1","punto clave 2","..."],"cita":"una frase textual literal dicha en la clase, o vacío si no hay ninguna clara"}';
+      let data;
+      for(let intento=0; intento<3; intento++){
+        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent?key='+apiKey, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            contents:[{ role:'user', parts:[ {file_data:{mime_type:fileData.mimeType, file_uri:fileData.uri}}, {text:'Resume esta clase grabada.'} ] }],
+            systemInstruction:{parts:[{text:sys}]},
+            generationConfig:{maxOutputTokens:1500}
+          })
+        });
+        data = await res.json();
+        if(data.error && data.error.code===503 && intento<2){ await new Promise(r=>setTimeout(r, 2000*(intento+1))); continue; }
+        break;
+      }
+      if(data.error) throw new Error(data.error.code===503 ? 'Google tiene el modelo saturado — intenta de nuevo en un minuto.' : (data.error.message||'Error de la API'));
+      const cand = data.candidates && data.candidates[0];
+      const text = (cand && cand.content && cand.content.parts||[]).map(p=>p.text||'').join('').trim();
+      let parsed; try{ parsed = JSON.parse(text); }catch(e){ const m=text.match(/\{[\s\S]*\}/); parsed = m?JSON.parse(m[0]):null; }
+      if(!parsed) throw new Error('No se pudo leer el resumen generado');
+
+      const list = loadClases();
+      list.unshift({ id: Date.now().toString(), titulo: parsed.titulo||selectedFile.name, materia: materiaActiva, archivo: selectedFile.name, fecha: new Date().toISOString(), resumen: parsed.resumen||'', puntos: parsed.puntos||[], cita: parsed.cita||'' });
+      saveClases(list);
+      showToast('✓ Clase procesada: ' + (parsed.titulo||selectedFile.name));
+      statusEl.textContent = '';
+      selectedFile = null;
+      document.getElementById('audio-input').value = '';
+      document.getElementById('dropzone').classList.remove('has-file');
+      document.getElementById('dropzone-text').textContent = 'Toca para subir el audio (.m4a, .mp3 — hasta ~3 horas)';
+      render();
+    }catch(e){ statusEl.textContent = ''; showToast('Error: ' + e.message); }
+    finally{ btn.disabled = false; }
+  });
+
+  // Polvo de tiza flotando — decorativo, sutil, nunca interactivo
+  const dustCanvas = document.getElementById('dust'), dctx = dustCanvas.getContext('2d');
+  function resizeDust(){ dustCanvas.width=innerWidth; dustCanvas.height=innerHeight; } resizeDust(); addEventListener('resize',resizeDust);
+  const N=60, parts = Array.from({length:N}, ()=>({x:Math.random()*innerWidth, y:Math.random()*innerHeight, r:Math.random()*1.6+0.4, s:Math.random()*0.25+0.05, o:Math.random()*0.35+0.08}));
+  function tickDust(){
+    dctx.clearRect(0,0,dustCanvas.width,dustCanvas.height);
+    parts.forEach(p=>{
+      p.y -= p.s; if(p.y<-5) p.y=innerHeight+5;
+      dctx.beginPath(); dctx.arc(p.x,p.y,p.r,0,7);
+      dctx.fillStyle = 'rgba(237,233,220,'+p.o+')'; dctx.fill();
+    });
+    requestAnimationFrame(tickDust);
+  }
+  tickDust();
+</script>
+
+<script>
+  window.addEventListener('load', ()=>{
+    gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' });
+  });
+  document.querySelectorAll('a[href$=".html"]').forEach(link=>{
+    link.addEventListener('click', function(e){
+      if(this.target === '_blank') return;
+      const href = this.getAttribute('href');
+      e.preventDefault();
+      gsap.to('#veil-iris', { scale:80, duration:0.5, ease:'power3.inOut', onComplete:()=>{ window.location.href = href; } });
+    });
+  });
+</script>
+</body>
+</html>

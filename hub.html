@@ -165,7 +165,7 @@
   const APPS = [
     {nm:'Hábitos', file:'index.html', c:'#B58A46', stat:()=> habitToday?'Registrado hoy':'Pendiente hoy'},
     {nm:'Protocolo', file:'sustancias.html', c:'#6FA88A', stat:()=> dosisHechas+'/6 tomas hoy'},
-    {nm:'Metas', file:'metas.html', c:'#C9A46B', stat:()=> goals.length+' metas · '+metasPct+'%'},
+    {nm:'Metas', file:'metas.html', c:'#FF6F5E', stat:()=> goals.length+' metas · '+metasPct+'%'},
     {nm:'Cerebro', file:'cerebro.html', c:'#F5D77A', stat:()=> lsJSON('brain',[]).length+' notas'},
     {nm:'Habilidades', file:'habilidades.html', c:'#3FD9A0', stat:()=> lsJSON('skillmap',[]).length+' habilidades'},
     {nm:'Compresor', file:'comprimir.html', c:'#8BB8FF', stat:()=> lsJSON('biblioteca',[]).length+' destilados'},
@@ -174,7 +174,8 @@
     {nm:'Mi voz', file:'voz.html', c:'#7FA4E0', stat:()=> lsJSON('voz_textos',[]).length+' textos'},
     {nm:'Errores', file:'errores.html', c:'#A8471F', stat:()=> lsJSON('errorlog',[]).length+' casos'},
     {nm:'Sesgos', file:'sesgos.html', c:'#8B6CF0', stat:()=> lsJSON('biaslog',[]).length+' análisis'},
-    {nm:'The Ledger', file:'inversiones.html', c:'#C9A227', stat:()=> lsJSON('inversiones',[]).length+' activos'}
+    {nm:'The Ledger', file:'inversiones.html', c:'#00C853', stat:()=> lsJSON('inversiones',[]).length+' activos'},
+    {nm:'Pizarra', file:'pizarra.html', c:'#F0D264', stat:()=> lsJSON('pizarra',[]).length+' clases'}
   ];
   document.getElementById('grid').innerHTML = APPS.map(a=>`
     <a class="tile" href="${a.file}" style="--c:${a.c}">
