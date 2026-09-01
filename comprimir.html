@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Compresor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<style>
+  :root{
+    --bg:#06070A; --panel:#0E1017; --line:rgba(255,255,255,0.09);
+    --ink:#EDEFF5; --ink-dim:#828AA0; --beam:#F5F5FF;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh; position:relative; overflow-x:hidden;}
+
+  canvas#prism{position:fixed; inset:0; z-index:0; display:block;}
+  body::after{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(ellipse at 30% 40%, transparent 30%, rgba(6,7,10,0.55) 100%);}
+
+  .page{position:relative; z-index:1; max-width:660px; margin:0 auto; padding:20px 20px 100px;}
+
+  .nav1{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:30px;}
+  .nav1 a{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-decoration:none; color:var(--ink-dim);
+    border:1px solid var(--line); padding:6px 11px; background:rgba(14,16,23,0.55); letter-spacing:0.03em; border-radius:4px;}
+  .nav1 a.current{background:var(--beam); color:#06070A; border-color:var(--beam);}
+  .nav1 a:hover{border-color:#fff; color:#fff;}
+
+  .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:8px;}
+  h1{font-family:'Spectral',serif; font-weight:500; font-size:36px; letter-spacing:-0.01em; line-height:1.05;
+     background:linear-gradient(100deg,#F5F5FF,#8BB8FF 30%,#C89BFF 55%,#FFB38B 80%,#F5F5FF); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+  .sub{color:var(--ink-dim); font-size:14px; line-height:1.6; margin-top:10px; max-width:500px;}
+
+  /* ===== Contador destilados ===== */
+  .stat-row{display:flex; gap:26px; margin-top:22px;}
+  .stat b{font-family:'Spectral',serif; font-size:32px; display:block; line-height:1;}
+  .stat span{font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-dim); display:block; margin-top:5px;}
+
+  section{margin-top:44px;}
+  h2{font-family:'Spectral',serif; font-weight:500; font-size:22px; margin-bottom:16px;}
+
+  /* ===== Compositor (destilar) ===== */
+  .compose{border:1px solid var(--line); background:rgba(14,16,23,0.66); backdrop-filter:blur(14px);
+    border-radius:16px; padding:20px; position:relative; overflow:hidden;}
+  .compose::before{content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,#8BB8FF,#C89BFF,#FFB38B,#8BF5D0); opacity:0.7;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-dim); margin-bottom:7px;}
+  .field .hint{font-size:11px; color:var(--ink-dim); font-family:'Inter',sans-serif; text-transform:none; letter-spacing:0; margin-top:4px;}
+  input[type=text], textarea, select{
+    width:100%; padding:11px 13px; border:1px solid var(--line); border-radius:10px; background:rgba(6,7,10,0.6); color:var(--ink); font-family:'Inter',sans-serif; font-size:14px;
+  }
+  input:focus, textarea:focus, select:focus{outline:none; border-color:#8BB8FF;}
+  textarea{min-height:52px; resize:vertical;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+
+  /* Chips de ideas / aplicaciones */
+  .chip-input{display:flex; gap:8px;}
+  .chip-input input{flex:1;}
+  .chip-input button{background:rgba(139,184,255,0.15); color:#8BB8FF; border:1px solid #8BB8FF; border-radius:10px; width:44px; font-size:18px; cursor:pointer;}
+  .chips{display:flex; flex-direction:column; gap:6px; margin-top:8px;}
+  .chip{display:flex; align-items:flex-start; gap:8px; font-size:13px; line-height:1.4; padding:8px 10px; background:rgba(6,7,10,0.5); border:1px solid var(--line); border-radius:9px;}
+  .chip .n{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-dim); flex-shrink:0; margin-top:2px;}
+  .chip .x{margin-left:auto; color:var(--ink-dim); cursor:pointer; flex-shrink:0;}
+  .chip .x:hover{color:#FF8B8B;}
+
+  .save-row{display:flex; justify-content:center; margin-top:18px;}
+  .btn{background:var(--beam); color:#06070A; border:none; padding:13px 28px; border-radius:999px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:0.04em; cursor:pointer; font-weight:600;}
+  .btn:hover{background:#fff;}
+  .btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line); font-weight:400;}
+
+  /* ===== Biblioteca: rayos espectrales ===== */
+  .search-row{margin-bottom:16px;}
+  .lib{display:flex; flex-direction:column; gap:12px;}
+  .ray{position:relative; border:1px solid var(--line); border-radius:14px; background:rgba(14,16,23,0.6); overflow:hidden; cursor:pointer; transition:transform 0.18s ease, border-color 0.2s ease;}
+  .ray:hover{transform:translateY(-2px);}
+  .ray-bar{position:absolute; left:0; top:0; bottom:0; width:4px;}
+  .ray-head{padding:15px 16px 15px 22px;}
+  .ray-title{font-family:'Spectral',serif; font-size:17px; font-weight:500; line-height:1.2;}
+  .ray-meta{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-dim); margin-top:5px; letter-spacing:0.03em; text-transform:uppercase;}
+  .ray-tesis{font-family:'Spectral',serif; font-style:italic; font-size:14.5px; color:var(--ink); margin-top:10px; line-height:1.5;}
+  .ray-body{max-height:0; overflow:hidden; transition:max-height 0.4s ease; padding:0 16px 0 22px;}
+  .ray.open .ray-body{max-height:1200px; padding-bottom:16px;}
+  .ray-section-title{font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-dim); margin:16px 0 8px;}
+  .ray-item{display:flex; gap:9px; font-size:13.5px; line-height:1.5; margin-bottom:7px;}
+  .ray-item .n{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-dim); flex-shrink:0; margin-top:2px;}
+  .ray-item.apply .n{color:#8BF5D0;}
+  .ray-del{position:absolute; top:14px; right:14px; color:var(--ink-dim); font-size:16px; cursor:pointer; z-index:2;}
+  .ray-del:hover{color:#FF8B8B;}
+  .ray-chevron{position:absolute; bottom:12px; right:16px; color:var(--ink-dim); font-size:12px; transition:transform 0.25s ease;}
+  .ray.open .ray-chevron{transform:rotate(180deg);}
+
+  .empty{color:var(--ink-dim); font-size:13px; text-align:center; padding:26px 0; line-height:1.6;}
+
+  button, .btn, .chip .x, .ray{transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1);}
+  button:active, .btn:active{transform:scale(0.94);}
+  button, a, input, select{touch-action:manipulation;}
+  h1,h2,label{overflow-wrap:normal; word-break:keep-all; hyphens:none; text-wrap:balance;}
+
+  .signature{position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:15;
+    font-family:'Petit Formal Script',cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
+  .toast{position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:9998;
+    background:rgba(139,245,208,0.14); border:1px solid #8BF5D0; color:#8BF5D0;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:10px 18px; border-radius:999px;
+    opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px;}
+  .toast svg{width:14px; height:14px;}
+
+  @media (max-width:480px){ h1{font-size:29px;} .row2{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#8BB8FF;transform:scale(80);"></div></div>
+
+<canvas id="prism"></canvas>
+
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#06070A; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div style="background:#0E1017; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#8BB8FF; margin-bottom:14px;">Acceso privado</div>
+    <div style="font-family:'Spectral',serif; font-weight:500; font-size:22px; color:#EDEFF5; margin-bottom:6px;">Bienvenido, Darío</div>
+    <div style="font-size:12px; color:#828AA0; margin-bottom:20px;">Ingresa tu PIN para continuar</div>
+    <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:#06070A; color:#EDEFF5; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
+    <div id="pin-error" style="color:#FF8B8B; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
+    <button id="pin-submit" style="width:100%; padding:13px; border:none; border-radius:10px; background:#8BB8FF; color:#06070A; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em; cursor:pointer; font-weight:600;">Entrar</button>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const CORRECT_PIN = '3751';
+    const gate = document.getElementById('pin-gate');
+    const input = document.getElementById('pin-input');
+    const err = document.getElementById('pin-error');
+    let unlocked = false;
+    try{ unlocked = localStorage.getItem('habit_unlocked') === 'yes'; }catch(e){}
+    if(unlocked){ gate.style.display = 'none'; }
+    else { setTimeout(()=> input.focus(), 200); }
+    function tryUnlock(){
+      if(input.value === CORRECT_PIN){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display='none'; }
+      else { err.textContent = 'PIN incorrecto'; input.value=''; input.focus(); }
+    }
+    document.getElementById('pin-submit').addEventListener('click', tryUnlock);
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryUnlock(); });
+  })();
+</script>
+
+<div class="page">
+  <div class="nav1">
+    <a href="index.html">Hábitos</a>
+    <a href="metas.html">Metas</a>
+    <a href="errores.html">Errores</a>
+    <a href="sesgos.html">Sesgos</a>
+    <a href="cerebro.html">Cerebro</a>
+    <a href="habilidades.html">Habilidades</a>
+    <a href="sustancias.html">Protocolo</a>
+    <a href="comprimir.html" class="current">Compresor</a>
+  </div>
+
+  <header>
+    <div class="eyebrow">Fase 2 · Sistema 7</div>
+    <h1>Compresor de<br>libros y cursos</h1>
+    <p class="sub">Un libro entra ancho y sale como un rayo puro: su tesis en una frase, sus ideas clave, y lo único que importa — cómo lo aplicas. Si no lo puedes comprimir, no lo entendiste.</p>
+    <div class="stat-row">
+      <div class="stat"><b id="stat-total">0</b><span>Destilados</span></div>
+      <div class="stat"><b id="stat-ideas">0</b><span>Ideas clave</span></div>
+      <div class="stat"><b id="stat-apply">0</b><span>Aplicaciones</span></div>
+    </div>
+  </header>
+
+  <section id="destilar">
+    <h2>Destilar uno nuevo</h2>
+    <div class="compose">
+      <div class="row2">
+        <div class="field"><label>Título</label><input type="text" id="c-title" placeholder="Ej: Atomic Habits"></div>
+        <div class="field"><label>Autor / fuente</label><input type="text" id="c-author" placeholder="Ej: James Clear"></div>
+      </div>
+      <div class="field">
+        <label>La tesis en una frase</label>
+        <textarea id="c-tesis" placeholder="Si tuvieras que resumir todo el libro en una sola oración, ¿cuál sería?"></textarea>
+        <div class="hint">Obligatorio. Es el rayo puro — lo demás son detalles.</div>
+      </div>
+      <div class="field">
+        <label>Ideas clave</label>
+        <div class="chip-input"><input type="text" id="c-idea" placeholder="Una idea… (Enter para agregar)"><button id="c-idea-add">+</button></div>
+        <div class="chips" id="c-ideas-list"></div>
+      </div>
+      <div class="field">
+        <label>Cómo lo aplico</label>
+        <div class="chip-input"><input type="text" id="c-apply" placeholder="Una acción concreta… (Enter para agregar)"><button id="c-apply-add">+</button></div>
+        <div class="chips" id="c-apply-list"></div>
+      </div>
+      <div class="save-row"><button class="btn" id="save-book">Destilar ✦</button></div>
+    </div>
+  </section>
+
+  <section id="biblioteca">
+    <h2>Tu biblioteca destilada</h2>
+    <div class="search-row"><input type="text" id="search" placeholder="Buscar por título, autor, idea…"></div>
+    <div class="lib" id="lib"></div>
+    <div class="empty" id="empty-state" style="display:none;">Nada destilado todavía.<br>El primer libro que comprimas aparece aquí como su propio rayo.</div>
+  </section>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span id="toast-text">Destilado</span></div>
+<div class="signature">Darío Calle</div>
+
+<script>
+  if(typeof Lenis !== 'undefined'){
+    try{
+      const lenis = new Lenis({ duration: 1.05, easing: t => Math.min(1, 1.001 - Math.pow(2, -10*t)) });
+      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+      requestAnimationFrame(raf);
+    }catch(e){}
+  }
+</script>
+
+<script>
+  // ===== Fondo: PRISMA — luz blanca entra, espectro sale =====
+  (function(){
+    const canvas = document.getElementById('prism');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 26);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Prisma triangular (cilindro de 3 lados) girando lento
+    const prismGeo = new THREE.CylinderGeometry(4.4, 4.4, 1.4, 3);
+    const prismEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(prismGeo),
+      new THREE.LineBasicMaterial({ color:0xBFC6E0, transparent:true, opacity:0.55 })
+    );
+    prismEdges.rotation.x = Math.PI/2;
+    const prismFill = new THREE.Mesh(prismGeo, new THREE.MeshBasicMaterial({ color:0x8BB8FF, transparent:true, opacity:0.05 }));
+    prismFill.rotation.x = Math.PI/2;
+    const prismGroup = new THREE.Group();
+    prismGroup.add(prismEdges); prismGroup.add(prismFill);
+    prismGroup.position.set(0, 0, 0);
+    scene.add(prismGroup);
+
+    // Haz blanco entrante (desde la izquierda)
+    const inBeamGeo = new THREE.PlaneGeometry(22, 0.7);
+    const inBeam = new THREE.Mesh(inBeamGeo, new THREE.MeshBasicMaterial({ color:0xF5F5FF, transparent:true, opacity:0.16, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+    inBeam.position.set(-13, 0, 0);
+    scene.add(inBeam);
+
+    // Espectro saliente (fan de rayos de color a la derecha)
+    const SPECTRUM = [0xFF6B6B,0xFFB36B,0xF5E06B,0x8BF5A0,0x8BD0F5,0x8B9BF5,0xC89BF5];
+    const outBeams = [];
+    SPECTRUM.forEach((col,i)=>{
+      const t = i/(SPECTRUM.length-1) - 0.5; // -0.5..0.5
+      const geo = new THREE.PlaneGeometry(24, 0.32);
+      const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color:col, transparent:true, opacity:0.42, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+      const pivot = new THREE.Group();
+      pivot.position.set(4.4, 0, 0);       // sale del vértice derecho del prisma
+      mesh.position.set(12, 0, 0);
+      mesh.rotation.z = t * 0.5;           // abanico
+      pivot.add(mesh);
+      scene.add(pivot);
+      outBeams.push({mesh, base:t*0.5, phase:Math.random()*Math.PI*2});
+    });
+
+    // Motas de polvo flotando en la luz
+    const DUST = 90;
+    const dustPos = new Float32Array(DUST*3);
+    for(let i=0;i<DUST;i++){ dustPos[i*3]=(Math.random()-0.3)*40; dustPos[i*3+1]=(Math.random()-0.5)*26; dustPos[i*3+2]=(Math.random()-0.5)*10; }
+    const dustGeo = new THREE.BufferGeometry();
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+    function dotTex(){
+      const c=document.createElement('canvas'); c.width=c.height=32; const x=c.getContext('2d');
+      const g=x.createRadialGradient(16,16,0,16,16,16); g.addColorStop(0,'rgba(255,255,255,0.9)'); g.addColorStop(1,'rgba(255,255,255,0)');
+      x.fillStyle=g; x.fillRect(0,0,32,32); return new THREE.CanvasTexture(c);
+    }
+    const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ size:0.32, map:dotTex(), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, opacity:0.5 }));
+    scene.add(dust);
+
+    function resize(){
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      // En vertical, alejar para que el abanico completo entre
+      camera.position.z = window.innerWidth < 640 ? 40 : 26;
+    }
+    window.addEventListener('resize', resize); resize();
+
+    const clock = new THREE.Clock();
+    function tick(){
+      requestAnimationFrame(tick);
+      const t = clock.getElapsedTime();
+      prismGroup.rotation.z = Math.sin(t*0.25)*0.14;
+      prismGroup.rotation.y = t*0.35;
+      inBeam.material.opacity = 0.12 + Math.sin(t*1.5)*0.06;
+      outBeams.forEach((b,i)=>{
+        b.mesh.rotation.z = b.base + Math.sin(t*0.6 + b.phase)*0.05;
+        b.mesh.material.opacity = 0.30 + Math.sin(t*1.2 + i)*0.16;
+      });
+      const dp = dustGeo.attributes.position.array;
+      for(let i=0;i<DUST;i++){ dp[i*3] += 0.012; if(dp[i*3]>26) dp[i*3]=-14; }
+      dustGeo.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    tick();
+  })();
+</script>
+
+<script>
+  // ===== Datos =====
+  function load(){ try{ return JSON.parse(localStorage.getItem('biblioteca')||'[]'); }catch(e){ return []; } }
+  function save(list){ try{ localStorage.setItem('biblioteca', JSON.stringify(list)); }catch(e){} render(); }
+
+  // Color espectral determinístico por libro (a partir de su id)
+  function hueFor(id){ let h=2166136261; for(let i=0;i<id.length;i++){ h^=id.charCodeAt(i); h=Math.imul(h,16777619);} return (h>>>0)%360; }
+  function colorFor(id){ return 'hsl('+hueFor(id)+', 70%, 66%)'; }
+
+  function showToast(text){
+    if(text) document.getElementById('toast-text').textContent = text;
+    const el = document.getElementById('toast');
+    gsap.killTweensOf(el);
+    gsap.timeline()
+      .to(el, { opacity:1, y:0, duration:0.35, ease:'back.out(2)' })
+      .to(el, { opacity:0, y:-14, duration:0.4, ease:'power1.in', delay:1.6 });
+  }
+
+  // Chips en el compositor
+  let draftIdeas = [], draftApply = [];
+  function renderDraftChips(){
+    document.getElementById('c-ideas-list').innerHTML = draftIdeas.map((t,i)=>`<div class="chip"><span class="n">${i+1}</span><span>${escapeHtml(t)}</span><span class="x" data-di="${i}">×</span></div>`).join('');
+    document.getElementById('c-apply-list').innerHTML = draftApply.map((t,i)=>`<div class="chip"><span class="n">▸</span><span>${escapeHtml(t)}</span><span class="x" data-da="${i}">×</span></div>`).join('');
+    document.querySelectorAll('[data-di]').forEach(x=> x.addEventListener('click', ()=>{ draftIdeas.splice(+x.dataset.di,1); renderDraftChips(); }));
+    document.querySelectorAll('[data-da]').forEach(x=> x.addEventListener('click', ()=>{ draftApply.splice(+x.dataset.da,1); renderDraftChips(); }));
+  }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  function addIdea(){ const el=document.getElementById('c-idea'); const v=el.value.trim(); if(!v) return; draftIdeas.push(v); el.value=''; el.focus(); renderDraftChips(); }
+  function addApply(){ const el=document.getElementById('c-apply'); const v=el.value.trim(); if(!v) return; draftApply.push(v); el.value=''; el.focus(); renderDraftChips(); }
+  document.getElementById('c-idea-add').addEventListener('click', addIdea);
+  document.getElementById('c-apply-add').addEventListener('click', addApply);
+  document.getElementById('c-idea').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addIdea(); } });
+  document.getElementById('c-apply').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addApply(); } });
+
+  document.getElementById('save-book').addEventListener('click', ()=>{
+    const title = document.getElementById('c-title').value.trim();
+    const tesis = document.getElementById('c-tesis').value.trim();
+    if(!title){ showToast('Falta el título'); return; }
+    if(!tesis){ showToast('Falta la tesis en una frase'); return; }
+    const list = load();
+    list.unshift({
+      id: Date.now().toString(),
+      title, author: document.getElementById('c-author').value.trim(),
+      tesis, ideas: draftIdeas.slice(), apply: draftApply.slice(),
+      date: new Date().toISOString().split('T')[0]
+    });
+    save(list);
+    // limpiar
+    ['c-title','c-author','c-tesis','c-idea','c-apply'].forEach(id=> document.getElementById(id).value='');
+    draftIdeas = []; draftApply = []; renderDraftChips();
+    showToast('Destilado ✦ ' + title);
+  });
+
+  function deleteBook(id){ save(load().filter(b=>b.id!==id)); }
+
+  let openId = null, searchTerm = '';
+  document.getElementById('search').addEventListener('input', e=>{ searchTerm = e.target.value.toLowerCase(); render(); });
+
+  function render(){
+    const list = load();
+    document.getElementById('stat-total').textContent = list.length;
+    document.getElementById('stat-ideas').textContent = list.reduce((s,b)=> s+(b.ideas||[]).length, 0);
+    document.getElementById('stat-apply').textContent = list.reduce((s,b)=> s+(b.apply||[]).length, 0);
+    document.getElementById('empty-state').style.display = list.length ? 'none' : 'block';
+
+    let filtered = list;
+    if(searchTerm){
+      filtered = list.filter(b=>
+        b.title.toLowerCase().includes(searchTerm) ||
+        (b.author||'').toLowerCase().includes(searchTerm) ||
+        b.tesis.toLowerCase().includes(searchTerm) ||
+        (b.ideas||[]).some(i=> i.toLowerCase().includes(searchTerm)) ||
+        (b.apply||[]).some(a=> a.toLowerCase().includes(searchTerm))
+      );
+    }
+
+    document.getElementById('lib').innerHTML = filtered.map(b=>{
+      const col = colorFor(b.id);
+      const isOpen = openId===b.id;
+      const ideas = (b.ideas||[]).map((t,i)=>`<div class="ray-item"><span class="n">${i+1}</span><span>${escapeHtml(t)}</span></div>`).join('');
+      const apply = (b.apply||[]).map(t=>`<div class="ray-item apply"><span class="n">▸</span><span>${escapeHtml(t)}</span></div>`).join('');
+      return `
+      <div class="ray ${isOpen?'open':''}" data-id="${b.id}" style="border-color:${isOpen?col:'var(--line)'}">
+        <div class="ray-bar" style="background:${col}; box-shadow:0 0 12px ${col};"></div>
+        <span class="ray-del" data-del="${b.id}">×</span>
+        <div class="ray-head">
+          <div class="ray-title">${escapeHtml(b.title)}</div>
+          <div class="ray-meta">${b.author?escapeHtml(b.author)+' · ':''}${b.date}</div>
+          <div class="ray-tesis">“${escapeHtml(b.tesis)}”</div>
+        </div>
+        <div class="ray-body">
+          ${ideas ? `<div class="ray-section-title">Ideas clave</div>${ideas}` : ''}
+          ${apply ? `<div class="ray-section-title">Cómo lo aplico</div>${apply}` : ''}
+          ${(!ideas && !apply) ? '<div class="ray-section-title">Solo la tesis — sin más detalle</div>' : ''}
+        </div>
+        <span class="ray-chevron">▾</span>
+      </div>`;
+    }).join('');
+
+    document.querySelectorAll('.ray').forEach(r=>{
+      r.addEventListener('click', (e)=>{
+        if(e.target.closest('[data-del]')) return;
+        openId = openId===r.dataset.id ? null : r.dataset.id;
+        render();
+      });
+    });
+    document.querySelectorAll('[data-del]').forEach(x=> x.addEventListener('click', (e)=>{ e.stopPropagation(); deleteBook(x.dataset.del); }));
+  }
+  renderDraftChips();
+  render();
+</script>
+
+<script>
+  window.addEventListener('load', ()=>{
+    gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' });
+  });
+  document.querySelectorAll('a[href$=".html"]').forEach(link=>{
+    link.addEventListener('click', function(e){
+      if(this.target === '_blank') return;
+      const href = this.getAttribute('href');
+      e.preventDefault();
+      gsap.to('#veil-iris', { scale:80, duration:0.5, ease:'power3.inOut', onComplete:()=>{ window.location.href = href; } });
+    });
+  });
+
+  const revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){ gsap.to(entry.target, { opacity:1, y:0, duration:0.6, ease:'power3.out' }); revealObserver.unobserve(entry.target); }
+    });
+  }, { threshold:0.1 });
+  document.querySelectorAll('section, header').forEach(el=>{ gsap.set(el, { opacity:0, y:26 }); revealObserver.observe(el); });
+</script>
+
+</body>
+</html>
