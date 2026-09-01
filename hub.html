@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+  :root{
+    --bg:#0C0D11; --panel:#15171E; --line:rgba(255,255,255,0.09);
+    --ink:#ECEEF4; --ink-dim:#828A9C;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh; position:relative; overflow-x:hidden;}
+  canvas#stars{position:fixed; inset:0; z-index:0; display:block;}
+
+  .page{position:relative; z-index:1; max-width:720px; margin:0 auto; padding:34px 20px 90px;}
+
+  header{margin-bottom:26px;}
+  .greet-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:8px;}
+  h1{font-family:'Fraunces',serif; font-weight:600; font-size:34px; letter-spacing:-0.01em; line-height:1.05;}
+  h1 .name{font-style:italic; font-weight:400;}
+  .date{color:var(--ink-dim); font-size:13px; margin-top:8px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.02em;}
+
+  /* Resumen de hoy */
+  .today{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:30px;}
+  .today-card{border:1px solid var(--line); background:rgba(21,23,30,0.7); border-radius:14px; padding:15px 14px; text-align:center; cursor:pointer; transition:transform 0.18s ease, border-color 0.2s ease;}
+  .today-card:hover{transform:translateY(-2px);}
+  .today-card b{font-family:'Fraunces',serif; font-size:26px; display:block; line-height:1;}
+  .today-card small{display:block; font-family:'IBM Plex Mono',monospace; font-size:8.5px; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-dim); margin-top:7px;}
+  .today-card .hint{font-size:10px; color:var(--ink-dim); margin-top:4px;}
+
+  .section-label{font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.14em; color:var(--ink-dim); margin:0 0 14px 2px;}
+
+  /* Tiles de apps */
+  .grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
+  .tile{position:relative; border:1px solid var(--line); background:rgba(21,23,30,0.66); border-radius:16px; padding:16px 16px 15px; cursor:pointer; overflow:hidden; text-decoration:none; color:var(--ink); display:block; transition:transform 0.18s ease, border-color 0.2s ease;}
+  .tile::before{content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--c);}
+  .tile:hover{transform:translateY(-3px); border-color:var(--c);}
+  .tile .dot{width:8px; height:8px; border-radius:50%; background:var(--c); box-shadow:0 0 10px var(--c); margin-bottom:11px;}
+  .tile .nm{font-family:'Fraunces',serif; font-size:16.5px; font-weight:600; line-height:1.15;}
+  .tile .stat{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-dim); margin-top:6px; letter-spacing:0.02em;}
+  .tile .stat b{color:var(--c); font-weight:500;}
+
+  h1,h2{overflow-wrap:normal; word-break:keep-all; hyphens:none; text-wrap:balance;}
+  a{touch-action:manipulation;}
+
+  .signature{position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:15;
+    font-family:'Petit Formal Script',cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
+
+  @media (max-width:400px){ .today{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#ECEEF4;transform:scale(80);"></div></div>
+
+<canvas id="stars"></canvas>
+
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0C0D11; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div style="background:#15171E; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#828A9C; margin-bottom:14px;">Sistema operativo personal</div>
+    <div style="font-family:'Fraunces',serif; font-weight:600; font-size:22px; color:#ECEEF4; margin-bottom:6px;">Bienvenido, Darío</div>
+    <div style="font-size:12px; color:#828A9C; margin-bottom:20px;">Ingresa tu PIN para continuar</div>
+    <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:#0C0D11; color:#ECEEF4; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
+    <div id="pin-error" style="color:#E0483D; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
+    <button id="pin-submit" style="width:100%; padding:13px; border:none; border-radius:10px; background:#ECEEF4; color:#0C0D11; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; letter-spacing:0.04em; cursor:pointer;">Entrar</button>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const CORRECT_PIN = '3751';
+    const gate = document.getElementById('pin-gate');
+    const input = document.getElementById('pin-input');
+    const err = document.getElementById('pin-error');
+    let unlocked = false;
+    try{ unlocked = localStorage.getItem('habit_unlocked') === 'yes'; }catch(e){}
+    if(unlocked){ gate.style.display = 'none'; }
+    else { setTimeout(()=> input.focus(), 200); }
+    function tryUnlock(){
+      if(input.value === CORRECT_PIN){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display='none'; }
+      else { err.textContent = 'PIN incorrecto'; input.value=''; input.focus(); }
+    }
+    document.getElementById('pin-submit').addEventListener('click', tryUnlock);
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryUnlock(); });
+  })();
+</script>
+
+<div class="page">
+  <header>
+    <div class="greet-eyebrow" id="greet">Buenas</div>
+    <h1>Tu <span class="name">panel</span></h1>
+    <div class="date" id="date"></div>
+  </header>
+
+  <div class="today" id="today"></div>
+
+  <div class="section-label">Tus sistemas</div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="signature">Darío Calle</div>
+
+<script>
+  // ===== Fondo: constelación de puntos en los colores de tus sistemas =====
+  (function(){
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+    let W,H,dots=[];
+    const COLORS = ['#B58A46','#C9A46B','#A8471F','#8B6CF0','#F5D77A','#3FD9A0','#6FA88A','#8BB8FF','#E0483D','#F5B841','#7FA4E0'];
+    function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight;
+      dots = Array.from({length:Math.min(44,Math.floor(W*H/26000))},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-0.5)*0.25,vy:(Math.random()-0.5)*0.25,r:Math.random()*1.6+0.6,c:COLORS[Math.floor(Math.random()*COLORS.length)],tw:Math.random()*6})); }
+    addEventListener('resize',resize); resize();
+    function tick(){
+      requestAnimationFrame(tick);
+      ctx.clearRect(0,0,W,H);
+      for(const d of dots){
+        d.x+=d.vx; d.y+=d.vy; d.tw+=0.02;
+        if(d.x<0||d.x>W)d.vx*=-1; if(d.y<0||d.y>H)d.vy*=-1;
+        ctx.globalAlpha=0.35+Math.sin(d.tw)*0.3;
+        ctx.fillStyle=d.c; ctx.shadowBlur=8; ctx.shadowColor=d.c;
+        ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha=1; ctx.shadowBlur=0;
+    }
+    tick();
+  })();
+</script>
+
+<script>
+  function ls(k, def){ try{ const v=localStorage.getItem(k); return v==null?def:v; }catch(e){ return def; } }
+  function lsJSON(k, def){ try{ return JSON.parse(localStorage.getItem(k)||'null') ?? def; }catch(e){ return def; } }
+  const todayISO = new Date().toISOString().split('T')[0];
+
+  // Saludo según la hora
+  const h = new Date().getHours();
+  document.getElementById('greet').textContent = h<12 ? 'Buenos días' : (h<19 ? 'Buenas tardes' : 'Buenas noches');
+  document.getElementById('date').textContent = new Date().toLocaleDateString('es', {weekday:'long', day:'numeric', month:'long'});
+
+  // ===== Resumen de hoy =====
+  // Hábitos
+  const habitToday = lsJSON('habit:'+todayISO, null);
+  // Protocolo
+  const susToday = lsJSON('sustancias:'+todayISO, null);
+  const dosisHechas = susToday && susToday.dosis ? Object.values(susToday.dosis).filter(Boolean).length : 0;
+  // Metas — avance global
+  const goals = lsJSON('goals', []);
+  let tot=0, done=0; goals.forEach(g=> (g.checkpoints||[]).forEach(c=>{ tot++; if(c.done) done++; }));
+  const metasPct = tot ? Math.round(done/tot*100) : 0;
+
+  const today = [
+    { b: habitToday ? (habitToday.energy||'—')+'/5' : '—', small:'Hábitos hoy', hint: habitToday ? 'Energía registrada' : 'Sin registrar', href:'index.html' },
+    { b: dosisHechas+'/6', small:'Protocolo hoy', hint: dosisHechas===6?'Día completo ✓':'tomas hechas', href:'sustancias.html' },
+    { b: metasPct+'%', small:'Metas', hint:'avance global', href:'metas.html' }
+  ];
+  document.getElementById('today').innerHTML = today.map(t=>`
+    <a class="today-card" href="${t.href}" style="text-decoration:none;color:inherit;">
+      <b>${t.b}</b><small>${t.small}</small><div class="hint">${t.hint}</div>
+    </a>`).join('');
+
+  // ===== Tiles de sistemas =====
+  const APPS = [
+    {nm:'Hábitos', file:'index.html', c:'#B58A46', stat:()=> habitToday?'Registrado hoy':'Pendiente hoy'},
+    {nm:'Protocolo', file:'sustancias.html', c:'#6FA88A', stat:()=> dosisHechas+'/6 tomas hoy'},
+    {nm:'Metas', file:'metas.html', c:'#C9A46B', stat:()=> goals.length+' metas · '+metasPct+'%'},
+    {nm:'Cerebro', file:'cerebro.html', c:'#F5D77A', stat:()=> lsJSON('brain',[]).length+' notas'},
+    {nm:'Habilidades', file:'habilidades.html', c:'#3FD9A0', stat:()=> lsJSON('skillmap',[]).length+' habilidades'},
+    {nm:'Compresor', file:'comprimir.html', c:'#8BB8FF', stat:()=> lsJSON('biblioteca',[]).length+' destilados'},
+    {nm:'Sparring', file:'sparring.html', c:'#E0483D', stat:()=> lsJSON('sparring',[]).length+' tesis'},
+    {nm:'Tendencias', file:'tendencias.html', c:'#F5B841', stat:()=> lsJSON('tendencias',[]).length+' señales'},
+    {nm:'Mi voz', file:'voz.html', c:'#7FA4E0', stat:()=> lsJSON('voz_textos',[]).length+' textos'},
+    {nm:'Errores', file:'errores.html', c:'#A8471F', stat:()=> lsJSON('errorlog',[]).length+' casos'},
+    {nm:'Sesgos', file:'sesgos.html', c:'#8B6CF0', stat:()=> lsJSON('biaslog',[]).length+' análisis'}
+  ];
+  document.getElementById('grid').innerHTML = APPS.map(a=>`
+    <a class="tile" href="${a.file}" style="--c:${a.c}">
+      <div class="dot"></div>
+      <div class="nm">${a.nm}</div>
+      <div class="stat">${a.stat()}</div>
+    </a>`).join('');
+
+  // Reveal
+  gsap.from('.today-card', {opacity:0, y:16, duration:0.5, stagger:0.06, ease:'power2.out', delay:0.1});
+  gsap.from('.tile', {opacity:0, y:18, duration:0.5, stagger:0.04, ease:'power2.out', delay:0.2});
+</script>
+
+<script>
+  window.addEventListener('load', ()=>{
+    gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' });
+  });
+  document.querySelectorAll('a[href$=".html"]').forEach(link=>{
+    link.addEventListener('click', function(e){
+      const href = this.getAttribute('href');
+      e.preventDefault();
+      gsap.to('#veil-iris', { scale:80, duration:0.5, ease:'power3.inOut', onComplete:()=>{ window.location.href = href; } });
+    });
+  });
+</script>
+
+</body>
+</html>
