@@ -19,9 +19,6 @@
   body{background:var(--bg); color:var(--ink); font-family:'IBM Plex Mono',monospace; height:100dvh; overflow:hidden; position:relative;}
 
   canvas#route-canvas{position:fixed; inset:0; z-index:0; display:block;}
-  svg.compass{position:fixed; bottom:-14vw; right:-14vw; width:52vw; height:52vw; max-width:640px; max-height:640px;
-    z-index:0; pointer-events:none; opacity:0.08; animation:spinSlow 220s linear infinite;}
-  @keyframes spinSlow{ to{ transform:rotate(360deg); } }
 
   /* ===== HUD flotante ===== */
   .hud-top{position:fixed; top:0; left:0; right:0; z-index:20; display:flex; justify-content:space-between;
@@ -160,15 +157,6 @@
 </script>
 
 <canvas id="route-canvas"></canvas>
-<svg class="compass" viewBox="0 0 200 200">
-  <circle cx="100" cy="100" r="94" fill="none" stroke="#C9A46B" stroke-width="0.6"/>
-  <circle cx="100" cy="100" r="70" fill="none" stroke="#C9A46B" stroke-width="0.4"/>
-  <g stroke="#C9A46B" stroke-width="0.5">
-    <line x1="100" y1="6" x2="100" y2="194"/><line x1="6" y1="100" x2="194" y2="100"/>
-    <line x1="30" y1="30" x2="170" y2="170"/><line x1="170" y1="30" x2="30" y2="170"/>
-  </g>
-  <path d="M100 20 L108 100 L100 180 L92 100 Z" fill="#C9A46B"/>
-</svg>
 
 <div class="hud-top">
   <div class="brand">FASE 0 · SISTEMA 2 — <b>PANEL DE METAS</b></div>
@@ -184,10 +172,10 @@
   </div>
 </div>
 
-<div class="empty-hint" id="empty-hint">Aún no hay rutas trazadas.<br>Traza la primera abajo — se vuelve un campamento real en la montaña.</div>
+<div class="empty-hint" id="empty-hint">El horizonte está vacío.<br>Planta tu primera meta abajo — aparece a la distancia de sus años.</div>
 
 <div class="capture-dock">
-  <div class="capture-eyebrow">Trazar nueva ruta</div>
+  <div class="capture-eyebrow">Plantar una meta en el tiempo</div>
   <input type="text" id="g-title" placeholder="¿Qué meta quieres alcanzar?" class="cd-title">
   <div class="capture-row">
     <div class="cd-years">
@@ -195,20 +183,20 @@
       <span>años</span>
     </div>
     <select id="g-category"><option value="Carrera">Carrera</option><option value="Estudios">Estudios</option><option value="Personal">Personal</option><option value="Financiero">Financiero</option></select>
-    <button id="add-goal">Trazar ↵</button>
+    <button id="add-goal">Plantar ↵</button>
   </div>
 </div>
 
 
 <div class="drawer" id="goals-drawer">
-  <div class="drawer-head"><h2>Tus rutas</h2><span class="drawer-close" data-close="goals-drawer">×</span></div>
+  <div class="drawer-head"><h2>Tus metas</h2><span class="drawer-close" data-close="goals-drawer">×</span></div>
   <div class="drawer-body">
     <div id="goals-list"></div>
-    <div class="empty" id="empty-state" style="display:none;">Aún no hay rutas trazadas.</div>
+    <div class="empty" id="empty-state" style="display:none;">Aún no hay metas plantadas.</div>
   </div>
 </div>
 
-<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span id="toast-text">Ruta trazada</span></div>
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span id="toast-text">Meta plantada</span></div>
 
 <script>
   // Cualquier número de años — el color solo indica plazo corto/medio/largo, ya no depende de 3 valores fijos
@@ -242,7 +230,7 @@
     });
     document.getElementById('g-title').value = '';
     saveGoals(goals);
-    showToast('Ruta trazada: ' + title);
+    showToast('Meta plantada: ' + title);
   }
 
   function addCheckpoint(id, text){
@@ -315,9 +303,24 @@
       addCheckpoint(gid, inp.value); inp.value='';
     }));
 
-    if(typeof relightGoals === 'function') relightGoals(goals.map(g=>({id:g.id, pct: g.checkpoints.length ? doneRatio(g) : 0, color: colorForYears(g.horizon)})));
+    if(typeof relightGoals === 'function') relightGoals(goals.map(g=>({
+      id: g.id,
+      title: g.title,
+      years: Math.max(1, parseInt(g.horizon) || 1),   // "3 años" -> 3
+      pct: g.checkpoints.length ? doneRatio(g) : 0,
+      color: colorForYears(g.horizon)
+    })));
   }
   function doneRatio(g){ return g.checkpoints.filter(c=>c.done).length / g.checkpoints.length; }
+
+  // Tocar un monolito del horizonte abre esa meta en el panel, ya expandida
+  function focusGoal(id){
+    expandedId = id;
+    render();
+    openDrawer('goals-drawer');
+    const row = document.querySelector('.goal-row[data-id="' + id + '"]');
+    if(row) row.scrollIntoView({behavior:'smooth', block:'center'});
+  }
 
   // ===== Drawer =====
   function openDrawer(id){
@@ -338,138 +341,184 @@
 </script>
 
 <script>
-  // ===== Fondo: camino de montaña real en 3D — cada meta es un campamento sobre la ruta =====
+  // ===== Fondo: HORIZONTE DE TIEMPO =====
+  // La distancia hacia el horizonte ES el tiempo. Una meta a 1 año se planta cerca y grande;
+  // una a 10 años, lejos y pequeña. El relleno del monolito es el avance real de sus checkpoints.
   (function(){
-    const routeCanvas = document.getElementById('route-canvas');
+    const canvasEl = document.getElementById('route-canvas');
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(58, window.innerWidth/window.innerHeight, 0.1, 1000);
-    // La ruta mide ~60 unidades de ancho — en celular vertical el campo de visión horizontal
-    // se estrecha muchísimo, así que la cámara necesita alejarse bastante más que en escritorio.
-    const ROUTE_HALF_W = 30, ROUTE_HALF_H = 10;
-    let camBaseZ = 30;
-    function fitCamera(){
-      const aspect = window.innerWidth / window.innerHeight;
-      const vFov = camera.fov * Math.PI/180;
-      const zForHeight = ROUTE_HALF_H / Math.tan(vFov/2);
-      const hFov = 2*Math.atan(Math.tan(vFov/2)*aspect);
-      const zForWidth = ROUTE_HALF_W / Math.tan(hFov/2);
-      camBaseZ = Math.max(zForHeight, zForWidth) * 1.12;
-      camera.position.z = camBaseZ;
-    }
-    camera.position.set(0, 6, 30);
-    fitCamera();
-    camera.lookAt(0,0,0);
-    const renderer = new THREE.WebGLRenderer({ canvas: routeCanvas, antialias:true, alpha:true });
+    scene.fog = new THREE.Fog(0x0A0D12, 55, 195);
+
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 400);
+    camera.position.set(0, 6, 22);
+    camera.lookAt(0, 4, -50);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias:true, alpha:true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    const routePoints = [];
-    const N = 80;
-    for(let i=0; i<N; i++){
-      const x = (i/(N-1)) * 60 - 30;
-      const y = Math.sin(i*0.25) * 4 + Math.sin(i*0.07) * 6;
-      const z = Math.cos(i*0.18) * 5 - 4;
-      routePoints.push(new THREE.Vector3(x, y, z));
-    }
-    const routeCurve = new THREE.CatmullRomCurve3(routePoints);
-    // Un solo camino, grueso y con halo — antes eran dos tubos finos que en celular
-    // se leían como líneas sueltas sin sentido, no como una ruta de montaña.
-    const tubeGeo = new THREE.TubeGeometry(routeCurve, 220, 0.32, 10, false);
-    const tubeMat = new THREE.MeshBasicMaterial({ color:0x5E9BD8, transparent:true, opacity:0.85 });
-    scene.add(new THREE.Mesh(tubeGeo, tubeMat));
-    const haloGeo = new THREE.TubeGeometry(routeCurve, 220, 0.7, 10, false);
-    const haloMat = new THREE.MeshBasicMaterial({ color:0x5E9BD8, transparent:true, opacity:0.14, blending:THREE.AdditiveBlending, depthWrite:false });
-    scene.add(new THREE.Mesh(haloGeo, haloMat));
+    const HALF_W = 20, Z_START = 22;
 
-    // Terreno de referencia debajo del camino — le da al ojo un "suelo" real, no solo curvas flotando
-    const groundGeo = new THREE.PlaneGeometry(70, 40, 40, 24);
-    groundGeo.rotateX(-Math.PI/2);
-    const gp = groundGeo.attributes.position;
-    for(let i=0;i<gp.count;i++){
-      const x=gp.getX(i), z=gp.getZ(i);
-      gp.setY(i, Math.sin(x*0.18)*2.2 + Math.cos(z*0.22)*1.8 - 12);
+    // --- Travesaños del suelo corriendo hacia ti: el tiempo pasando ---
+    const RUNGS = 44, SPACING = 4, SPAN = RUNGS * SPACING;
+    const rungZ = [];
+    for(let i=0;i<RUNGS;i++) rungZ.push(Z_START - i*SPACING);
+    const rungGeo = new THREE.BufferGeometry();
+    const rungPos = new Float32Array(RUNGS*6);
+    rungGeo.setAttribute('position', new THREE.BufferAttribute(rungPos, 3));
+    scene.add(new THREE.LineSegments(rungGeo, new THREE.LineBasicMaterial({ color:0x8A9099, transparent:true, opacity:0.20 })));
+    function writeRungs(){
+      for(let i=0;i<RUNGS;i++){
+        const z = rungZ[i];
+        rungPos[i*6]=-HALF_W; rungPos[i*6+1]=0; rungPos[i*6+2]=z;
+        rungPos[i*6+3]= HALF_W; rungPos[i*6+4]=0; rungPos[i*6+5]=z;
+      }
+      rungGeo.attributes.position.needsUpdate = true;
     }
-    groundGeo.computeVertexNormals();
-    const groundMat = new THREE.MeshBasicMaterial({ color:0xD9A441, wireframe:true, transparent:true, opacity:0.16 });
-    scene.add(new THREE.Mesh(groundGeo, groundMat));
+    writeRungs();
 
-    function glowTex(hex){
-      const c = document.createElement('canvas'); c.width = c.height = 64;
-      const ctx = c.getContext('2d');
-      const g = ctx.createRadialGradient(32,32,0,32,32,32);
-      g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.4, hex); g.addColorStop(1,'rgba(255,255,255,0)');
-      ctx.fillStyle = g; ctx.fillRect(0,0,64,64);
-      return new THREE.CanvasTexture(c);
-    }
+    // --- Rieles laterales: convergen en el horizonte y fijan la perspectiva ---
+    const railMat = new THREE.LineBasicMaterial({ color:0xC9A46B, transparent:true, opacity:0.32 });
+    [-HALF_W, HALF_W].forEach(x=>{
+      const g = new THREE.BufferGeometry().setFromPoints([ new THREE.Vector3(x,0,Z_START), new THREE.Vector3(x,0,Z_START-SPAN) ]);
+      scene.add(new THREE.Line(g, railMat));
+    });
 
-    // Campamentos ambientales decorativos, siempre presentes y tenues
-    const ambientColors = ['rgba(94,155,216,0.55)','rgba(217,164,65,0.55)','rgba(194,91,79,0.55)'];
-    const AMB_COUNT = 10;
-    for(let i=0; i<AMB_COUNT; i++){
-      const t = (i+0.5)/AMB_COUNT;
-      const p = routeCurve.getPointAt(t);
-      const mat = new THREE.SpriteMaterial({ map:glowTex(ambientColors[i%3]), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, opacity:0.5 });
-      const sprite = new THREE.Sprite(mat); sprite.scale.set(1.0,1.0,1); sprite.position.copy(p);
-      scene.add(sprite);
+    function textTexture(text, color, px){
+      const c = document.createElement('canvas');
+      let ctx = c.getContext('2d');
+      const font = '600 ' + px + "px 'IBM Plex Mono', monospace";
+      ctx.font = font;
+      const w = Math.ceil(ctx.measureText(text).width) + 24;
+      c.width = w; c.height = Math.ceil(px*1.7);
+      ctx = c.getContext('2d');          // cambiar width/height resetea el estado del contexto
+      ctx.font = font;
+      ctx.fillStyle = color;
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 12, c.height/2);
+      const tex = new THREE.CanvasTexture(c);
+      tex.minFilter = THREE.LinearFilter;
+      return { tex, aspect: c.width / c.height };
     }
 
-    // Campamentos reales — uno por meta, se encienden y crecen según el progreso
-    const MAX_GOALS = 14;
-    const goalSprites = [];
-    for(let i=0; i<MAX_GOALS; i++){
-      const mat = new THREE.SpriteMaterial({ map:glowTex('rgba(255,255,255,1)'), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, opacity:0 });
-      const sprite = new THREE.Sprite(mat); sprite.scale.set(0.001,0.001,1); sprite.position.set(0,-999,0);
-      scene.add(sprite); goalSprites.push({sprite, mat, phase:Math.random()*Math.PI*2});
+    // --- La escala: raíz cuadrada, así los años cercanos se separan y los lejanos se comprimen ---
+    function zForYears(y){ return -(10 + 19 * Math.sqrt(Math.max(1, y))); }
+
+    [1,2,3,5,10,20].forEach(y=>{
+      const z = zForYears(y);
+      const g = new THREE.BufferGeometry().setFromPoints([ new THREE.Vector3(-HALF_W,0.02,z), new THREE.Vector3(HALF_W,0.02,z) ]);
+      scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color:0xC9A46B, transparent:true, opacity:0.30 })));
+      const t = textTexture(y + (y===1 ? ' año' : ' años'), 'rgba(201,164,107,0.95)', 40);
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:t.tex, transparent:true, depthWrite:false }));
+      sp.scale.set(1.9*t.aspect, 1.9, 1);
+      sp.position.set(0, 1.2, z);
+      scene.add(sp);
+    });
+
+    // --- Monolitos: uno por meta ---
+    const MAX_GOALS = 12, H = 9;
+    const slots = [];
+    for(let i=0;i<MAX_GOALS;i++){
+      const group = new THREE.Group();
+      group.visible = false;
+
+      const boxGeo = new THREE.BoxGeometry(2.6, H, 2.6);
+      const shellMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.07, depthWrite:false });
+      const shell = new THREE.Mesh(boxGeo, shellMat);
+      shell.position.y = H/2; group.add(shell);
+
+      const edgeMat = new THREE.LineBasicMaterial({ color:0xffffff, transparent:true, opacity:0.30 });
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(boxGeo), edgeMat);
+      edges.position.y = H/2; group.add(edges);
+
+      const fillMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.9 });
+      const fill = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1, 2.6), fillMat);
+      group.add(fill);
+
+      const labelMat = new THREE.SpriteMaterial({ transparent:true, depthWrite:false });
+      const label = new THREE.Sprite(labelMat);
+      label.position.y = H + 2.2; group.add(label);
+
+      scene.add(group);
+      slots.push({ group, shell, shellMat, edgeMat, fill, fillMat, label, labelMat });
     }
-    function hashId(id){ let h=2166136261; for(let i=0;i<id.length;i++){ h^=id.charCodeAt(i); h=Math.imul(h,16777619);} return (h>>>0); }
-    let activeGoals = [];
+
+    const isNarrow = ()=> window.innerWidth < 640;
+    let lastGoals = [];
     relightGoals = function(goals){
-      activeGoals = goals.slice(0, MAX_GOALS);
-      goalSprites.forEach((gs, i)=>{
-        const data = activeGoals[i];
-        if(!data){ gs.mat.opacity = 0; gs.sprite.position.set(0,-999,0); return; }
-        const t = 0.08 + (hashId(data.id) % 1000)/1000 * 0.84;
-        const p = routeCurve.getPointAt(t);
-        gs.sprite.position.copy(p);
-        gs.mat.opacity = 1;
-        gs.mat.map = hexToRgba(data.color);
-        gs.baseScale = 1.3 + data.pct*1.6;
+      lastGoals = goals || [];
+      const list = lastGoals.slice().sort((a,b)=> a.years - b.years).slice(0, MAX_GOALS);
+      slots.forEach((s, i)=>{
+        const d = list[i];
+        if(!d){ s.group.visible = false; s.group.userData.goalId = null; return; }
+        s.group.visible = true;
+        s.group.userData.goalId = d.id;
+
+        // Carriles alternados a izquierda y derecha: nunca se tapan entre sí
+        const base = isNarrow() ? 5.0 : 6.5;
+        const step = isNarrow() ? 3.0 : 4.5;
+        const side = (i % 2 === 0) ? -1 : 1;
+        const tier = Math.floor(i/2) % 2;
+        s.group.position.set(side * (base + tier*step), 0, zForYears(d.years));
+
+        const col = new THREE.Color(d.color);
+        s.fillMat.color = col; s.edgeMat.color = col; s.shellMat.color = col;
+
+        const pct = Math.max(0, Math.min(1, d.pct || 0));
+        s.fill.scale.y = Math.max(0.04, pct * H);
+        s.fill.position.y = s.fill.scale.y / 2;
+        s.fillMat.opacity = pct > 0 ? 0.92 : 0.22;
+
+        const short = d.title.length > 18 ? d.title.slice(0,17)+'…' : d.title;
+        const t = textTexture(short, '#EDEFEA', 40);
+        s.labelMat.map = t.tex;
+        s.label.scale.set(1.7*t.aspect, 1.7, 1);
       });
     };
-    function hexToRgba(hex){
-      const n = parseInt(hex.replace('#',''),16);
-      const r=(n>>16)&255, g=(n>>8)&255, b=n&255;
-      const c=document.createElement('canvas'); c.width=c.height=64;
-      const ctx=c.getContext('2d');
-      const grad=ctx.createRadialGradient(32,32,0,32,32,32);
-      grad.addColorStop(0,'rgba(255,255,255,1)'); grad.addColorStop(0.4,`rgba(${r},${g},${b},1)`); grad.addColorStop(1,`rgba(${r},${g},${b},0)`);
-      ctx.fillStyle=grad; ctx.fillRect(0,0,64,64);
-      return new THREE.CanvasTexture(c);
-    }
+
+    // Tocar un monolito abre esa meta
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+    canvasEl.addEventListener('click', (ev)=>{
+      ndc.x = (ev.clientX / window.innerWidth) * 2 - 1;
+      ndc.y = -(ev.clientY / window.innerHeight) * 2 + 1;
+      ray.setFromCamera(ndc, camera);
+      const hits = ray.intersectObjects(slots.filter(s=> s.group.visible).map(s=> s.shell), false);
+      if(!hits.length) return;
+      const slot = slots.find(s=> s.shell === hits[0].object);
+      if(slot && slot.group.userData.goalId && typeof focusGoal === 'function') focusGoal(slot.group.userData.goalId);
+    });
 
     function resize(){
       camera.aspect = window.innerWidth/window.innerHeight;
-      fitCamera();
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      relightGoals(lastGoals);   // los carriles cambian de ancho entre celular y escritorio
     }
     window.addEventListener('resize', resize);
 
-    const rClock = new THREE.Clock();
-    function animateRoute(){
-      requestAnimationFrame(animateRoute);
-      const t = rClock.getElapsedTime();
-      goalSprites.forEach(gs=>{
-        if(gs.mat.opacity>0 && gs.baseScale){
-          const s = gs.baseScale + Math.sin(t*1.6 + gs.phase)*0.28;
-          gs.sprite.scale.set(s, s, 1);
-        }
-      });
-      scene.rotation.y = Math.sin(t*0.035) * 0.1;
-      camera.position.y = 6 + Math.sin(t*0.05) * 1.3;
+    const clock = new THREE.Clock();
+    let prev = 0;
+    function animate(){
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+      const dt = Math.min(0.05, t - prev); prev = t;
+
+      for(let i=0;i<RUNGS;i++){
+        rungZ[i] += dt * 7;
+        if(rungZ[i] > Z_START) rungZ[i] -= SPAN;
+      }
+      writeRungs();
+
+      // Respiración muy leve — sin romper la lectura de "distancia = tiempo"
+      camera.position.y = 6 + Math.sin(t*0.5)*0.25;
+      camera.position.x = Math.sin(t*0.3)*0.4;
+      camera.lookAt(0, 4, -50);
+
+      slots.forEach((s,i)=>{ if(s.group.visible) s.edgeMat.opacity = 0.26 + Math.sin(t*1.5 + i)*0.10; });
+
       renderer.render(scene, camera);
     }
-    animateRoute();
+    animate();
     render();
   })();
 </script>
