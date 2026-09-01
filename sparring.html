@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sparring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<style>
+  :root{
+    --bg:#0B0C10; --panel:#14161C; --line:rgba(255,255,255,0.09);
+    --ink:#ECEEF2; --ink-dim:#7E8592;
+    --carmin:#E0483D; --acero:#6FA0C8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh; position:relative; overflow-x:hidden;}
+
+  canvas#ring{position:fixed; inset:0; z-index:0; display:block;}
+  body::after{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(11,12,16,0.72) 100%);}
+
+  .page{position:relative; z-index:1; max-width:660px; margin:0 auto; padding:20px 20px 100px;}
+
+  .nav1{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:28px;}
+  .nav1 a{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-decoration:none; color:var(--ink-dim);
+    border:1px solid var(--line); padding:6px 11px; background:rgba(20,22,28,0.55); letter-spacing:0.03em; border-radius:3px;}
+  .nav1 a.current{background:var(--carmin); color:#fff; border-color:var(--carmin);}
+  .nav1 a:hover{border-color:var(--acero); color:var(--acero);}
+
+  .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--carmin); margin-bottom:8px;}
+  h1{font-family:'Oswald',sans-serif; font-weight:700; font-size:46px; letter-spacing:0.01em; text-transform:uppercase; line-height:0.95;}
+  h1 .vs{color:var(--acero);}
+  .sub{color:var(--ink-dim); font-size:14px; line-height:1.6; margin-top:12px; max-width:500px;}
+
+  .stat-row{display:flex; gap:26px; margin-top:22px;}
+  .stat b{font-family:'Oswald',sans-serif; font-weight:600; font-size:34px; display:block; line-height:1;}
+  .stat span{font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-dim); display:block; margin-top:5px;}
+
+  section{margin-top:44px;}
+  h2{font-family:'Oswald',sans-serif; font-weight:600; font-size:24px; text-transform:uppercase; letter-spacing:0.02em; margin-bottom:16px;}
+
+  /* ===== Compositor ===== */
+  .compose{border:1px solid var(--line); background:rgba(20,22,28,0.66); backdrop-filter:blur(14px); border-radius:14px; padding:20px; position:relative; overflow:hidden;}
+  .compose::before{content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--carmin),var(--acero));}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-dim); margin-bottom:7px;}
+  .field .hint{font-size:11px; color:var(--ink-dim); margin-top:5px;}
+  input[type=text], textarea, select{
+    width:100%; padding:11px 13px; border:1px solid var(--line); border-radius:9px; background:rgba(11,12,16,0.6); color:var(--ink); font-family:'Inter',sans-serif; font-size:14px;
+  }
+  input:focus, textarea:focus, select:focus{outline:none; border-color:var(--carmin);}
+  textarea{min-height:56px; resize:vertical;}
+
+  .save-row{display:flex; justify-content:center; margin-top:16px;}
+  .btn{background:var(--carmin); color:#fff; border:none; padding:13px 28px; border-radius:3px; font-family:'Oswald',sans-serif; font-weight:600; font-size:14px; text-transform:uppercase; letter-spacing:0.06em; cursor:pointer;}
+  .btn:hover{background:#ef5a4f;}
+  .btn.steel{background:var(--acero);} .btn.steel:hover{background:#83b0d6;}
+  .btn.mini{padding:8px 14px; font-size:11px;}
+
+  /* ===== Cuadrilátero / rounds ===== */
+  .arena{display:flex; flex-direction:column; gap:16px;}
+  .round{border:1px solid var(--line); border-radius:14px; background:rgba(20,22,28,0.62); overflow:hidden; cursor:pointer; position:relative; transition:transform 0.18s ease, border-color 0.2s ease;}
+  .round:hover{transform:translateY(-2px);}
+  .round-head{padding:16px 16px 14px;}
+  .round-no{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:7px;}
+  .round-tesis{font-family:'Oswald',sans-serif; font-weight:500; font-size:19px; line-height:1.15;}
+  .round-del{position:absolute; top:14px; right:14px; color:var(--ink-dim); font-size:16px; cursor:pointer; z-index:2;}
+  .round-del:hover{color:var(--carmin);}
+
+  /* Medidor de dominio (el centro que se inclina) */
+  .tilt{margin-top:14px;}
+  .tilt-bar{position:relative; height:6px; border-radius:3px; background:linear-gradient(90deg, var(--acero), rgba(255,255,255,0.12) 50%, var(--carmin)); overflow:visible;}
+  .tilt-marker{position:absolute; top:50%; width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid var(--bg); transform:translate(-50%,-50%); transition:left 0.6s cubic-bezier(0.22,1,0.36,1); box-shadow:0 0 10px rgba(255,255,255,0.4);}
+  .tilt-labels{display:flex; justify-content:space-between; margin-top:8px; font-family:'IBM Plex Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.06em;}
+  .tilt-labels .l{color:var(--acero);} .tilt-labels .r{color:var(--carmin);}
+  .tilt-verdict{text-align:center; font-family:'Oswald',sans-serif; font-size:13px; text-transform:uppercase; letter-spacing:0.04em; margin-top:8px; color:var(--ink-dim);}
+
+  .round-body{max-height:0; overflow:hidden; transition:max-height 0.4s ease; padding:0 16px;}
+  .round.open .round-body{max-height:2000px; padding-bottom:16px;}
+
+  .exchange{border-left:2px solid var(--acero); padding:2px 0 2px 12px; margin:14px 0; position:relative;}
+  .exchange.answered{border-left-color:var(--carmin);}
+  .ex-contra{font-size:13.5px; line-height:1.5; color:var(--ink);}
+  .ex-contra .tag{font-family:'IBM Plex Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.06em; color:var(--acero); display:block; margin-bottom:4px;}
+  .ex-replica{font-size:13.5px; line-height:1.5; color:var(--ink); margin-top:10px; padding-left:12px; border-left:2px solid var(--carmin);}
+  .ex-replica .tag{font-family:'IBM Plex Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.06em; color:var(--carmin); display:block; margin-bottom:4px;}
+  .ex-replica.empty{color:var(--ink-dim); font-style:italic;}
+  .ex-del{float:right; color:var(--ink-dim); cursor:pointer; font-size:13px;}
+  .ex-del:hover{color:var(--carmin);}
+  .ex-reply-btn{margin-top:8px; margin-left:12px;}
+
+  .ex-verdict{margin-top:8px; margin-left:12px; font-size:12px; line-height:1.5;}
+  .ex-verdict b{font-family:'Oswald',sans-serif; font-weight:600; letter-spacing:0.02em;}
+  .attack-row{margin:14px 0; text-align:center;}
+  .attack-row .btn{background:linear-gradient(90deg,var(--carmin),#c23a30);}
+  .btn:disabled{opacity:0.6; cursor:default;}
+
+  .empty{color:var(--ink-dim); font-size:13px; text-align:center; padding:26px 0; line-height:1.6;}
+
+  button, .btn, .round{transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1);}
+  button:active, .btn:active{transform:scale(0.94);}
+  button, a, input, select{touch-action:manipulation;}
+  h1,h2,label{overflow-wrap:normal; word-break:keep-all; hyphens:none; text-wrap:balance;}
+
+  .signature{position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:15;
+    font-family:'Petit Formal Script',cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
+  .toast{position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:9998;
+    background:rgba(224,72,61,0.16); border:1px solid var(--carmin); color:#ff9a92;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:10px 18px; border-radius:3px;
+    opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px;}
+  .toast svg{width:14px; height:14px;}
+
+  @media (max-width:480px){ h1{font-size:36px;} }
+</style>
+</head>
+<body>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#E0483D;transform:scale(80);"></div></div>
+
+<canvas id="ring"></canvas>
+
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0B0C10; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div style="background:#14161C; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#E0483D; margin-bottom:14px;">Acceso privado</div>
+    <div style="font-family:'Oswald',sans-serif; font-weight:600; font-size:24px; text-transform:uppercase; color:#ECEEF2; margin-bottom:6px;">Bienvenido, Darío</div>
+    <div style="font-size:12px; color:#7E8592; margin-bottom:20px;">Ingresa tu PIN para continuar</div>
+    <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border-radius:8px; border:1px solid rgba(255,255,255,0.15); background:#0B0C10; color:#ECEEF2; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
+    <div id="pin-error" style="color:#E0483D; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
+    <button id="pin-submit" style="width:100%; padding:13px; border:none; border-radius:8px; background:#E0483D; color:#fff; font-family:'Oswald',sans-serif; font-weight:600; font-size:14px; text-transform:uppercase; letter-spacing:0.06em; cursor:pointer;">Entrar</button>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const CORRECT_PIN = '3751';
+    const gate = document.getElementById('pin-gate');
+    const input = document.getElementById('pin-input');
+    const err = document.getElementById('pin-error');
+    let unlocked = false;
+    try{ unlocked = localStorage.getItem('habit_unlocked') === 'yes'; }catch(e){}
+    if(unlocked){ gate.style.display = 'none'; }
+    else { setTimeout(()=> input.focus(), 200); }
+    function tryUnlock(){
+      if(input.value === CORRECT_PIN){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display='none'; }
+      else { err.textContent = 'PIN incorrecto'; input.value=''; input.focus(); }
+    }
+    document.getElementById('pin-submit').addEventListener('click', tryUnlock);
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryUnlock(); });
+  })();
+</script>
+
+<div class="page">
+  <div class="nav1">
+    <a href="index.html">Hábitos</a>
+    <a href="metas.html">Metas</a>
+    <a href="errores.html">Errores</a>
+    <a href="sesgos.html">Sesgos</a>
+    <a href="cerebro.html">Cerebro</a>
+    <a href="habilidades.html">Habilidades</a>
+    <a href="sustancias.html">Protocolo</a>
+    <a href="comprimir.html">Compresor</a>
+    <a href="sparring.html" class="current">Sparring</a>
+  </div>
+
+  <header>
+    <div class="eyebrow">Fase 2 · Sistema 8</div>
+    <h1>Tú <span class="vs">vs</span><br>tu tesis</h1>
+    <p class="sub">Toda postura que no aguanta su mejor contraataque no está lista. Sube tu tesis al ring y deja que la IA te ataque con lo más fuerte que tenga. Respondes cada golpe, la IA juzga si tu réplica aguanta, y el centro se inclina hacia ti solo cuando de verdad te defiendes. Usa tu clave de API de Anthropic (la misma de Cerebro).</p>
+    <div class="stat-row">
+      <div class="stat"><b id="stat-tesis">0</b><span>Tesis</span></div>
+      <div class="stat"><b id="stat-contras">0</b><span>Contraataques</span></div>
+      <div class="stat"><b id="stat-def">0%</b><span>Defendidos</span></div>
+    </div>
+  </header>
+
+  <section id="nueva">
+    <h2>Nueva tesis al ring</h2>
+    <div class="compose">
+      <div class="field">
+        <label>Tu postura</label>
+        <textarea id="c-tesis" placeholder="La postura que vas a defender. Ej: 'Vale más terminar la carrera que dejarla por el freelance ahora.'"></textarea>
+        <div class="hint">Sé específico. Una tesis vaga no se puede atacar ni defender.</div>
+      </div>
+      <div class="field">
+        <label>Contexto (opcional)</label>
+        <input type="text" id="c-context" placeholder="¿Para qué? Ej: decisión personal, examen, debate, negociación…">
+      </div>
+      <div class="save-row"><button class="btn" id="save-tesis">Subir al ring ✊</button></div>
+    </div>
+  </section>
+
+  <section id="arena-sec">
+    <h2>El cuadrilátero</h2>
+    <div class="arena" id="arena"></div>
+    <div class="empty" id="empty-state" style="display:none;">El ring está vacío.<br>Sube tu primera tesis y ponla a prueba.</div>
+  </section>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span id="toast-text">Listo</span></div>
+<div class="signature">Darío Calle</div>
+
+<script>
+  if(typeof Lenis !== 'undefined'){
+    try{
+      const lenis = new Lenis({ duration: 1.05, easing: t => Math.min(1, 1.001 - Math.pow(2, -10*t)) });
+      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+      requestAnimationFrame(raf);
+    }catch(e){}
+  }
+</script>
+
+<script>
+  // ===== Fondo: CUADRILÁTERO — dos esquinas en tensión, chispas que chocan en el centro =====
+  (function(){
+    const canvas = document.getElementById('ring');
+    const ctx = canvas.getContext('2d');
+    let W, H;
+    function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+
+    // Chispas que salen de las dos esquinas superiores y convergen al centro
+    const sparks = [];
+    function spawn(fromLeft){
+      const sx = fromLeft ? W*0.12 : W*0.88;
+      const sy = H*0.16;
+      sparks.push({
+        x:sx, y:sy, tx:W*0.5, ty:H*0.46,
+        t:0, speed:0.006+Math.random()*0.01,
+        color: fromLeft ? '110,160,200' : '224,72,61',
+        size: 1+Math.random()*1.8
+      });
+    }
+
+    let frame=0;
+    function tick(){
+      requestAnimationFrame(tick);
+      frame++;
+      ctx.clearRect(0,0,W,H);
+
+      // Glow de las dos esquinas, latiendo
+      const pulse = 0.5 + Math.sin(frame*0.03)*0.5;
+      const g1 = ctx.createRadialGradient(W*0.12,H*0.16,0, W*0.12,H*0.16, 260);
+      g1.addColorStop(0,`rgba(110,160,200,${0.22+pulse*0.10})`); g1.addColorStop(1,'rgba(110,160,200,0)');
+      ctx.fillStyle=g1; ctx.fillRect(0,0,W,H);
+      const g2 = ctx.createRadialGradient(W*0.88,H*0.16,0, W*0.88,H*0.16, 260);
+      g2.addColorStop(0,`rgba(224,72,61,${0.22+(1-pulse)*0.10})`); g2.addColorStop(1,'rgba(224,72,61,0)');
+      ctx.fillStyle=g2; ctx.fillRect(0,0,W,H);
+
+      // Líneas de fuerza desde cada esquina hacia el centro
+      ctx.lineWidth=1;
+      for(let i=0;i<5;i++){
+        const off=(i-2)*26;
+        ctx.strokeStyle=`rgba(110,160,200,${0.05+pulse*0.04})`;
+        ctx.beginPath(); ctx.moveTo(W*0.12,H*0.16); ctx.lineTo(W*0.5+off, H*0.46); ctx.stroke();
+        ctx.strokeStyle=`rgba(224,72,61,${0.05+(1-pulse)*0.04})`;
+        ctx.beginPath(); ctx.moveTo(W*0.88,H*0.16); ctx.lineTo(W*0.5+off, H*0.46); ctx.stroke();
+      }
+
+      // Choque en el centro
+      const clashR = 30 + Math.sin(frame*0.12)*14;
+      const cg = ctx.createRadialGradient(W*0.5,H*0.46,0, W*0.5,H*0.46, clashR);
+      cg.addColorStop(0,'rgba(255,240,200,0.28)'); cg.addColorStop(1,'rgba(255,240,200,0)');
+      ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(W*0.5,H*0.46,clashR,0,Math.PI*2); ctx.fill();
+
+      if(frame%8===0){ spawn(true); spawn(false); }
+      for(let i=sparks.length-1;i>=0;i--){
+        const s=sparks[i]; s.t+=s.speed;
+        if(s.t>=1){ sparks.splice(i,1); continue; }
+        const e = 1-Math.pow(1-s.t,2);
+        const x = s.x + (s.tx-s.x)*e, y = s.y + (s.ty-s.y)*e;
+        ctx.fillStyle=`rgba(${s.color},${(1-s.t)*0.8})`;
+        ctx.beginPath(); ctx.arc(x,y,s.size,0,Math.PI*2); ctx.fill();
+      }
+
+      // Piso del ring en perspectiva (líneas que convergen)
+      ctx.strokeStyle='rgba(255,255,255,0.04)';
+      const fy=H*0.62;
+      for(let i=-4;i<=4;i++){
+        ctx.beginPath(); ctx.moveTo(W*0.5 + i*40, fy); ctx.lineTo(W*0.5 + i*180, H); ctx.stroke();
+      }
+      for(let j=0;j<4;j++){
+        const yy = fy + (H-fy)*(j/4)*(j/4);
+        ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(W,yy); ctx.stroke();
+      }
+
+    }
+    tick();
+  })();
+</script>
+
+<script>
+  // ===== Datos =====
+  function load(){ try{ return JSON.parse(localStorage.getItem('sparring')||'[]'); }catch(e){ return []; } }
+  function save(list){ try{ localStorage.setItem('sparring', JSON.stringify(list)); }catch(e){} render(); }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  function showToast(text){
+    if(text) document.getElementById('toast-text').textContent = text;
+    const el = document.getElementById('toast');
+    gsap.killTweensOf(el);
+    gsap.timeline()
+      .to(el, { opacity:1, y:0, duration:0.35, ease:'back.out(2)' })
+      .to(el, { opacity:0, y:-14, duration:0.4, ease:'power1.in', delay:1.6 });
+  }
+
+  document.getElementById('save-tesis').addEventListener('click', ()=>{
+    const tesis = document.getElementById('c-tesis').value.trim();
+    if(!tesis){ showToast('Escribe tu postura primero'); return; }
+    const list = load();
+    list.unshift({
+      id: Date.now().toString(),
+      tesis, context: document.getElementById('c-context').value.trim(),
+      exchanges: [], date: new Date().toISOString().split('T')[0]
+    });
+    save(list);
+    document.getElementById('c-tesis').value=''; document.getElementById('c-context').value='';
+    showToast('Al ring ✊');
+  });
+
+  function deleteTesis(id){ save(load().filter(t=>t.id!==id)); }
+  function addReplica(id, idx, text){
+    if(!text.trim()) return;
+    const list=load(); const t=list.find(x=>x.id===id);
+    if(t && t.exchanges[idx]){ t.exchanges[idx].replica = text.trim(); t.exchanges[idx].verdict=null; t.exchanges[idx].judge=''; save(list); showToast('Réplica anotada ✊'); }
+  }
+  function delExchange(id, idx){
+    const list=load(); const t=list.find(x=>x.id===id);
+    if(t){ t.exchanges.splice(idx,1); save(list); }
+  }
+
+  let openId = null;
+
+  // ===== Capa de IA: la misma clave de Anthropic que usa Cerebro (guardada en el dispositivo) =====
+  function getApiKey(){
+    try{ let k = localStorage.getItem('brain_api_key'); if(k) return k; }catch(e){}
+    const k = prompt('Pega tu clave de API de Anthropic (la misma de Cerebro).\nSe guarda solo en este dispositivo.');
+    if(k){ try{ localStorage.setItem('brain_api_key', k.trim()); }catch(e){} return k.trim(); }
+    return null;
+  }
+  async function askClaude(system, user, maxTokens){
+    const apiKey = getApiKey();
+    if(!apiKey) throw new Error('Sin clave de API');
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model:'claude-sonnet-5', max_tokens:maxTokens||900, system, messages:[{role:'user', content:user}] })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message||'Error de la API');
+    return data.content.map(c=> c.text||'').join('');
+  }
+
+  // La IA ataca la tesis con sus mejores contraargumentos
+  async function aiAttack(id){
+    const list=load(); const t=list.find(x=>x.id===id); if(!t) return;
+    const btn = document.querySelector('[data-attack="'+id+'"]');
+    if(btn){ btn.disabled=true; btn.textContent='La IA está pensando…'; }
+    try{
+      const sys = 'Eres un sparring intelectual implacable pero honesto. Tu trabajo es ATACAR la tesis del usuario con los contraargumentos más fuertes y reales que existan — los que un experto o un rival brillante usaría. Nada de hombres de paja ni objeciones débiles. Responde SOLO con un array JSON de 3 a 4 strings, cada uno un contraargumento contundente en español, autocontenido, de 1-2 oraciones. Sin texto fuera del JSON.';
+      const usr = 'Tesis a atacar: "'+t.tesis+'"'+(t.context?('\nContexto: '+t.context):'');
+      const raw = await askClaude(sys, usr, 700);
+      let arr;
+      try{ arr = JSON.parse(raw); }
+      catch(e){ const m = raw.match(/\[[\s\S]*\]/); arr = m ? JSON.parse(m[0]) : null; }
+      if(!Array.isArray(arr) || !arr.length) throw new Error('Respuesta inesperada');
+      arr.forEach(c=>{ if(typeof c==='string' && c.trim()) t.exchanges.push({contra:c.trim(), replica:'', verdict:null, judge:''}); });
+      save(list);
+      showToast('La IA lanzó '+arr.length+' golpes');
+    }catch(e){ showToast('Error: '+e.message); }
+    finally{ if(btn){ btn.disabled=false; } render(); }
+  }
+
+  // La IA juzga si tu réplica aguanta el contraargumento
+  async function aiJudge(id, idx){
+    const list=load(); const t=list.find(x=>x.id===id); if(!t||!t.exchanges[idx]) return;
+    const e = t.exchanges[idx];
+    if(!e.replica){ showToast('Responde primero'); return; }
+    const btn = document.querySelector('[data-judge="'+id+'|'+idx+'"]');
+    if(btn){ btn.disabled=true; btn.textContent='Juzgando…'; }
+    try{
+      const sys = 'Eres un juez de debate riguroso y justo. Evalúa si la RÉPLICA del usuario realmente neutraliza el CONTRAARGUMENTO contra su tesis. Sé honesto: no regales veredictos. Responde SOLO con JSON: {"veredicto":"fuerte|parcial|debil","razon":"una frase breve en español explicando por qué"}. "fuerte"=la réplica desarma el golpe; "parcial"=lo mitiga pero deja un hueco; "debil"=no responde de verdad. Sin texto fuera del JSON.';
+      const usr = 'Tesis: "'+t.tesis+'"\nContraargumento: "'+e.contra+'"\nRéplica del usuario: "'+e.replica+'"';
+      const raw = await askClaude(sys, usr, 300);
+      let obj;
+      try{ obj = JSON.parse(raw); }
+      catch(err){ const m = raw.match(/\{[\s\S]*\}/); obj = m ? JSON.parse(m[0]) : null; }
+      if(!obj || !obj.veredicto) throw new Error('Respuesta inesperada');
+      e.verdict = (obj.veredicto||'').toLowerCase();
+      e.judge = obj.razon || '';
+      save(list);
+      showToast('Veredicto: '+e.verdict);
+    }catch(err){ showToast('Error: '+err.message); }
+    finally{ if(btn){ btn.disabled=false; } render(); }
+  }
+
+  // Cada golpe pesa según el veredicto de la IA; si aún no hay veredicto pero hay réplica, cuenta a medias
+  function scoreOf(e){
+    if(e.verdict==='fuerte') return 1;
+    if(e.verdict==='parcial') return 0.5;
+    if(e.verdict==='debil') return 0;
+    return e.replica ? 0.6 : 0;
+  }
+  function balanceOf(t){
+    const n = t.exchanges.length;
+    if(n===0) return 0.5;
+    return t.exchanges.reduce((s,e)=> s+scoreOf(e), 0) / n;
+  }
+  function verdict(bal, n){
+    if(n===0) return 'Aún sin ataques';
+    if(bal >= 0.85) return 'Tu tesis aguanta ✊';
+    if(bal >= 0.6) return 'Vas ganando terreno';
+    if(bal >= 0.4) return 'Combate parejo';
+    return 'Tu tesis está en aprietos';
+  }
+  const VERDICT_LABEL = {fuerte:'Réplica fuerte ✊', parcial:'Réplica parcial', debil:'Réplica débil'};
+  const VERDICT_COLOR = {fuerte:'var(--carmin)', parcial:'#D9A441', debil:'var(--acero)'};
+
+  function render(){
+    const list = load();
+    const totalContras = list.reduce((s,t)=> s+t.exchanges.length, 0);
+    const held = list.reduce((s,t)=> s+t.exchanges.reduce((a,e)=> a+scoreOf(e), 0), 0);
+    document.getElementById('stat-tesis').textContent = list.length;
+    document.getElementById('stat-contras').textContent = totalContras;
+    document.getElementById('stat-def').textContent = totalContras ? Math.round(held/totalContras*100)+'%' : '0%';
+    document.getElementById('empty-state').style.display = list.length ? 'none' : 'block';
+
+    document.getElementById('arena').innerHTML = list.map((t,ri)=>{
+      const isOpen = openId===t.id;
+      const bal = balanceOf(t);
+      const n = t.exchanges.length;
+      const exchanges = t.exchanges.map((e,i)=>{
+        const vl = e.verdict ? VERDICT_LABEL[e.verdict] : null;
+        const vc = e.verdict ? VERDICT_COLOR[e.verdict] : 'var(--carmin)';
+        return `
+        <div class="exchange ${e.replica?'answered':''}">
+          <span class="ex-del" data-exdel="${t.id}|${i}">×</span>
+          <div class="ex-contra"><span class="tag">Golpe de la IA</span>${escapeHtml(e.contra)}</div>
+          ${e.replica
+            ? `<div class="ex-replica"><span class="tag">Tu réplica</span>${escapeHtml(e.replica)}</div>
+               ${vl
+                 ? `<div class="ex-verdict" style="color:${vc}"><b>${vl}</b>${e.judge?' — '+escapeHtml(e.judge):''}</div>`
+                 : `<div class="ex-reply-btn"><button class="btn steel mini" data-judge="${t.id}|${i}">¿Aguanta? — que la IA juzgue</button></div>`}`
+            : `<div class="ex-replica empty"><span class="tag">Tu réplica</span>Aún sin responder — este golpe sigue en pie.</div>
+               <div class="ex-reply-btn"><button class="btn mini" data-reply="${t.id}|${i}">Responder</button></div>`}
+        </div>`;
+      }).join('');
+      return `
+      <div class="round ${isOpen?'open':''}" data-id="${t.id}" style="border-color:${isOpen?'var(--carmin)':'var(--line)'}">
+        <span class="round-del" data-del="${t.id}">×</span>
+        <div class="round-head">
+          <div class="round-no">Round ${list.length-ri}${t.context?' · '+escapeHtml(t.context):''}</div>
+          <div class="round-tesis">${escapeHtml(t.tesis)}</div>
+          <div class="tilt">
+            <div class="tilt-bar"><div class="tilt-marker" style="left:${(bal*100).toFixed(0)}%"></div></div>
+            <div class="tilt-labels"><span class="l">En contra</span><span class="r">Defendido</span></div>
+            <div class="tilt-verdict">${verdict(bal,n)}</div>
+          </div>
+        </div>
+        <div class="round-body">
+          <div class="attack-row"><button class="btn mini" data-attack="${t.id}">⚡ Que la IA me ataque</button></div>
+          ${exchanges || '<div class="empty" style="padding:10px 0;">Sin golpes todavía. Deja que la IA ataque tu tesis con lo más fuerte que tenga.</div>'}
+        </div>
+      </div>`;
+    }).join('');
+
+    const arena = document.getElementById('arena');
+    arena.querySelectorAll('.round').forEach(r=>{
+      r.addEventListener('click', (e)=>{
+        if(e.target.closest('button') || e.target.closest('textarea') || e.target.closest('[data-del]') || e.target.closest('[data-exdel]')) return;
+        openId = openId===r.dataset.id ? null : r.dataset.id;
+        render();
+      });
+    });
+    arena.querySelectorAll('[data-del]').forEach(x=> x.addEventListener('click', e=>{ e.stopPropagation(); deleteTesis(x.dataset.del); }));
+    arena.querySelectorAll('[data-exdel]').forEach(x=> x.addEventListener('click', e=>{ e.stopPropagation(); const [id,i]=x.dataset.exdel.split('|'); delExchange(id, +i); }));
+    arena.querySelectorAll('[data-attack]').forEach(b=> b.addEventListener('click', e=>{ e.stopPropagation(); aiAttack(b.dataset.attack); }));
+    arena.querySelectorAll('[data-judge]').forEach(b=> b.addEventListener('click', e=>{ e.stopPropagation(); const [id,i]=b.dataset.judge.split('|'); aiJudge(id, +i); }));
+    arena.querySelectorAll('[data-reply]').forEach(b=> b.addEventListener('click', e=>{
+      e.stopPropagation();
+      const [id,i]=b.dataset.reply.split('|');
+      const r = prompt('Tu réplica a este contraataque:');
+      if(r) addReplica(id, +i, r);
+    }));
+  }
+  render();
+</script>
+
+<script>
+  window.addEventListener('load', ()=>{
+    gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' });
+  });
+  document.querySelectorAll('a[href$=".html"]').forEach(link=>{
+    link.addEventListener('click', function(e){
+      if(this.target === '_blank') return;
+      const href = this.getAttribute('href');
+      e.preventDefault();
+      gsap.to('#veil-iris', { scale:80, duration:0.5, ease:'power3.inOut', onComplete:()=>{ window.location.href = href; } });
+    });
+  });
+  const revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{ if(entry.isIntersecting){ gsap.to(entry.target, { opacity:1, y:0, duration:0.6, ease:'power3.out' }); revealObserver.unobserve(entry.target); } });
+  }, { threshold:0.1 });
+  document.querySelectorAll('section, header').forEach(el=>{ gsap.set(el, { opacity:0, y:26 }); revealObserver.observe(el); });
+</script>
+
+</body>
+</html>
