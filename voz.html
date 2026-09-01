@@ -274,7 +274,7 @@
     gsap.timeline().to(el,{opacity:1,y:0,duration:0.35,ease:'back.out(2)'}).to(el,{opacity:0,y:-14,duration:0.4,ease:'power1.in',delay:1.8});
   }
 
-  const GEMINI_MODEL = 'gemini-2.5-flash';
+  const GEMINI_MODEL = 'gemini-flash-latest';
   function getApiKey(){
     try{ let k = localStorage.getItem('gemini_api_key'); if(k) return k; }catch(e){}
     const k = prompt('Pega tu clave de API de Google AI Studio (aistudio.google.com → Get API key). Gratis.\nSe guarda solo en este dispositivo.');
