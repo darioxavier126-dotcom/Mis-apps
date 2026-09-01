@@ -219,12 +219,12 @@
 <div class="drawer" id="ask-drawer">
   <div class="drawer-head"><h2>Pregúntale a tu cerebro</h2><span class="drawer-close" data-close="ask-drawer">×</span></div>
   <div class="drawer-body">
-    <div class="field"><label>Tu clave de API</label><input type="password" id="api-key" placeholder="sk-ant-…"></div>
+    <div class="field"><label>Tu clave de API (Google AI Studio)</label><input type="password" id="api-key" placeholder="AIza…"></div>
     <div class="field"><label>Pregunta</label><textarea id="ai-question" placeholder="Ej: ¿qué tengo apuntado sobre Lean Six Sigma?" style="min-height:54px;"></textarea></div>
     <div class="row-end"><button class="btn" id="ask-ai">Preguntar</button></div>
     <div class="status" id="ai-status"></div>
     <div class="ai-answer" id="ai-answer"></div>
-    <p class="ai-note">Tu clave queda guardada en este celular para no pegarla cada vez — vive solo en este navegador, nunca sale de aquí. Si prestas o vendes el celular, bórrala tocando "Olvidar clave". Consíguela en console.anthropic.com.</p>
+    <p class="ai-note">Usa una clave gratis de Google AI Studio (aistudio.google.com → Get API key). Queda guardada en este celular para no pegarla cada vez — vive solo en este navegador. Si prestas o vendes el celular, bórrala con "Olvidar clave". La misma clave sirve para Sparring, Tendencias y Mi voz.</p>
     <div class="row-end" style="margin-top:8px;"><span class="drawer-close" id="forget-key" style="font-size:10px; text-decoration:underline;">Olvidar clave</span></div>
   </div>
 </div>
@@ -457,14 +457,15 @@
   document.getElementById('open-ask').addEventListener('click', ()=> openDrawer('ask-drawer'));
   document.querySelectorAll('[data-close]').forEach(el=> el.addEventListener('click', ()=> closeDrawer(el.dataset.close)));
 
-  // ===== Preguntar a la IA =====
-  // La clave se guarda en localStorage de este dispositivo para no pegarla cada vez.
-  // Vive solo en este navegador — nunca se envía a ningún lado excepto a la API de Anthropic.
+  // ===== Preguntar a la IA (Google Gemini) =====
+  // La clave (de Google AI Studio) se guarda en este dispositivo para no pegarla cada vez.
+  // Vive solo en este navegador — nunca se envía a ningún lado excepto a la API de Google.
+  const GEMINI_MODEL = 'gemini-2.5-flash';
   const apiKeyInput = document.getElementById('api-key');
-  try{ const saved = localStorage.getItem('brain_api_key'); if(saved) apiKeyInput.value = saved; }catch(e){}
+  try{ const saved = localStorage.getItem('gemini_api_key'); if(saved) apiKeyInput.value = saved; }catch(e){}
 
   document.getElementById('forget-key').addEventListener('click', ()=>{
-    try{ localStorage.removeItem('brain_api_key'); }catch(e){}
+    try{ localStorage.removeItem('gemini_api_key'); }catch(e){}
     apiKeyInput.value = '';
     showToast('Clave olvidada');
   });
@@ -476,7 +477,7 @@
     const answerEl = document.getElementById('ai-answer');
     if(!apiKey){ statusEl.textContent = 'Falta tu clave de API.'; return; }
     if(!question){ statusEl.textContent = 'Escribe una pregunta.'; return; }
-    try{ localStorage.setItem('brain_api_key', apiKey); }catch(e){}
+    try{ localStorage.setItem('gemini_api_key', apiKey); }catch(e){}
 
     const notes = loadNotes();
     const context = notes.map(n => `Título: ${n.title}\nEtiquetas: ${(n.tags||[]).join(', ')}\nContenido: ${n.content}`).join('\n\n---\n\n');
@@ -485,27 +486,20 @@
     answerEl.classList.remove('show');
 
     try{
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify({
-          model: 'claude-sonnet-5',
-          max_tokens: 800,
-          messages: [{
-            role: 'user',
-            content: `Estas son mis notas personales:\n\n${context}\n\n---\n\nPregunta: ${question}\n\nResponde solo con base en estas notas. Si no hay información suficiente, dilo claramente en vez de inventar.`
-          }]
+          systemInstruction:{parts:[{text:'Respondes preguntas del usuario usando solo sus notas personales. Si no hay información suficiente, dilo claramente en vez de inventar.'}]},
+          contents: [{ role:'user', parts:[{ text:`Estas son mis notas personales:\n\n${context}\n\n---\n\nPregunta: ${question}` }] }],
+          generationConfig:{ maxOutputTokens:900 }
         })
       });
       const data = await res.json();
       if(data.error){ statusEl.textContent = 'Error: ' + data.error.message; return; }
-      const text = data.content.map(c=> c.text||'').join('\n');
-      answerEl.textContent = text;
+      const cand = data.candidates && data.candidates[0];
+      const text = (cand && cand.content && cand.content.parts||[]).map(p=> p.text||'').join('\n');
+      answerEl.textContent = text || 'Sin respuesta.';
       answerEl.classList.add('show');
       statusEl.textContent = '';
     } catch(err){ statusEl.textContent = 'Error de conexión: ' + err.message; }
