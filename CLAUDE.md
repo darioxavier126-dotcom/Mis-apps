@@ -40,6 +40,9 @@
 | `tendencias.html` | Traductor de tendencias | Ámbar sobre negro, **tablero de aeropuerto (split-flap)** | Franjas de salón + filas que voltean | `tendencias` (+ `tendencias_temas`) (**IA + búsqueda web**: escanea el mundo) |
 | `voz.html` | Escribir con mi voz | Tinta-noche, **caligrafía viva** | Tinta fluyendo en campo de flujo (canvas 2D) | `voz_perfil`, `voz_textos` (**IA**: aprende tu estilo y reescribe) |
 | `comprimir.html` | Compresor de libros/cursos | Negro óptico, espectro, **prisma/destilación** | Prisma 3D: luz blanca → espectro (three.js) | `biblioteca` |
+| `inversiones.html` | Terminal (Bitcoin/inversiones) | Verde fósforo sobre negro, **terminal de trading** monoespaciada | Scanlines CRT sutiles | `inversiones` (precios vía API pública de CoinGecko, sin clave) |
+
+**Nota de proveedor de IA (2026-09-01):** las 4 apps con IA (Cerebro, Sparring, Tendencias, Mi voz) migraron de Anthropic a **Google Gemini** (`gemini-3.6-flash`, capa gratis de Google AI Studio) por costo — clave en `gemini_api_key`. Todas reintentan 3 veces si Google devuelve 503 (modelo saturado). Terminal usa el mismo patrón para su lectura de tendencia de mercado.
 
 ## Patrones compartidos (reutilizar, no reinventar)
 - **PIN gate** idéntico en lógica (clave `3751`, guarda `habit_unlocked`), con "Bienvenido, Darío" + try/catch en localStorage.
