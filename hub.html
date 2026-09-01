@@ -81,9 +81,18 @@
     try{ unlocked = localStorage.getItem('habit_unlocked') === 'yes'; }catch(e){}
     if(unlocked){ gate.style.display = 'none'; }
     else { setTimeout(()=> input.focus(), 200); }
+    function enterPanel(){
+      // Animación de entrada: el gate se disuelve hacia el centro y el panel aparece con un pequeño rebote, en cascada
+      gsap.to(gate, { opacity:0, scale:1.15, duration:0.5, ease:'power2.in', onComplete:()=>{ gate.style.display='none'; gate.style.opacity=1; gate.style.transform='none'; } });
+      gsap.from('header, .today-card, .tile', { opacity:0, y:24, scale:0.96, duration:0.7, delay:0.25, stagger:0.045, ease:'back.out(1.4)' });
+    }
     function tryUnlock(){
-      if(input.value === CORRECT_PIN){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display='none'; }
-      else { err.textContent = 'PIN incorrecto'; input.value=''; input.focus(); }
+      if(input.value === CORRECT_PIN){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} enterPanel(); }
+      else {
+        err.textContent = 'PIN incorrecto'; input.value='';
+        gsap.fromTo('#pin-gate > div', { x:-8 }, { x:0, duration:0.4, ease:'elastic.out(1,0.3)' });
+        input.focus();
+      }
     }
     document.getElementById('pin-submit').addEventListener('click', tryUnlock);
     input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryUnlock(); });
@@ -138,7 +147,7 @@
 
   // Saludo según la hora
   const h = new Date().getHours();
-  document.getElementById('greet').textContent = h<12 ? 'Buenos días' : (h<19 ? 'Buenas tardes' : 'Buenas noches');
+  document.getElementById('greet').textContent = (h<12 ? 'Buenos días' : (h<19 ? 'Buenas tardes' : 'Buenas noches')) + ', Darío';
   document.getElementById('date').textContent = new Date().toLocaleDateString('es', {weekday:'long', day:'numeric', month:'long'});
 
   // ===== Resumen de hoy =====
@@ -164,19 +173,19 @@
 
   // ===== Tiles de sistemas =====
   const APPS = [
-    {nm:'Hábitos', file:'index.html', c:'#B58A46', stat:()=> habitToday?'Registrado hoy':'Pendiente hoy'},
+    {nm:'Hábitos', file:'index.html', c:'#5FBFB3', stat:()=> habitToday?'Registrado hoy':'Pendiente hoy'},
     {nm:'Protocolo', file:'sustancias.html', c:'#6FA88A', stat:()=> dosisHechas+'/6 tomas hoy'},
     {nm:'Metas', file:'metas.html', c:'#FF6F5E', stat:()=> goals.length+' metas · '+metasPct+'%'},
-    {nm:'Cerebro', file:'cerebro.html', c:'#F5D77A', stat:()=> lsJSON('brain',[]).length+' notas'},
+    {nm:'Cerebro', file:'cerebro.html', c:'#6C7DE8', stat:()=> lsJSON('brain',[]).length+' notas'},
     {nm:'Habilidades', file:'habilidades.html', c:'#3FD9A0', stat:()=> lsJSON('skillmap',[]).length+' habilidades'},
     {nm:'Compresor', file:'comprimir.html', c:'#8BB8FF', stat:()=> lsJSON('biblioteca',[]).length+' destilados'},
     {nm:'Sparring', file:'sparring.html', c:'#E0483D', stat:()=> lsJSON('sparring',[]).length+' tesis'},
-    {nm:'Tendencias', file:'tendencias.html', c:'#F5B841', stat:()=> lsJSON('tendencias',[]).length+' señales'},
+    {nm:'Tendencias', file:'tendencias.html', c:'#5FE0D0', stat:()=> lsJSON('tendencias',[]).length+' señales'},
     {nm:'Mi voz', file:'voz.html', c:'#7FA4E0', stat:()=> lsJSON('voz_textos',[]).length+' textos'},
     {nm:'Errores', file:'errores.html', c:'#A8471F', stat:()=> lsJSON('errorlog',[]).length+' casos'},
     {nm:'Sesgos', file:'sesgos.html', c:'#8B6CF0', stat:()=> lsJSON('biaslog',[]).length+' análisis'},
     {nm:'The Ledger', file:'inversiones.html', c:'#00C853', stat:()=> lsJSON('inversiones',[]).length+' activos'},
-    {nm:'Pizarra', file:'pizarra.html', c:'#F0D264', stat:()=> lsJSON('pizarra',[]).length+' clases'}
+    {nm:'Pizarra', file:'pizarra.html', c:'#F09EB0', stat:()=> lsJSON('pizarra',[]).length+' clases'}
   ];
   document.getElementById('grid').innerHTML = APPS.map(a=>`
     <a class="tile" href="${a.file}" style="--c:${a.c}">
