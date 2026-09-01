@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mi voz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<style>
+  :root{
+    --bg:#0B0E16; --panel:#121724; --line:rgba(150,180,230,0.13);
+    --ink:#E8EBF4; --ink-dim:#7C86A0; --pluma:#7FA4E0; --pluma-hi:#A8C4F5; --sepia:#D9A066;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh; position:relative; overflow-x:hidden;}
+  canvas#ink{position:fixed; inset:0; z-index:0; display:block;}
+  body::after{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(ellipse at 50% 20%, transparent 40%, rgba(11,14,22,0.7) 100%);}
+
+  .page{position:relative; z-index:1; max-width:680px; margin:0 auto; padding:20px 20px 100px;}
+
+  .nav1{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:28px;}
+  .nav1 a{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-decoration:none; color:var(--ink-dim);
+    border:1px solid var(--line); padding:6px 11px; background:rgba(18,23,36,0.55); letter-spacing:0.03em; border-radius:3px;}
+  .nav1 a.current{background:var(--pluma); color:#0B0E16; border-color:var(--pluma);}
+  .nav1 a:hover{border-color:var(--pluma); color:var(--pluma);}
+
+  .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--pluma); margin-bottom:6px;}
+  h1{font-family:'Newsreader',serif; font-weight:500; font-size:42px; letter-spacing:-0.01em; line-height:1.02; font-style:italic;}
+  .sub{color:var(--ink-dim); font-size:14px; line-height:1.6; margin-top:12px; max-width:520px;}
+
+  section{margin-top:40px;}
+  h2{font-family:'Newsreader',serif; font-weight:500; font-size:24px; margin-bottom:6px;}
+  .h2-sub{color:var(--ink-dim); font-size:12.5px; margin-bottom:16px; line-height:1.5;}
+
+  .card{border:1px solid var(--line); background:rgba(18,23,36,0.66); backdrop-filter:blur(14px); border-radius:14px; padding:20px; position:relative; overflow:hidden;}
+  .card::before{content:''; position:absolute; top:0; left:0; bottom:0; width:3px; background:linear-gradient(var(--pluma), transparent);}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-dim); margin-bottom:7px;}
+  input[type=text], textarea, select{
+    width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:rgba(11,14,22,0.6); color:var(--ink); font-family:'Inter',sans-serif; font-size:14px; line-height:1.55;
+  }
+  input:focus, textarea:focus, select:focus{outline:none; border-color:var(--pluma);}
+  textarea{resize:vertical;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+
+  .save-row{display:flex; justify-content:center; gap:10px; margin-top:16px; flex-wrap:wrap;}
+  .btn{background:var(--pluma); color:#0B0E16; border:none; padding:13px 26px; border-radius:999px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:0.04em; cursor:pointer; font-weight:600;}
+  .btn:hover{background:var(--pluma-hi);}
+  .btn.ghost{background:transparent; color:var(--pluma); border:1px solid var(--pluma); font-weight:400;}
+  .btn.mini{padding:9px 16px; font-size:11px;}
+  .btn:disabled{opacity:0.55; cursor:default;}
+
+  /* Perfil de voz aprendido */
+  .voice-card{border:1px solid var(--line); background:rgba(18,23,36,0.6); border-radius:14px; padding:18px 20px; position:relative;}
+  .voice-badge{display:inline-flex; align-items:center; gap:7px; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--sepia); margin-bottom:12px;}
+  .voice-badge::before{content:'✒'; font-size:13px;}
+  .voice-text{font-family:'Newsreader',serif; font-size:15px; line-height:1.7; color:var(--ink); white-space:pre-wrap;}
+  .voice-actions{display:flex; gap:10px; margin-top:14px;}
+  .voice-empty{color:var(--ink-dim); font-size:13.5px; line-height:1.6;}
+
+  /* Salida generada */
+  .output{margin-top:16px; border:1px solid var(--pluma); border-radius:14px; background:rgba(127,164,224,0.06); padding:20px; display:none;}
+  .output.show{display:block;}
+  .output-text{font-family:'Newsreader',serif; font-size:16px; line-height:1.75; white-space:pre-wrap; color:var(--ink);}
+  .output-actions{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;}
+
+  /* Biblioteca */
+  .lib{display:flex; flex-direction:column; gap:12px;}
+  .piece{position:relative; border:1px solid var(--line); border-radius:12px; background:rgba(18,23,36,0.55); overflow:hidden; cursor:pointer; transition:transform 0.18s ease;}
+  .piece:hover{transform:translateY(-2px);}
+  .piece-head{padding:14px 16px;}
+  .piece-tipo{font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--pluma); margin-bottom:5px;}
+  .piece-idea{font-size:13px; color:var(--ink-dim); line-height:1.4;}
+  .piece-body{max-height:0; overflow:hidden; transition:max-height 0.4s ease; padding:0 16px;}
+  .piece.open .piece-body{max-height:1600px; padding-bottom:16px;}
+  .piece-full{font-family:'Newsreader',serif; font-size:15px; line-height:1.7; white-space:pre-wrap; color:var(--ink);}
+  .piece-del{position:absolute; top:13px; right:14px; color:var(--ink-dim); font-size:15px; cursor:pointer; z-index:2;}
+  .piece-del:hover{color:#F5735B;}
+  .piece-actions{margin-top:12px;}
+
+  .empty{color:var(--ink-dim); font-size:13px; text-align:center; padding:24px 0; line-height:1.6;}
+
+  button, .btn, .piece{transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1);}
+  button:active, .btn:active{transform:scale(0.94);}
+  button, a, input, select{touch-action:manipulation;}
+  h1,h2,label{overflow-wrap:normal; word-break:keep-all; hyphens:none; text-wrap:balance;}
+
+  .signature{position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:15;
+    font-family:'Petit Formal Script',cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
+  .toast{position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:9998;
+    background:rgba(127,164,224,0.16); border:1px solid var(--pluma); color:var(--pluma-hi);
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:10px 18px; border-radius:3px;
+    opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px; max-width:90vw;}
+  .toast svg{width:14px; height:14px; flex-shrink:0;}
+
+  @media (max-width:480px){ h1{font-size:34px;} .row2{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#7FA4E0;transform:scale(80);"></div></div>
+
+<canvas id="ink"></canvas>
+
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0B0E16; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div style="background:#121724; border:1px solid rgba(150,180,230,0.16); border-radius:12px; padding:36px 30px; max-width:340px; width:100%; text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#7FA4E0; margin-bottom:14px;">Acceso privado</div>
+    <div style="font-family:'Newsreader',serif; font-style:italic; font-size:26px; color:#E8EBF4; margin-bottom:6px;">Bienvenido, Darío</div>
+    <div style="font-size:12px; color:#7C86A0; margin-bottom:20px;">Ingresa tu PIN para continuar</div>
+    <input type="password" inputmode="numeric" maxlength="4" id="pin-input" style="width:100%; text-align:center; letter-spacing:12px; font-size:24px; padding:14px; border-radius:8px; border:1px solid rgba(150,180,230,0.2); background:#0B0E16; color:#E8EBF4; font-family:'IBM Plex Mono',monospace; margin-bottom:16px;">
+    <div id="pin-error" style="color:#F5735B; font-size:12.5px; font-family:'IBM Plex Mono',monospace; min-height:18px; margin-bottom:10px;"></div>
+    <button id="pin-submit" style="width:100%; padding:13px; border:none; border-radius:8px; background:#7FA4E0; color:#0B0E16; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:14px; letter-spacing:0.04em; cursor:pointer;">Entrar</button>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const CORRECT_PIN = '3751';
+    const gate = document.getElementById('pin-gate');
+    const input = document.getElementById('pin-input');
+    const err = document.getElementById('pin-error');
+    let unlocked = false;
+    try{ unlocked = localStorage.getItem('habit_unlocked') === 'yes'; }catch(e){}
+    if(unlocked){ gate.style.display = 'none'; }
+    else { setTimeout(()=> input.focus(), 200); }
+    function tryUnlock(){
+      if(input.value === CORRECT_PIN){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display='none'; }
+      else { err.textContent = 'PIN incorrecto'; input.value=''; input.focus(); }
+    }
+    document.getElementById('pin-submit').addEventListener('click', tryUnlock);
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryUnlock(); });
+  })();
+</script>
+
+<div class="page">
+  <div class="nav1">
+    <a href="index.html">Hábitos</a>
+    <a href="metas.html">Metas</a>
+    <a href="errores.html">Errores</a>
+    <a href="sesgos.html">Sesgos</a>
+    <a href="cerebro.html">Cerebro</a>
+    <a href="habilidades.html">Habilidades</a>
+    <a href="sustancias.html">Protocolo</a>
+    <a href="comprimir.html">Compresor</a>
+    <a href="sparring.html">Sparring</a>
+    <a href="tendencias.html">Tendencias</a>
+    <a href="voz.html" class="current">Mi voz</a>
+  </div>
+
+  <header>
+    <div class="eyebrow">Fase 2 · Sistema 10</div>
+    <h1>Escribir con<br>mi propia voz</h1>
+    <p class="sub">La IA escribe bien, pero suena a IA. Aquí primero aprende cómo escribes tú — tu tono, tus muletillas, tu ritmo — y después reescribe lo que necesites sonando a ti, no a un robot. Propuestas de Upwork, correos, posts: en tu letra.</p>
+  </header>
+
+  <section id="voz-sec">
+    <h2>Mi voz</h2>
+    <div class="h2-sub">Pega 2-3 textos que hayas escrito tú (mientras más reales, mejor). La IA extrae tu firma de escritura.</div>
+    <div id="voice-slot"></div>
+  </section>
+
+  <section id="escribir-sec">
+    <h2>Escribir algo</h2>
+    <div class="h2-sub">Dale la idea en bruto y lo reescribe en tu voz. No hace falta que quede bonito — para eso está.</div>
+    <div class="card">
+      <div class="row2">
+        <div class="field"><label>Qué es</label>
+          <select id="w-tipo">
+            <option value="Propuesta de Upwork">Propuesta de Upwork</option>
+            <option value="Correo">Correo</option>
+            <option value="Mensaje / DM">Mensaje / DM</option>
+            <option value="Post para redes">Post para redes</option>
+            <option value="Ensayo / texto académico">Ensayo / académico</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="field"><label>Largo</label>
+          <select id="w-largo">
+            <option value="corto">Corto</option>
+            <option value="medio" selected>Medio</option>
+            <option value="largo">Largo</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>La idea en bruto</label>
+        <textarea id="w-idea" style="min-height:90px;" placeholder="Escribe la idea como te salga, con tus palabras, sin pulir. Ej: 'quiero decirle a este cliente que sí puedo hacer su automatización de correos, que ya hice algo parecido, y que empiezo esta semana'"></textarea>
+      </div>
+      <div class="save-row"><button class="btn" id="write-btn">✒ Escribir con mi voz</button></div>
+      <div class="output" id="output">
+        <div class="output-text" id="output-text"></div>
+        <div class="output-actions">
+          <button class="btn mini" id="copy-btn">Copiar</button>
+          <button class="btn ghost mini" id="save-piece">Guardar</button>
+          <button class="btn ghost mini" id="redo-btn">Otra versión</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="lib-sec">
+    <h2>Lo que he escrito</h2>
+    <div class="lib" id="lib"></div>
+    <div class="empty" id="empty-state" style="display:none;">Todavía no has guardado nada.</div>
+  </section>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span id="toast-text">Listo</span></div>
+<div class="signature">Darío Calle</div>
+
+<script>
+  if(typeof Lenis !== 'undefined'){
+    try{
+      const lenis = new Lenis({ duration: 1.05, easing: t => Math.min(1, 1.001 - Math.pow(2, -10*t)) });
+      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+      requestAnimationFrame(raf);
+    }catch(e){}
+  }
+</script>
+
+<script>
+  // ===== Fondo: TINTA en campo de flujo (caligrafía viva) =====
+  (function(){
+    const canvas = document.getElementById('ink');
+    const ctx = canvas.getContext('2d');
+    let W,H, parts=[];
+    function resize(){
+      W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;
+      ctx.fillStyle='#0B0E16'; ctx.fillRect(0,0,W,H);
+      const n = Math.min(90, Math.floor(W*H/16000));
+      parts = Array.from({length:n}, ()=>({ x:Math.random()*W, y:Math.random()*H, life:Math.random()*200 }));
+    }
+    window.addEventListener('resize', resize); resize();
+
+    function field(x,y,t){
+      return (Math.sin(x*0.0016 + t*0.15) + Math.cos(y*0.0016 - t*0.1) + Math.sin((x+y)*0.001)) * Math.PI;
+    }
+    let t=0;
+    function tick(){
+      requestAnimationFrame(tick);
+      t += 0.01;
+      // desvanecer lento para dejar rastro de tinta
+      ctx.fillStyle='rgba(11,14,22,0.045)'; ctx.fillRect(0,0,W,H);
+      ctx.lineWidth=1;
+      for(const p of parts){
+        const a = field(p.x, p.y, t);
+        const nx = p.x + Math.cos(a)*1.4, ny = p.y + Math.sin(a)*1.4;
+        ctx.strokeStyle='rgba(127,164,224,0.06)';
+        ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(nx,ny); ctx.stroke();
+        p.x=nx; p.y=ny; p.life--;
+        if(p.x<0||p.x>W||p.y<0||p.y>H||p.life<0){ p.x=Math.random()*W; p.y=Math.random()*H; p.life=100+Math.random()*180; }
+      }
+    }
+    tick();
+  })();
+</script>
+
+<script>
+  // ===== Datos =====
+  function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function loadPerfil(){ try{ return localStorage.getItem('voz_perfil')||''; }catch(e){ return ''; } }
+  function savePerfil(p){ try{ localStorage.setItem('voz_perfil', p); }catch(e){} renderVoice(); }
+  function loadPieces(){ try{ return JSON.parse(localStorage.getItem('voz_textos')||'[]'); }catch(e){ return []; } }
+  function savePieces(l){ try{ localStorage.setItem('voz_textos', JSON.stringify(l)); }catch(e){} renderLib(); }
+
+  function showToast(text){
+    if(text) document.getElementById('toast-text').textContent = text;
+    const el = document.getElementById('toast');
+    gsap.killTweensOf(el);
+    gsap.timeline().to(el,{opacity:1,y:0,duration:0.35,ease:'back.out(2)'}).to(el,{opacity:0,y:-14,duration:0.4,ease:'power1.in',delay:1.8});
+  }
+
+  function getApiKey(){
+    try{ let k = localStorage.getItem('brain_api_key'); if(k) return k; }catch(e){}
+    const k = prompt('Pega tu clave de API de Anthropic (la misma de Cerebro).\nSe guarda solo en este dispositivo.');
+    if(k){ try{ localStorage.setItem('brain_api_key', k.trim()); }catch(e){} return k.trim(); }
+    return null;
+  }
+  async function askClaude(system, user, maxTokens){
+    const apiKey = getApiKey(); if(!apiKey) throw new Error('Sin clave de API');
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model:'claude-sonnet-5', max_tokens:maxTokens||1500, system, messages:[{role:'user',content:user}] })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message||'Error de la API');
+    return data.content.map(c=>c.text||'').join('').trim();
+  }
+
+  // ===== Perfil de voz =====
+  function renderVoice(){
+    const perfil = loadPerfil();
+    const slot = document.getElementById('voice-slot');
+    if(perfil){
+      slot.innerHTML = `
+        <div class="voice-card">
+          <div class="voice-badge">Tu firma de escritura</div>
+          <div class="voice-text">${escapeHtml(perfil)}</div>
+          <div class="voice-actions">
+            <button class="btn ghost mini" id="reteach">Reaprender con nuevos textos</button>
+          </div>
+        </div>`;
+      document.getElementById('reteach').addEventListener('click', showTeachForm);
+    } else {
+      showTeachForm();
+    }
+  }
+  function showTeachForm(){
+    document.getElementById('voice-slot').innerHTML = `
+      <div class="card">
+        <div class="field">
+          <label>Pega textos tuyos</label>
+          <textarea id="samples" style="min-height:150px;" placeholder="Pega aquí 2-3 cosas que hayas escrito tú: un correo, una propuesta, un mensaje largo, un texto de clase… entre más real y más tuyo, mejor aprende tu voz."></textarea>
+        </div>
+        <div class="save-row"><button class="btn" id="learn-btn">✒ Aprender mi voz</button></div>
+      </div>`;
+    document.getElementById('learn-btn').addEventListener('click', learnVoice);
+  }
+  async function learnVoice(){
+    const samples = document.getElementById('samples').value.trim();
+    if(samples.length < 60){ showToast('Pega un poco más de texto tuyo'); return; }
+    const btn = document.getElementById('learn-btn'); btn.disabled=true; const prev=btn.textContent; btn.textContent='Leyendo tu letra…';
+    try{
+      const sys = 'Eres un analista experto de estilo de escritura. Vas a leer textos escritos por Darío y extraer su "firma de voz": los rasgos que hacen que un texto suene a él. Analiza: tono (formal/cercano, seco/cálido, directo/rodeado), ritmo y largo de frases, muletillas y conectores que repite, vocabulario típico, cómo abre y cierra, nivel de puntuación/emojis, y qué NO hace (para no meterlo después). Responde en español con un perfil claro y conciso en 6-9 líneas con viñetas cortas (usa "• "), pensado para que otra IA pueda imitar esa voz. Nada de preámbulo ni cierre — solo el perfil.';
+      const perfil = await askClaude(sys, 'Textos de Darío:\n\n'+samples, 900);
+      savePerfil(perfil);
+      showToast('✒ Tu voz quedó registrada');
+    }catch(e){ showToast('Error: '+e.message); }
+    finally{ btn.disabled=false; if(btn) btn.textContent=prev; }
+  }
+
+  // ===== Escribir con la voz =====
+  let lastOutput = '';
+  async function writeInVoice(){
+    const idea = document.getElementById('w-idea').value.trim();
+    if(!idea){ showToast('Escribe la idea primero'); return; }
+    const perfil = loadPerfil();
+    const tipo = document.getElementById('w-tipo').value;
+    const largo = document.getElementById('w-largo').value;
+    const btn = document.getElementById('write-btn'); btn.disabled=true; const prev=btn.textContent; btn.textContent='Escribiendo…';
+    try{
+      const largoTxt = {corto:'breve, al grano', medio:'de largo medio', largo:'desarrollado pero sin relleno'}[largo];
+      const sys = 'Eres Darío escribiendo con su propia mano. Escribes en español, en un '+tipo+', '+largoTxt+'. '+
+        (perfil ? 'Esta es la firma de voz de Darío, imítala fielmente:\n'+perfil : 'No hay perfil de voz guardado: escribe natural, cercano y directo, en español latino, sin sonar a IA.')+
+        '\n\nReglas: suena humano y a él, NO a IA. Prohibido: clichés de IA ("en el mundo actual", "es importante destacar", "en resumen", "sin duda"), listas cuando no hacen falta, entusiasmo falso, y el guion largo. No expliques lo que vas a hacer ni des opciones — entrega el texto final listo para enviar, y nada más.';
+      const out = await askClaude(sys, 'Idea en bruto a convertir en '+tipo+':\n\n'+idea, 1500);
+      lastOutput = out;
+      document.getElementById('output-text').textContent = out;
+      const o = document.getElementById('output'); o.classList.add('show');
+      gsap.from('#output-text', { opacity:0, y:10, duration:0.5, ease:'power2.out' });
+    }catch(e){ showToast('Error: '+e.message); }
+    finally{ btn.disabled=false; if(btn) btn.textContent=prev; }
+  }
+  document.getElementById('write-btn').addEventListener('click', writeInVoice);
+  document.getElementById('redo-btn').addEventListener('click', writeInVoice);
+
+  document.getElementById('copy-btn').addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(lastOutput); showToast('Copiado'); }catch(e){ showToast('No se pudo copiar'); }
+  });
+  document.getElementById('save-piece').addEventListener('click', ()=>{
+    if(!lastOutput) return;
+    const list = loadPieces();
+    list.unshift({ id:Date.now().toString(), tipo:document.getElementById('w-tipo').value, idea:document.getElementById('w-idea').value.trim(), texto:lastOutput, date:new Date().toISOString().split('T')[0] });
+    savePieces(list);
+    showToast('Guardado');
+  });
+
+  // ===== Biblioteca =====
+  let openId=null;
+  function deletePiece(id){ savePieces(loadPieces().filter(p=>p.id!==id)); }
+  function renderLib(){
+    const list = loadPieces();
+    document.getElementById('empty-state').style.display = list.length ? 'none' : 'block';
+    document.getElementById('lib').innerHTML = list.map(p=>{
+      const isOpen = openId===p.id;
+      const idea = p.idea && p.idea.length>70 ? p.idea.slice(0,69)+'…' : (p.idea||'');
+      return `
+      <div class="piece ${isOpen?'open':''}" data-id="${p.id}">
+        <span class="piece-del" data-del="${p.id}">×</span>
+        <div class="piece-head">
+          <div class="piece-tipo">${escapeHtml(p.tipo)} · ${p.date}</div>
+          <div class="piece-idea">${escapeHtml(idea)}</div>
+        </div>
+        <div class="piece-body">
+          <div class="piece-full">${escapeHtml(p.texto)}</div>
+          <div class="piece-actions"><button class="btn mini" data-copy="${p.id}">Copiar</button></div>
+        </div>
+      </div>`;
+    }).join('');
+    document.querySelectorAll('.piece').forEach(r=> r.addEventListener('click', e=>{
+      if(e.target.closest('[data-del]') || e.target.closest('[data-copy]')) return;
+      openId = openId===r.dataset.id ? null : r.dataset.id; renderLib();
+    }));
+    document.querySelectorAll('[data-del]').forEach(x=> x.addEventListener('click', e=>{ e.stopPropagation(); deletePiece(x.dataset.del); }));
+    document.querySelectorAll('[data-copy]').forEach(x=> x.addEventListener('click', async e=>{
+      e.stopPropagation();
+      const p = loadPieces().find(z=>z.id===x.dataset.copy);
+      if(p){ try{ await navigator.clipboard.writeText(p.texto); showToast('Copiado'); }catch(err){ showToast('No se pudo copiar'); } }
+    }));
+  }
+
+  renderVoice();
+  renderLib();
+</script>
+
+<script>
+  window.addEventListener('load', ()=>{
+    gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' });
+  });
+  document.querySelectorAll('a[href$=".html"]').forEach(link=>{
+    link.addEventListener('click', function(e){
+      if(this.target === '_blank') return;
+      const href = this.getAttribute('href');
+      e.preventDefault();
+      gsap.to('#veil-iris', { scale:80, duration:0.5, ease:'power3.inOut', onComplete:()=>{ window.location.href = href; } });
+    });
+  });
+  const revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{ if(entry.isIntersecting){ gsap.to(entry.target, { opacity:1, y:0, duration:0.6, ease:'power3.out' }); revealObserver.unobserve(entry.target); } });
+  }, { threshold:0.08 });
+  document.querySelectorAll('section').forEach(el=>{ gsap.set(el, { opacity:0, y:26 }); revealObserver.observe(el); });
+</script>
+
+</body>
+</html>
