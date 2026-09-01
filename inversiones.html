@@ -3,77 +3,94 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Terminal</title>
+<title>Inversiones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Petit+Formal+Script&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;600;700&family=Petit+Formal+Script&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <style>
   :root{
-    --bg:#020403; --panel:#08110C; --line:rgba(58,255,140,0.16);
-    --ink:#D8FFE8; --ink-dim:#4E7A63; --green:#3AFF8C; --green-hi:#8FFFC0; --red:#FF5C5C;
+    --bg:#0F0906; --panel:#1A100A; --line:rgba(201,162,39,0.18);
+    --ink:#F0E6D2; --ink-dim:#9C8563; --gold:#C9A227; --gold-hi:#E8C766;
+    --up:#4FAE7A; --down:#C0524A; --wood:#2B190F;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
   body{background:var(--bg); color:var(--ink); font-family:'JetBrains Mono',monospace; min-height:100vh; position:relative; overflow-x:hidden;}
-  body::before{content:''; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.4;
-    background:repeating-linear-gradient(180deg, rgba(58,255,140,0.025) 0 1px, transparent 1px 3px);}
   body::after{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
-    background:radial-gradient(ellipse at 50% -10%, rgba(58,255,140,0.07), transparent 55%);}
+    background:radial-gradient(ellipse at 50% -10%, rgba(201,162,39,0.08), transparent 55%);}
 
-  .page{position:relative; z-index:1; max-width:720px; margin:0 auto; padding:20px 16px 100px;}
+  /* ===== Cintas de ticker — el "piso de bolsa" de fondo ===== */
+  .tape-wrap{position:fixed; left:0; right:0; z-index:0; overflow:hidden; white-space:nowrap; opacity:0.5; pointer-events:none;
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:rgba(43,25,15,0.35);}
+  .tape-wrap.t1{top:0; padding:9px 0;}
+  .tape-wrap.t2{bottom:0; padding:9px 0;}
+  .tape-track{display:inline-block; font-size:12.5px; letter-spacing:0.02em;}
+  .tape-track span{margin-right:34px; color:var(--ink-dim);}
+  .tape-track span b{color:var(--gold-hi); font-weight:600;}
+  .tape-track span.up{color:var(--up);} .tape-track span.down{color:var(--down);}
 
-  .nav1{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:24px;}
+  .page{position:relative; z-index:1; max-width:720px; margin:0 auto; padding:56px 16px 100px;}
+
+  .nav1{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:26px;}
   .nav1 a{font-size:10.5px; text-decoration:none; color:var(--ink-dim);
-    border:1px solid var(--line); padding:6px 11px; background:rgba(8,17,12,0.6); letter-spacing:0.03em; border-radius:2px;}
-  .nav1 a.current{background:var(--green); color:#020403; border-color:var(--green);}
-  .nav1 a:hover{border-color:var(--green); color:var(--green);}
+    border:1px solid var(--line); padding:6px 11px; background:rgba(26,16,10,0.65); letter-spacing:0.03em; border-radius:2px; font-family:'JetBrains Mono',monospace;}
+  .nav1 a.current{background:var(--gold); color:#0F0906; border-color:var(--gold);}
+  .nav1 a:hover{border-color:var(--gold); color:var(--gold-hi);}
 
-  .eyebrow{font-size:11px; letter-spacing:0.24em; text-transform:uppercase; color:var(--green); margin-bottom:8px;}
-  h1{font-weight:700; font-size:28px; letter-spacing:0.01em; text-transform:uppercase;}
-  .sub{color:var(--ink-dim); font-size:12.5px; line-height:1.6; margin-top:10px; max-width:520px;}
+  .eyebrow{font-size:11px; letter-spacing:0.24em; text-transform:uppercase; color:var(--gold); margin-bottom:8px;}
+  h1{font-family:'Playfair Display',serif; font-weight:700; font-size:38px; letter-spacing:0.005em; line-height:1.05;}
+  .sub{color:var(--ink-dim); font-size:13px; line-height:1.6; margin-top:12px; max-width:520px; font-family:'JetBrains Mono',monospace;}
 
-  section{margin-top:30px;}
-  h2{font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:0.12em; margin-bottom:14px; color:var(--green); display:flex; align-items:center; gap:8px;}
-  h2::before{content:'▸';}
+  section{margin-top:34px;}
+  h2{font-family:'Playfair Display',serif; font-weight:600; font-style:italic; font-size:21px; margin-bottom:14px; color:var(--gold-hi); display:flex; align-items:center; gap:9px;}
+  h2::before{content:''; width:16px; height:1px; background:var(--gold); display:inline-block;}
 
-  /* ===== Ticker board ===== */
+  .tabs{display:flex; gap:8px; margin-bottom:14px;}
+  .tab{font-family:'JetBrains Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; padding:8px 14px; border:1px solid var(--line); border-radius:999px; background:rgba(26,16,10,0.5); color:var(--ink-dim); cursor:pointer;}
+  .tab.active{background:var(--gold); color:#0F0906; border-color:var(--gold);}
+
+  /* ===== Tablero de posiciones ===== */
   .board{display:flex; flex-direction:column; gap:10px;}
-  .ticker{border:1px solid var(--line); border-radius:4px; background:rgba(8,17,12,0.7); padding:14px 16px; position:relative; overflow:hidden; cursor:pointer;}
-  .ticker::before{content:''; position:absolute; left:0; top:0; bottom:0; width:2px; background:var(--green); opacity:0.5;}
-  .t-row{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
-  .t-name{font-size:11px; color:var(--ink-dim); letter-spacing:0.06em; text-transform:uppercase;}
-  .t-price{font-size:24px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums;}
-  .t-change{font-size:12px; font-weight:600; margin-top:3px;}
-  .t-change.up{color:var(--green-hi);} .t-change.down{color:var(--red);}
+  .ticker{border:1px solid var(--line); border-radius:8px; background:linear-gradient(180deg, rgba(43,25,15,0.55), rgba(26,16,10,0.7)); padding:16px 18px; position:relative; overflow:hidden; cursor:pointer;}
+  .ticker::before{content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--gold);}
+  .t-row{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .t-tag{display:inline-block; font-size:8.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--gold); border:1px solid var(--line); border-radius:3px; padding:2px 6px; margin-bottom:6px;}
+  .t-name{font-family:'Playfair Display',serif; font-size:16px; font-weight:600; color:var(--ink);}
+  .t-symbol{font-size:10.5px; color:var(--ink-dim); letter-spacing:0.05em;}
+  .t-price{font-size:23px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; text-align:right;}
+  .t-change{font-size:12px; font-weight:600; margin-top:3px; text-align:right;}
+  .t-change.up{color:var(--up);} .t-change.down{color:var(--down);}
   .t-del{position:absolute; top:12px; right:12px; color:var(--ink-dim); font-size:14px; cursor:pointer; z-index:2;}
-  .t-del:hover{color:var(--red);}
-  .t-alert-row{margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); display:none; gap:8px;}
+  .t-del:hover{color:var(--down);}
+  .t-alert-row{margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); display:none; gap:8px;}
   .ticker.open .t-alert-row{display:flex;}
-  .t-alert-row input{flex:1; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:3px; background:rgba(2,4,3,0.7); color:var(--ink); font-family:inherit; font-size:12px;}
-  .t-alert-row input:focus{outline:none; border-color:var(--green);}
-  .t-alert-status{font-size:10px; color:var(--ink-dim); margin-top:8px; line-height:1.5;}
-  .t-alert-status b{color:var(--green);}
+  .t-alert-row input{flex:1; min-width:0; padding:9px 10px; border:1px solid var(--line); border-radius:5px; background:rgba(15,9,6,0.7); color:var(--ink); font-family:'JetBrains Mono',monospace; font-size:12px;}
+  .t-alert-row input:focus{outline:none; border-color:var(--gold);}
+  .t-alert-status{font-size:10px; color:var(--ink-dim); margin-top:9px; line-height:1.5; font-family:'JetBrains Mono',monospace;}
+  .t-alert-status b{color:var(--gold-hi);}
 
   .add-row{display:flex; gap:8px; margin-top:12px;}
-  .add-row select{flex:1; padding:11px 12px; border:1px solid var(--line); border-radius:3px; background:rgba(8,17,12,0.7); color:var(--ink); font-family:inherit; font-size:13px;}
-  .add-row select:focus{outline:none; border-color:var(--green);}
-  .add-row button{background:var(--green); color:#020403; border:none; width:44px; border-radius:3px; font-size:18px; cursor:pointer; font-weight:700;}
+  .add-row select, .add-row input{flex:1; padding:12px; border:1px solid var(--line); border-radius:6px; background:rgba(26,16,10,0.7); color:var(--ink); font-family:'JetBrains Mono',monospace; font-size:13px;}
+  .add-row select:focus, .add-row input:focus{outline:none; border-color:var(--gold);}
+  .add-row button{background:var(--gold); color:#0F0906; border:none; width:46px; border-radius:6px; font-size:18px; cursor:pointer; font-weight:700;}
+  .hint{font-size:11px; color:var(--ink-dim); margin-top:8px; line-height:1.5;}
 
-  .ai-box{border:1px solid var(--line); border-radius:4px; background:rgba(8,17,12,0.6); padding:16px; margin-top:14px;}
-  .ai-text{font-size:13px; line-height:1.65; color:var(--ink); white-space:pre-wrap; display:none;}
-  .ai-text.show{display:block; margin-top:12px;}
-  .ai-note{font-size:10px; color:var(--ink-dim); margin-top:10px; line-height:1.5;}
-  .ai-note b{color:var(--red);}
+  .ai-box{border:1px solid var(--line); border-radius:8px; background:rgba(26,16,10,0.55); padding:18px; margin-top:14px;}
+  .ai-text{font-family:'Playfair Display',serif; font-size:15px; line-height:1.7; color:var(--ink); white-space:pre-wrap; display:none;}
+  .ai-text.show{display:block; margin-top:14px;}
+  .ai-note{font-size:10px; color:var(--ink-dim); margin-top:12px; line-height:1.5; font-family:'JetBrains Mono',monospace;}
+  .ai-note b{color:var(--down);}
 
-  .btn{background:var(--green); color:#020403; border:none; padding:12px 24px; border-radius:3px; font-family:inherit; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; cursor:pointer;}
-  .btn:hover{background:var(--green-hi);}
+  .btn{background:var(--gold); color:#0F0906; border:none; padding:13px 26px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; cursor:pointer;}
+  .btn:hover{background:var(--gold-hi);}
+  .btn.ghost{background:transparent; color:var(--gold); border:1px solid var(--gold); font-weight:500;}
   .btn:disabled{opacity:0.5; cursor:default;}
-  .save-row{display:flex; justify-content:center; margin-top:4px;}
+  .save-row{display:flex; justify-content:center; gap:10px; margin-top:4px; flex-wrap:wrap;}
 
   .status-line{font-size:10px; color:var(--ink-dim); text-align:center; margin-top:10px; letter-spacing:0.04em;}
-  .empty{color:var(--ink-dim); font-size:12.5px; text-align:center; padding:24px 0; line-height:1.6;}
+  .empty{color:var(--ink-dim); font-size:12.5px; text-align:center; padding:26px 0; line-height:1.6;}
 
-  button, .btn, .ticker{transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1);}
+  button, .btn, .ticker, .tab{transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1);}
   button:active, .btn:active{transform:scale(0.94);}
   button, a, input, select{touch-action:manipulation;}
   h1,h2,label{overflow-wrap:normal; word-break:keep-all; hyphens:none;}
@@ -81,49 +98,66 @@
   .signature{position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:15;
     font-family:'Petit Formal Script',cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
   .toast{position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:9998;
-    background:rgba(58,255,140,0.14); border:1px solid var(--green); color:var(--green-hi);
-    font-size:12px; padding:10px 18px; border-radius:3px;
+    background:rgba(201,162,39,0.16); border:1px solid var(--gold); color:var(--gold-hi);
+    font-family:'JetBrains Mono',monospace; font-size:12px; padding:10px 18px; border-radius:3px;
     opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px; max-width:90vw;}
 
-  @media (max-width:480px){ h1{font-size:22px;} .t-price{font-size:20px;} }
+  @media (max-width:480px){ h1{font-size:28px;} .t-price{font-size:19px;} .page{padding-top:96px;} }
 </style>
 </head>
 <body>
-<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#3AFF8C;transform:scale(80);"></div></div>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#C9A227;transform:scale(80);"></div></div>
 
-<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#020403; display:flex; align-items:center; justify-content:center; padding:24px;">
+<div class="tape-wrap t1"><div class="tape-track" id="tape1"></div></div>
+<div class="tape-wrap t2"><div class="tape-track" id="tape2"></div></div>
+
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0F0906; display:flex; align-items:center; justify-content:center; padding:24px;">
   <div style="text-align:center; max-width:280px;">
-    <div style="font-family:'JetBrains Mono',monospace; color:#3AFF8C; font-size:12px; letter-spacing:0.2em; text-transform:uppercase; margin-bottom:18px;">Terminal</div>
-    <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="PIN" style="width:100%; padding:14px; text-align:center; font-size:22px; letter-spacing:0.4em; border-radius:8px; border:1px solid rgba(58,255,140,0.3); background:rgba(8,17,12,0.8); color:#D8FFE8; font-family:'JetBrains Mono',monospace;">
-    <button id="pin-submit" style="width:100%; margin-top:12px; padding:14px; border-radius:8px; border:none; background:#3AFF8C; color:#020403; font-weight:700; font-family:'JetBrains Mono',monospace; cursor:pointer;">Entrar</button>
-    <div id="pin-error" style="color:#FF5C5C; font-size:12px; margin-top:10px; min-height:16px;"></div>
+    <div style="font-family:'Playfair Display',serif; font-weight:700; font-style:italic; color:#C9A227; font-size:20px; margin-bottom:18px;">Inversiones</div>
+    <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="PIN" style="width:100%; padding:14px; text-align:center; font-size:22px; letter-spacing:0.4em; border-radius:8px; border:1px solid rgba(201,162,39,0.3); background:rgba(26,16,10,0.8); color:#F0E6D2; font-family:'JetBrains Mono',monospace;">
+    <button id="pin-submit" style="width:100%; margin-top:12px; padding:14px; border-radius:8px; border:none; background:#C9A227; color:#0F0906; font-weight:700; font-family:'JetBrains Mono',monospace; cursor:pointer;">Entrar</button>
+    <div id="pin-error" style="color:#C0524A; font-size:12px; margin-top:10px; min-height:16px;"></div>
   </div>
 </div>
 
 <div class="page">
   <div class="nav1">
     <a href="hub.html">◇ Inicio</a>
-    <a href="inversiones.html" class="current">Terminal</a>
+    <a href="inversiones.html" class="current">Inversiones</a>
   </div>
 
   <div class="eyebrow">Panel financiero</div>
-  <h1>Terminal</h1>
-  <p class="sub">Precios en tiempo real (CoinGecko, sin costo) y alertas cuando un activo cruza el precio que definas. La lectura de IA es una opinión generada, no un consejo de inversión.</p>
+  <h1>Inversiones</h1>
+  <p class="sub">Cripto y acciones en tiempo real, alertas de precio que te avisan por Telegram aunque cierres la app, y una lectura de IA sobre lo que está pasando. La lectura es una opinión, no un consejo de inversión.</p>
 
   <section>
-    <h2>Activos</h2>
+    <h2>Posiciones</h2>
     <div class="board" id="board"></div>
-    <div class="add-row">
-      <select id="asset-select">
-        <option value="bitcoin|BTC|Bitcoin">Bitcoin (BTC)</option>
-        <option value="ethereum|ETH|Ethereum">Ethereum (ETH)</option>
-        <option value="solana|SOL|Solana">Solana (SOL)</option>
-        <option value="binancecoin|BNB|BNB">BNB</option>
-        <option value="ripple|XRP|XRP">XRP</option>
-        <option value="dogecoin|DOGE|Dogecoin">Dogecoin</option>
-        <option value="cardano|ADA|Cardano">Cardano (ADA)</option>
-      </select>
-      <button id="add-asset">+</button>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="cripto">Cripto</div>
+      <div class="tab" data-tab="accion">Acciones</div>
+    </div>
+    <div id="add-cripto">
+      <div class="add-row">
+        <select id="crypto-select">
+          <option value="bitcoin|BTC|Bitcoin">Bitcoin (BTC)</option>
+          <option value="ethereum|ETH|Ethereum">Ethereum (ETH)</option>
+          <option value="solana|SOL|Solana">Solana (SOL)</option>
+          <option value="binancecoin|BNB|BNB">BNB</option>
+          <option value="ripple|XRP|XRP">XRP</option>
+          <option value="dogecoin|DOGE|Dogecoin">Dogecoin</option>
+          <option value="cardano|ADA|Cardano">Cardano (ADA)</option>
+        </select>
+        <button id="add-crypto">+</button>
+      </div>
+    </div>
+    <div id="add-accion" style="display:none;">
+      <div class="add-row">
+        <input type="text" id="stock-symbol" placeholder="Símbolo (ej: AAPL, TSLA, MSFT)" style="text-transform:uppercase;">
+        <button id="add-stock">+</button>
+      </div>
+      <p class="hint">Acciones vía Finnhub — pide una clave gratis en <b>finnhub.io</b> (registro con correo, sin tarjeta) la primera vez que agregues una.</p>
     </div>
     <div class="status-line" id="status-line">Actualizando…</div>
   </section>
@@ -144,17 +178,13 @@
 <script>
   // ===== PIN =====
   (function(){
-    try{
-      if(localStorage.getItem('habit_unlocked') === 'yes'){ document.getElementById('pin-gate').remove(); }
-    }catch(e){}
+    try{ if(localStorage.getItem('habit_unlocked') === 'yes'){ document.getElementById('pin-gate').remove(); } }catch(e){}
     const submit = document.getElementById('pin-submit');
     const input = document.getElementById('pin-input');
     const err = document.getElementById('pin-error');
     function tryPin(){
-      if(input.value === '3751'){
-        try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){}
-        document.getElementById('pin-gate').remove();
-      } else { err.textContent = 'PIN incorrecto'; input.value=''; }
+      if(input.value === '3751'){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} document.getElementById('pin-gate').remove(); }
+      else { err.textContent = 'PIN incorrecto'; input.value=''; }
     }
     submit.addEventListener('click', tryPin);
     input.addEventListener('keydown', e=>{ if(e.key==='Enter') tryPin(); });
@@ -167,47 +197,76 @@
     gsap.timeline()
       .set(t, { opacity:1, y:-14 })
       .to(t, { y:0, duration:0.35, ease:'back.out(2)' })
-      .to(t, { opacity:1, duration:1.4 })
+      .to(t, { opacity:1, duration:1.6 })
       .to(t, { opacity:0, y:-14, duration:0.35, ease:'power2.in' });
   }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function fmt(n){ return '$'+n.toLocaleString('en-US', {maximumFractionDigits: n<1?4:2}); }
+
+  // ===== Tabs agregar =====
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('add-cripto').style.display = tab.dataset.tab==='cripto' ? 'block' : 'none';
+      document.getElementById('add-accion').style.display = tab.dataset.tab==='accion' ? 'block' : 'none';
+    });
+  });
 
   // ===== Datos =====
-  function load(){ try{ return JSON.parse(localStorage.getItem('inversiones')||'null') || [ {id:'bitcoin',symbol:'BTC',name:'Bitcoin',alertAbove:null,alertBelow:null} ]; }catch(e){ return [{id:'bitcoin',symbol:'BTC',name:'Bitcoin',alertAbove:null,alertBelow:null}]; } }
+  function load(){ try{ return JSON.parse(localStorage.getItem('inversiones')||'null') || [ {id:'bitcoin',symbol:'BTC',name:'Bitcoin',type:'cripto',alertAbove:null,alertBelow:null} ]; }catch(e){ return [{id:'bitcoin',symbol:'BTC',name:'Bitcoin',type:'cripto',alertAbove:null,alertBelow:null}]; } }
   function save(list){ try{ localStorage.setItem('inversiones', JSON.stringify(list)); }catch(e){} }
   let assets = load();
-  let prices = {};
+  let prices = {}; // id -> {usd, change}
   let openId = null;
-  const alerted = {}; // evita repetir el mismo aviso en la misma sesión
+  const alerted = {};
 
   try{ if('Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(e){}
 
-  document.getElementById('add-asset').addEventListener('click', ()=>{
-    const [id,symbol,name] = document.getElementById('asset-select').value.split('|');
+  function getFinnhubKey(){
+    try{ let k = localStorage.getItem('finnhub_api_key'); if(k) return k; }catch(e){}
+    const k = prompt('Pega tu clave gratis de Finnhub (finnhub.io → registro → API key).\nSe guarda solo en este dispositivo.');
+    if(k){ try{ localStorage.setItem('finnhub_api_key', k.trim()); }catch(e){} return k.trim(); }
+    return null;
+  }
+
+  document.getElementById('add-crypto').addEventListener('click', ()=>{
+    const [id,symbol,name] = document.getElementById('crypto-select').value.split('|');
     if(assets.some(a=>a.id===id)){ showToast('Ya lo tienes en el tablero'); return; }
-    assets.push({id,symbol,name,alertAbove:null,alertBelow:null});
+    assets.push({id,symbol,name,type:'cripto',alertAbove:null,alertBelow:null});
     save(assets); render(); fetchPrices();
     showToast('▸ '+symbol+' agregado');
   });
+  document.getElementById('add-stock').addEventListener('click', ()=>{
+    const symbol = document.getElementById('stock-symbol').value.trim().toUpperCase();
+    if(!symbol) return;
+    if(assets.some(a=>a.id===symbol)){ showToast('Ya lo tienes en el tablero'); return; }
+    if(!getFinnhubKey()) return;
+    assets.push({id:symbol,symbol,name:symbol,type:'accion',alertAbove:null,alertBelow:null});
+    save(assets); render(); fetchPrices();
+    document.getElementById('stock-symbol').value='';
+    showToast('▸ '+symbol+' agregado');
+  });
 
-  function deleteAsset(id){ assets = assets.filter(a=>a.id!==id); save(assets); render(); }
+  function deleteAsset(id){ assets = assets.filter(a=>a.id!==id); save(assets); render(); syncAlertasToGithub(); }
 
   function setAlert(id, field, val){
     const a = assets.find(x=>x.id===id); if(!a) return;
     a[field] = val ? parseFloat(val) : null;
     save(assets);
     delete alerted[id+field];
-    showToast('Alerta guardada');
+    showToast('Alerta guardada — sincronizando…');
+    syncAlertasToGithub();
   }
 
   function render(){
     const boardEl = document.getElementById('board');
-    if(!assets.length){ boardEl.innerHTML = '<div class="empty">Agrega un activo para empezar.</div>'; return; }
+    if(!assets.length){ boardEl.innerHTML = '<div class="empty">Agrega cripto o una acción para empezar.</div>'; return; }
     boardEl.innerHTML = assets.map(a=>{
       const p = prices[a.id];
-      const price = p ? '$'+p.usd.toLocaleString('en-US', {maximumFractionDigits: p.usd<1?4:2}) : '···';
-      const chg = p ? p.usd_24h_change : null;
-      const chgTxt = chg!=null ? (chg>=0?'+':'')+chg.toFixed(2)+'% (24h)' : '';
+      const price = p ? fmt(p.usd) : '···';
+      const chg = p ? p.change : null;
+      const chgTxt = chg!=null ? (chg>=0?'+':'')+chg.toFixed(2)+'%' : '';
       const chgClass = chg!=null ? (chg>=0?'up':'down') : '';
       const isOpen = openId===a.id;
       return `
@@ -215,7 +274,11 @@
         <span class="t-del" data-del="${a.id}">×</span>
         <div class="t-row">
           <div>
-            <div class="t-name">${escapeHtml(a.symbol)} · ${escapeHtml(a.name)}</div>
+            <div class="t-tag">${a.type==='cripto'?'Cripto':'Acción'}</div>
+            <div class="t-name">${escapeHtml(a.name)}</div>
+            <div class="t-symbol">${escapeHtml(a.symbol)}</div>
+          </div>
+          <div>
             <div class="t-price">${price}</div>
             <div class="t-change ${chgClass}">${chgTxt}</div>
           </div>
@@ -239,32 +302,60 @@
       inp.addEventListener('change', ()=> setAlert(inp.dataset.id, inp.dataset.field, inp.value));
       inp.addEventListener('click', e=> e.stopPropagation());
     });
+    renderTape();
+  }
+
+  function renderTape(){
+    const items = assets.filter(a=>prices[a.id]).map(a=>{
+      const p = prices[a.id];
+      const cls = p.change>=0?'up':'down';
+      return `<span>${escapeHtml(a.symbol)} <b>${fmt(p.usd)}</b> <span class="${cls}">${p.change>=0?'▲':'▼'}${Math.abs(p.change).toFixed(2)}%</span></span>`;
+    }).join('');
+    const doubled = items + items || '<span>Agrega activos para ver la cinta en vivo…</span>';
+    document.getElementById('tape1').innerHTML = doubled;
+    document.getElementById('tape2').innerHTML = doubled;
   }
 
   async function fetchPrices(){
     if(!assets.length) return;
-    const ids = assets.map(a=>a.id).join(',');
     const statusEl = document.getElementById('status-line');
+    const cryptoIds = assets.filter(a=>a.type==='cripto').map(a=>a.id);
+    const stocks = assets.filter(a=>a.type==='accion');
     try{
-      const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids='+ids+'&vs_currencies=usd&include_24hr_change=true');
-      const data = await res.json();
-      prices = data;
+      if(cryptoIds.length){
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids='+cryptoIds.join(',')+'&vs_currencies=usd&include_24hr_change=true');
+        const data = await res.json();
+        cryptoIds.forEach(id=>{ if(data[id]) prices[id] = { usd:data[id].usd, change:data[id].usd_24h_change }; });
+      }
+      if(stocks.length){
+        const key = getFinnhubKeySilent();
+        if(key){
+          await Promise.all(stocks.map(async a=>{
+            try{
+              const res = await fetch('https://finnhub.io/api/v1/quote?symbol='+a.id+'&token='+key);
+              const d = await res.json();
+              if(d.c) prices[a.id] = { usd:d.c, change:d.dp };
+            }catch(e){}
+          }));
+        }
+      }
       render();
       checkAlerts();
       statusEl.textContent = 'Actualizado — ' + new Date().toLocaleTimeString('es-EC', {hour:'2-digit', minute:'2-digit'});
-    }catch(e){ statusEl.textContent = 'Sin conexión con CoinGecko, reintentando…'; }
+    }catch(e){ statusEl.textContent = 'Sin conexión, reintentando…'; }
   }
+  function getFinnhubKeySilent(){ try{ return localStorage.getItem('finnhub_api_key'); }catch(e){ return null; } }
 
   function checkAlerts(){
     assets.forEach(a=>{
       const p = prices[a.id]; if(!p) return;
       if(a.alertAbove && p.usd >= a.alertAbove && !alerted[a.id+'alertAbove']){
         alerted[a.id+'alertAbove'] = true;
-        notify(a.symbol+' subió a $'+p.usd.toLocaleString('en-US'), 'Cruzó tu alerta de $'+a.alertAbove);
+        notify(a.symbol+' subió a '+fmt(p.usd), 'Cruzó tu alerta de $'+a.alertAbove);
       }
       if(a.alertBelow && p.usd <= a.alertBelow && !alerted[a.id+'alertBelow']){
         alerted[a.id+'alertBelow'] = true;
-        notify(a.symbol+' bajó a $'+p.usd.toLocaleString('en-US'), 'Cruzó tu alerta de $'+a.alertBelow);
+        notify(a.symbol+' bajó a '+fmt(p.usd), 'Cruzó tu alerta de $'+a.alertBelow);
       }
     });
   }
@@ -276,6 +367,35 @@
   render();
   fetchPrices();
   setInterval(fetchPrices, 30000);
+
+  // ===== Sincronizar alertas al repo → GitHub Action las revisa y avisa por Telegram aunque cierres la app =====
+  const REPO = 'darioxavier126-dotcom/Mis-apps';
+  function getGithubToken(){
+    try{ let t = localStorage.getItem('github_pat'); if(t) return t; }catch(e){}
+    const t = prompt('Pega tu token de GitHub (fine-grained, solo para este repo, permiso "Contents: Read and write").\nSe guarda solo en este dispositivo.');
+    if(t){ try{ localStorage.setItem('github_pat', t.trim()); }catch(e){} return t.trim(); }
+    return null;
+  }
+  async function syncAlertasToGithub(){
+    const token = getGithubToken();
+    if(!token){ showToast('Sin token de GitHub — la alerta solo funciona con la app abierta'); return; }
+    const payload = { assets: assets.filter(a=> a.alertAbove || a.alertBelow).map(a=>({ id:a.id, symbol:a.symbol, type:a.type, above:a.alertAbove||null, below:a.alertBelow||null })) };
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2)+'\n')));
+    const url = 'https://api.github.com/repos/'+REPO+'/contents/alertas.json';
+    try{
+      const getRes = await fetch(url, { headers:{ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json' } });
+      const getData = await getRes.json();
+      if(!getRes.ok) throw new Error(getData.message || 'No se pudo leer alertas.json');
+      const putRes = await fetch(url, {
+        method:'PUT',
+        headers:{ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json', 'Content-Type':'application/json' },
+        body: JSON.stringify({ message:'Actualiza alertas de precio', content, sha:getData.sha })
+      });
+      const putData = await putRes.json();
+      if(!putRes.ok) throw new Error(putData.message || 'No se pudo guardar en GitHub');
+      showToast('✓ Sincronizado — te avisa por Telegram aunque cierres la app');
+    }catch(e){ showToast('Error al sincronizar: '+e.message); }
+  }
 
   // ===== IA: lectura de tendencia (Gemini) =====
   const GEMINI_MODEL = 'gemini-3.6-flash';
@@ -289,7 +409,7 @@
     const apiKey = getApiKey(); if(!apiKey) return;
     const btn = document.getElementById('ai-btn'); const out = document.getElementById('ai-text');
     btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Pensando…';
-    const resumen = assets.map(a=>{ const p=prices[a.id]; return p ? `${a.symbol}: $${p.usd} (${p.usd_24h_change>=0?'+':''}${p.usd_24h_change.toFixed(2)}% en 24h)` : `${a.symbol}: sin dato`; }).join('\n');
+    const resumen = assets.map(a=>{ const p=prices[a.id]; return p ? `${a.symbol} (${a.type}): $${p.usd} (${p.change>=0?'+':''}${p.change.toFixed(2)}%)` : `${a.symbol}: sin dato`; }).join('\n');
     const sys = 'Eres un analista que comenta movimientos de mercado de forma directa y breve, sin relleno. Nunca das consejo financiero formal ni garantizas resultados; siempre aclaras que es una lectura, no una recomendación.';
     const usr = 'Estos son los activos que sigo ahora mismo:\n'+resumen+'\n\nDame una lectura breve (4-6 frases) de qué está pasando y qué vigilar, sin decirme qué comprar o vender.';
     try{

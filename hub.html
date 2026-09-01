@@ -174,7 +174,7 @@
     {nm:'Mi voz', file:'voz.html', c:'#7FA4E0', stat:()=> lsJSON('voz_textos',[]).length+' textos'},
     {nm:'Errores', file:'errores.html', c:'#A8471F', stat:()=> lsJSON('errorlog',[]).length+' casos'},
     {nm:'Sesgos', file:'sesgos.html', c:'#8B6CF0', stat:()=> lsJSON('biaslog',[]).length+' análisis'},
-    {nm:'Terminal', file:'inversiones.html', c:'#3AFF8C', stat:()=> lsJSON('inversiones',[]).length+' activos'}
+    {nm:'Inversiones', file:'inversiones.html', c:'#C9A227', stat:()=> lsJSON('inversiones',[]).length+' activos'}
   ];
   document.getElementById('grid').innerHTML = APPS.map(a=>`
     <a class="tile" href="${a.file}" style="--c:${a.c}">
