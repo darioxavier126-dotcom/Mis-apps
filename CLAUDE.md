@@ -29,7 +29,7 @@
 | Archivo | Nombre | Identidad visual | Fondo | Clave localStorage |
 |---|---|---|---|---|
 | `index.html` | Rastreador de hábitos | Crema/dorado/marino, diario de bitácora, lomo de cuaderno | Cintas de aurora 3D (three.js) | `habit:YYYY-MM-DD` |
-| `metas.html` | Panel de metas | Marino oscuro, latón, **"Horizonte de tiempo"** | Monolitos 3D a la distancia = años; suelo que corre (three.js) | `goals` |
+| `metas.html` | Constelación de metas | Índigo/coral/turquesa, lista plana con anillos de progreso medibles | Campo de estrellas 3D viajando hacia la cámara (three.js), puramente decorativo — nunca se superpone con la info | `goals` |
 | `errores.html` | Bitácora de errores | Papel envejecido, sello rojo, máquina de escribir | Papeles cayendo en 3D + líneas redactadas | `errorlog` |
 | `sesgos.html` | Detector de sesgos | Violeta/cian sobre púrpura | Red neuronal 3D real | `biaslog` |
 | `cerebro.html` | Segundo cerebro | Azul espacio, dorado estelar | **Cerebro 3D** de neuronas + sinapsis a pantalla completa | `brain` (+ `brain_api_key`) |
@@ -40,7 +40,7 @@
 | `tendencias.html` | Traductor de tendencias | Ámbar sobre negro, **tablero de aeropuerto (split-flap)** | Franjas de salón + filas que voltean | `tendencias` (+ `tendencias_temas`) (**IA + búsqueda web**: escanea el mundo) |
 | `voz.html` | Escribir con mi voz | Tinta-noche, **caligrafía viva** | Tinta fluyendo en campo de flujo (canvas 2D) | `voz_perfil`, `voz_textos` (**IA**: aprende tu estilo y reescribe) |
 | `comprimir.html` | Compresor de libros/cursos | Negro óptico, espectro, **prisma/destilación** | Prisma 3D: luz blanca → espectro (three.js) | `biblioteca` |
-| `inversiones.html` | Inversiones (cripto + acciones) | Mahogany/latón, **piso de bolsa** — cintas de ticker en vivo arriba/abajo | Cintas de precio scrolleando (DOM/CSS) | `inversiones` (+ `finnhub_api_key`, `github_pat`) |
+| `inversiones.html` | The Ledger (cripto + acciones) | Navy/negro, rojo-verde de mercado real, **periódico financiero + Big Board** | Cintas de ticker arriba/abajo + "lluvia de mercado" (números/flechas flotando en diagonal) | `inversiones`, `inversiones_history` (+ `finnhub_api_key`, `github_pat`) |
 
 **Nota de proveedor de IA (2026-09-01):** las 4 apps con IA (Cerebro, Sparring, Tendencias, Mi voz) migraron de Anthropic a **Google Gemini** (`gemini-3.6-flash`, capa gratis de Google AI Studio) por costo — clave en `gemini_api_key`. Todas reintentan 3 veces si Google devuelve 503 (modelo saturado). Inversiones usa el mismo patrón para su lectura de tendencia de mercado.
 
