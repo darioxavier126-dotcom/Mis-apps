@@ -174,12 +174,13 @@
 <script>
   // ===== PIN =====
   (function(){
-    try{ if(localStorage.getItem('habit_unlocked') === 'yes'){ document.getElementById('pin-gate').remove(); } }catch(e){}
+    const gate = document.getElementById('pin-gate');
     const submit = document.getElementById('pin-submit');
     const input = document.getElementById('pin-input');
     const err = document.getElementById('pin-error');
+    try{ if(localStorage.getItem('habit_unlocked') === 'yes'){ gate.style.display = 'none'; } }catch(e){}
     function tryPin(){
-      if(input.value === '3751'){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} document.getElementById('pin-gate').remove(); }
+      if(input.value === '3751'){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display = 'none'; }
       else { err.textContent = 'PIN incorrecto'; input.value=''; }
     }
     submit.addEventListener('click', tryPin);
