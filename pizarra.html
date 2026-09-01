@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#173229">
 <title>Pizarra</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Space+Mono:wght@400;700&family=Petit+Formal+Script&display=swap" rel="stylesheet">
@@ -344,7 +345,7 @@
   // Polvo de tiza flotando — decorativo, sutil, nunca interactivo
   const dustCanvas = document.getElementById('dust'), dctx = dustCanvas.getContext('2d');
   function resizeDust(){ dustCanvas.width=innerWidth; dustCanvas.height=innerHeight; } resizeDust(); addEventListener('resize',resizeDust);
-  const N=60, parts = Array.from({length:N}, ()=>({x:Math.random()*innerWidth, y:Math.random()*innerHeight, r:Math.random()*1.6+0.4, s:Math.random()*0.25+0.05, o:Math.random()*0.35+0.08}));
+  const N=90, parts = Array.from({length:N}, ()=>({x:Math.random()*innerWidth, y:Math.random()*innerHeight, r:Math.random()*2.4+0.8, s:Math.random()*0.4+0.12, o:Math.random()*0.5+0.2}));
   function tickDust(){
     dctx.clearRect(0,0,dustCanvas.width,dustCanvas.height);
     parts.forEach(p=>{

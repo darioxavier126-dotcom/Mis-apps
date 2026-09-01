@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080B14">
 <title>The Ledger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Roboto+Mono:wght@400;500;600;700&family=Petit+Formal+Script&display=swap" rel="stylesheet">
@@ -23,7 +24,7 @@
   #rain{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;}
   .drop{position:absolute; font-family:'Roboto Mono',monospace; font-weight:600; white-space:nowrap; opacity:0; will-change:transform,opacity;}
   .drop.up{color:var(--up);} .drop.down{color:var(--down);}
-  @keyframes rise{ 0%{opacity:0; transform:translate(0,0);} 10%{opacity:0.5;} 90%{opacity:0.35;} 100%{opacity:0; transform:translate(var(--dx), var(--dy));} }
+  @keyframes rise{ 0%{opacity:0; transform:translate(0,0);} 10%{opacity:0.85;} 90%{opacity:0.6;} 100%{opacity:0; transform:translate(var(--dx), var(--dy));} }
 
   /* ===== Cintas de fondo en movimiento — acciones y % pasando, como un piso de bolsa real ===== */
   .tape-wrap{position:fixed; left:0; right:0; z-index:0; overflow:hidden; white-space:nowrap; pointer-events:none;
@@ -455,8 +456,8 @@
     rainEl.appendChild(el);
     setTimeout(()=> el.remove(), dur*1000);
   }
-  setInterval(spawnDrop, 900);
-  for(let i=0;i<8;i++) setTimeout(spawnDrop, i*250);
+  setInterval(spawnDrop, 500);
+  for(let i=0;i<16;i++) setTimeout(spawnDrop, i*150);
 
   // ===== Sincronizar alertas al repo → GitHub Action las revisa y avisa por Telegram aunque cierres la app =====
   const REPO = 'darioxavier126-dotcom/Mis-apps';
