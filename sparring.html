@@ -337,7 +337,7 @@
   let openId = null;
 
   // ===== Capa de IA: Google Gemini (clave gratis de Google AI Studio, guardada en el dispositivo) =====
-  const GEMINI_MODEL = 'gemini-3.6-flash';
+  const GEMINI_MODEL = 'gemini-3.5-flash-lite';
   function getApiKey(){
     try{ let k = localStorage.getItem('gemini_api_key'); if(k) return k; }catch(e){}
     const k = prompt('Pega tu clave de API de Google AI Studio (aistudio.google.com → Get API key). Gratis.\nSe guarda solo en este dispositivo.');
