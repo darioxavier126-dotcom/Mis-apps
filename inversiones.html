@@ -24,7 +24,7 @@
   #rain{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;}
   .drop{position:absolute; font-family:'Roboto Mono',monospace; font-weight:600; white-space:nowrap; opacity:0; will-change:transform,opacity;}
   .drop.up{color:var(--up);} .drop.down{color:var(--down);}
-  @keyframes rise{ 0%{opacity:0; transform:translate(0,0);} 10%{opacity:0.85;} 90%{opacity:0.6;} 100%{opacity:0; transform:translate(var(--dx), var(--dy));} }
+  @keyframes rise{ 0%{opacity:0; transform:translate(0,0);} 15%{opacity:0.28;} 85%{opacity:0.2;} 100%{opacity:0; transform:translate(var(--dx), var(--dy));} }
 
   /* ===== Cintas de fondo en movimiento — acciones y % pasando, como un piso de bolsa real ===== */
   .tape-wrap{position:fixed; left:0; right:0; z-index:0; overflow:hidden; white-space:nowrap; pointer-events:none;
@@ -466,8 +466,8 @@
     rainEl.appendChild(el);
     setTimeout(()=> el.remove(), dur*1000);
   }
-  setInterval(spawnDrop, 500);
-  for(let i=0;i<16;i++) setTimeout(spawnDrop, i*150);
+  setInterval(spawnDrop, 2200);
+  for(let i=0;i<4;i++) setTimeout(spawnDrop, i*500);
 
   // ===== Sincronizar alertas al repo → GitHub Action las revisa y avisa por Telegram aunque cierres la app =====
   const REPO = 'darioxavier126-dotcom/Mis-apps';
