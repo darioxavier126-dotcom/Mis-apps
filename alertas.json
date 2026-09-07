@@ -1,1 +1,11 @@
-{ "assets": [] }
+{
+  "assets": [
+    {
+      "id": "bitcoin",
+      "symbol": "BTC",
+      "type": "cripto",
+      "above": null,
+      "below": 79900
+    }
+  ]
+}
