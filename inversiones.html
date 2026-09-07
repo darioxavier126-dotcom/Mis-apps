@@ -187,6 +187,7 @@
       </div>
     </div>
     <div class="status-line" id="status-line">Actualizando…</div>
+    <div class="status-line"><span id="forget-github" style="cursor:pointer; text-decoration:underline;">Olvidar token de GitHub</span></div>
   </section>
 
   <section>
@@ -477,6 +478,10 @@
     if(t){ try{ localStorage.setItem('github_pat', t.trim()); }catch(e){} return t.trim(); }
     return null;
   }
+  document.getElementById('forget-github').addEventListener('click', ()=>{
+    try{ localStorage.removeItem('github_pat'); }catch(e){}
+    showToast('Token de GitHub olvidado — la próxima alerta te lo pedirá de nuevo');
+  });
   async function syncAlertasToGithub(){
     const token = getGithubToken();
     if(!token){ showToast('Sin token de GitHub — la alerta solo funciona con la app abierta'); return; }
