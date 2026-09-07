@@ -42,6 +42,7 @@
 | `comprimir.html` | Compresor de libros/cursos | Negro óptico, espectro, **prisma/destilación** | Prisma 3D: luz blanca → espectro (three.js) | `biblioteca` |
 | `inversiones.html` | The Ledger (cripto + acciones) | Navy/negro, rojo-verde de mercado real, **periódico financiero + Big Board** | Cintas de ticker arriba/abajo + "lluvia de mercado" (números/flechas flotando en diagonal) | `inversiones`, `inversiones_history` (+ `finnhub_api_key`, `github_pat`) |
 | `pizarra.html` | Pizarra (grabador de clases) | Verde pizarra, tiza, letra a mano | Polvo de tiza flotando (canvas 2D) | `pizarra`, `pizarra_materias` (**IA**: sube audio a la API de archivos de Gemini, resume la clase) |
+| `jarvis.html` | Jarvis (asistente unificado) | Índigo/violeta, chat minimalista | Esfera de partículas Fibonacci girando (canvas 2D) | Sin clave propia — lee `habit:*`, `sustancias:*`, `goals`, `errorlog`, `biaslog`, `skillmap`, `brain`, `biblioteca`, `sparring`, `tendencias`, `inversiones`, `pizarra` en cada pregunta y se los manda a Gemini como contexto. Es el Sistema 13 (Dashboard de vida unificado) del plan maestro. |
 
 **Nota de proveedor de IA (2026-09-01):** las 4 apps con IA (Cerebro, Sparring, Tendencias, Mi voz) migraron de Anthropic a **Google Gemini** (`gemini-3.6-flash`, capa gratis de Google AI Studio) por costo — clave en `gemini_api_key`. Todas reintentan 3 veces si Google devuelve 503 (modelo saturado). Inversiones usa el mismo patrón para su lectura de tendencia de mercado.
 

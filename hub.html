@@ -185,7 +185,8 @@
     {nm:'Errores', file:'errores.html', c:'#A8471F', stat:()=> lsJSON('errorlog',[]).length+' casos'},
     {nm:'Sesgos', file:'sesgos.html', c:'#8B6CF0', stat:()=> lsJSON('biaslog',[]).length+' análisis'},
     {nm:'The Ledger', file:'inversiones.html', c:'#00C853', stat:()=> lsJSON('inversiones',[]).length+' activos'},
-    {nm:'Pizarra', file:'pizarra.html', c:'#F09EB0', stat:()=> lsJSON('pizarra',[]).length+' clases'}
+    {nm:'Pizarra', file:'pizarra.html', c:'#F09EB0', stat:()=> lsJSON('pizarra',[]).length+' clases'},
+    {nm:'Jarvis', file:'jarvis.html', c:'#8C7CF0', stat:()=> 'Pregúntale lo que sea'}
   ];
   document.getElementById('grid').innerHTML = APPS.map(a=>`
     <a class="tile" href="${a.file}" style="--c:${a.c}">

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0B0C14">
+<title>Jarvis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+  :root{
+    --bg:#0B0C14; --panel:#151824; --line:rgba(140,160,255,0.14);
+    --ink:#EDEFF7; --ink-dim:#7B82A0; --violet:#8C7CF0; --violet-hi:#A99BFF; --cyan:#5FE0D0;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; height:100dvh; overflow:hidden; position:relative;}
+  #orb-canvas{position:fixed; inset:0; z-index:0; display:block;}
+
+  .hud-top{position:fixed; top:0; left:0; right:0; z-index:20; display:flex; justify-content:space-between; align-items:center;
+    padding:16px 18px; gap:10px; flex-wrap:wrap; background:linear-gradient(rgba(11,12,20,0.8), transparent); pointer-events:none;}
+  .hud-top > *{pointer-events:auto;}
+  .brand{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.02em; color:var(--violet-hi);}
+  .nav1{display:flex; gap:6px; flex-wrap:wrap;}
+  .nav1 a{font-family:'JetBrains Mono',monospace; font-size:10px; text-decoration:none; color:var(--ink-dim);
+    border:1px solid var(--line); padding:5px 9px; background:rgba(21,24,36,0.6); letter-spacing:0.02em; border-radius:999px;}
+  .nav1 a.current{background:var(--violet); color:#0B0C14; border-color:var(--violet);}
+  .nav1 a:hover{border-color:var(--violet); color:var(--violet-hi);}
+
+  .chat-wrap{position:relative; z-index:1; height:100dvh; display:flex; flex-direction:column; max-width:680px; margin:0 auto; padding:70px 16px 0;}
+  .intro{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px; padding-bottom:120px;}
+  .intro .eyebrow{font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.2em; text-transform:uppercase; color:var(--cyan);}
+  .intro h1{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:30px;}
+  .intro p{color:var(--ink-dim); font-size:13.5px; max-width:380px; line-height:1.6;}
+  .suggestions{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:8px; max-width:460px;}
+  .sug{font-size:12px; padding:8px 13px; border:1px solid var(--line); border-radius:999px; background:rgba(21,24,36,0.6); color:var(--ink-dim); cursor:pointer;}
+  .sug:hover{border-color:var(--violet); color:var(--violet-hi);}
+
+  .messages{flex:1; overflow-y:auto; padding:10px 2px 130px; display:none; flex-direction:column; gap:14px;}
+  .messages.show{display:flex;}
+  .msg{max-width:82%; padding:13px 16px; border-radius:16px; font-size:14px; line-height:1.6; white-space:pre-wrap;}
+  .msg.user{align-self:flex-end; background:var(--violet); color:#0B0C14; border-bottom-right-radius:4px;}
+  .msg.bot{align-self:flex-start; background:var(--panel); border:1px solid var(--line); border-bottom-left-radius:4px;}
+  .msg.thinking{align-self:flex-start; background:var(--panel); border:1px solid var(--line); color:var(--ink-dim); font-family:'JetBrains Mono',monospace; font-size:12px;}
+
+  .composer{position:fixed; left:0; right:0; bottom:0; z-index:20; padding:14px 16px calc(16px + env(safe-area-inset-bottom));
+    background:linear-gradient(transparent, rgba(11,12,20,0.92) 30%);}
+  .composer-inner{max-width:680px; margin:0 auto; display:flex; gap:8px; align-items:flex-end;
+    background:rgba(21,24,36,0.85); backdrop-filter:blur(14px); border:1px solid var(--line); border-radius:20px; padding:8px 8px 8px 16px;}
+  .composer textarea{flex:1; background:none; border:none; outline:none; color:var(--ink); font-family:'Inter',sans-serif; font-size:14.5px;
+    resize:none; max-height:120px; padding:8px 0; line-height:1.5;}
+  .composer textarea::placeholder{color:var(--ink-dim);}
+  .send-btn{width:38px; height:38px; border-radius:50%; background:var(--violet); border:none; color:#0B0C14; font-size:16px; cursor:pointer; flex-shrink:0;}
+  .send-btn:disabled{opacity:0.4; cursor:default;}
+
+  button, .sug, a{transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1);}
+  button:active, .sug:active{transform:scale(0.94);}
+  button, a, textarea{touch-action:manipulation;}
+  h1{overflow-wrap:normal; word-break:keep-all; hyphens:none; text-wrap:balance;}
+
+  .signature{position:fixed; bottom:4px; left:50%; transform:translateX(-50%); z-index:2;
+    font-family:'Petit Formal Script',cursive; font-size:14px; opacity:0.25; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--ink-dim);}
+
+  ::-webkit-scrollbar{width:0; background:transparent;}
+</style>
+</head>
+<body>
+<div id="page-veil" style="position:fixed;inset:0;z-index:9997;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;"><div id="veil-iris" style="width:60px;height:60px;border-radius:50%;background:#8C7CF0;transform:scale(80);"></div></div>
+
+<canvas id="orb-canvas"></canvas>
+
+<div id="pin-gate" style="position:fixed; inset:0; z-index:999; background:#0B0C14; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div style="text-align:center; max-width:280px;">
+    <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; color:#8C7CF0; font-size:22px; margin-bottom:18px;">Jarvis</div>
+    <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="PIN" style="width:100%; padding:14px; text-align:center; font-size:22px; letter-spacing:0.4em; border-radius:14px; border:1px solid rgba(140,124,240,0.3); background:rgba(21,24,36,0.8); color:#EDEFF7; font-family:'JetBrains Mono',monospace;">
+    <button id="pin-submit" style="width:100%; margin-top:12px; padding:14px; border-radius:14px; border:none; background:#8C7CF0; color:#0B0C14; font-weight:700; font-family:'Inter',sans-serif; cursor:pointer;">Entrar</button>
+    <div id="pin-error" style="color:#8C7CF0; font-size:12px; margin-top:10px; min-height:16px;"></div>
+  </div>
+</div>
+
+<div class="hud-top">
+  <div class="brand">◆ Jarvis</div>
+  <div class="nav1">
+    <a href="hub.html">◇ Inicio</a>
+    <a href="cerebro.html">Cerebro</a>
+  </div>
+</div>
+
+<div class="chat-wrap">
+  <div class="intro" id="intro">
+    <div class="eyebrow">Tu asistente personal</div>
+    <h1>¿Qué necesitas saber?</h1>
+    <p>Leo tus hábitos, metas, errores, sesgos, habilidades, protocolo, notas de Cerebro, inversiones y clases de Pizarra — pregúntame directo, sin abrir nada más.</p>
+    <div class="suggestions">
+      <div class="sug">¿Cómo voy esta semana?</div>
+      <div class="sug">¿Qué dosis me faltan hoy?</div>
+      <div class="sug">¿En qué meta estoy más atrasado?</div>
+      <div class="sug">Resume mi última clase</div>
+    </div>
+  </div>
+  <div class="messages" id="messages"></div>
+</div>
+
+<div class="composer">
+  <div class="composer-inner">
+    <textarea id="composer-input" placeholder="Pregúntale a Jarvis…" rows="1"></textarea>
+    <button class="send-btn" id="send-btn">↑</button>
+  </div>
+</div>
+
+<div class="signature">Darío Calle</div>
+
+<script>
+  // ===== PIN =====
+  (function(){
+    const gate = document.getElementById('pin-gate');
+    const submit = document.getElementById('pin-submit');
+    const input = document.getElementById('pin-input');
+    const err = document.getElementById('pin-error');
+    try{ if(localStorage.getItem('habit_unlocked') === 'yes'){ gate.style.display = 'none'; } }catch(e){}
+    function tryPin(){
+      if(input.value === '3751'){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display = 'none'; }
+      else { err.textContent = 'PIN incorrecto'; input.value=''; }
+    }
+    submit.addEventListener('click', tryPin);
+    input.addEventListener('keydown', e=>{ if(e.key==='Enter') tryPin(); });
+  })();
+
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // ===== Reunir todos los datos del sistema =====
+  function lsJSON(k, def){ try{ return JSON.parse(localStorage.getItem(k)||'null') ?? def; }catch(e){ return def; } }
+  function buildContext(){
+    const today = new Date().toISOString().split('T')[0];
+    const partes = [];
+    const habitHoy = lsJSON('habit:'+today, null);
+    partes.push('HÁBITOS HOY ('+today+'): ' + (habitHoy ? JSON.stringify(habitHoy) : 'sin registrar todavía'));
+    const susHoy = lsJSON('sustancias:'+today, null);
+    partes.push('PROTOCOLO HOY: ' + (susHoy ? JSON.stringify(susHoy.dosis||susHoy) : 'sin registrar todavía'));
+    const goals = lsJSON('goals', []);
+    partes.push('METAS ('+goals.length+'): ' + goals.map(g=>{
+      const n=g.checkpoints.length, d=g.checkpoints.filter(c=>c.done).length;
+      return `"${g.title}" (${g.category}, ${g.horizon}, ${n?Math.round(d/n*100):0}% avance)`;
+    }).join(' | ') || 'ninguna meta guardada');
+    const errores = lsJSON('errorlog', []);
+    partes.push('ERRORES REGISTRADOS ('+errores.length+'): ' + errores.slice(0,15).map(e=>e.title||e.text||JSON.stringify(e)).join(' | '));
+    const sesgos = lsJSON('biaslog', []);
+    partes.push('SESGOS DETECTADOS ('+sesgos.length+'): ' + sesgos.slice(0,15).map(s=>s.text||JSON.stringify(s)).join(' | '));
+    const skills = lsJSON('skillmap', []);
+    partes.push('HABILIDADES ('+skills.length+'): ' + skills.map(s=>`${s.name||s.title} nivel ${s.level}`).join(' | '));
+    const brain = lsJSON('brain', []);
+    partes.push('NOTAS DE CEREBRO ('+brain.length+'): ' + brain.slice(0,20).map(n=>`${n.title}: ${(n.content||'').slice(0,140)}`).join(' | '));
+    const biblioteca = lsJSON('biblioteca', []);
+    partes.push('LIBROS/CURSOS COMPRIMIDOS ('+biblioteca.length+'): ' + biblioteca.map(b=>b.titulo).join(' | '));
+    const sparring = lsJSON('sparring', []);
+    partes.push('TESIS EN SPARRING ('+sparring.length+'): ' + sparring.map(t=>t.tesis).join(' | '));
+    const tendencias = lsJSON('tendencias', []);
+    partes.push('ÚLTIMAS TENDENCIAS GUARDADAS ('+tendencias.length+'): ' + tendencias.slice(0,10).map(t=>t.title).join(' | '));
+    const inversiones = lsJSON('inversiones', []);
+    partes.push('ACTIVOS EN THE LEDGER: ' + inversiones.map(a=>a.symbol).join(', ') || 'ninguno');
+    const clases = lsJSON('pizarra', []);
+    partes.push('CLASES EN PIZARRA ('+clases.length+'): ' + clases.slice(0,15).map(c=>`[${c.materia}] ${c.titulo}: ${(c.resumen||'').slice(0,180)}`).join(' | '));
+    return partes.join('\n\n');
+  }
+
+  // ===== IA (Gemini) =====
+  const GEMINI_MODEL = 'gemini-3.5-flash-lite';
+  function getApiKey(){
+    try{ let k = localStorage.getItem('gemini_api_key'); if(k) return k; }catch(e){}
+    const k = prompt('Pega tu clave de API de Google AI Studio (aistudio.google.com → Get API key). Gratis.\nSe guarda solo en este dispositivo.');
+    if(k){ try{ localStorage.setItem('gemini_api_key', k.trim()); }catch(e){} return k.trim(); }
+    return null;
+  }
+
+  let historial = []; // {role:'user'|'model', text}
+
+  function addMsg(role, text){
+    document.getElementById('intro').style.display = 'none';
+    const msgsEl = document.getElementById('messages');
+    msgsEl.classList.add('show');
+    const el = document.createElement('div');
+    el.className = 'msg ' + (role==='user'?'user':'bot');
+    el.textContent = text;
+    msgsEl.appendChild(el);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    return el;
+  }
+
+  async function ask(question){
+    if(!question.trim()) return;
+    const apiKey = getApiKey(); if(!apiKey) return;
+    addMsg('user', question);
+    historial.push({role:'user', text:question});
+    const thinkEl = document.createElement('div');
+    thinkEl.className = 'msg thinking';
+    thinkEl.textContent = 'Jarvis está leyendo tus datos…';
+    document.getElementById('messages').appendChild(thinkEl);
+    document.getElementById('messages').scrollTop = 9e9;
+
+    const sys = 'Eres Jarvis, el asistente personal de Darío Calle Cedeño (21 años, estudiante de Negocios Internacionales en UEES, Guayaquil, freelancer de automatización con IA en Upwork). Respondes SOLO con base en los datos que te doy abajo, sacados en vivo de todos sus sistemas personales. Sé directo, breve, cálido pero sin relleno. Si no hay datos suficientes para responder algo, dilo claramente en vez de inventar. Nunca dés consejo médico ni financiero formal — solo lee y resume lo que él mismo guardó.';
+    const contexto = buildContext();
+    const userMsg = 'DATOS ACTUALES DE TODOS MIS SISTEMAS:\n\n'+contexto+'\n\n---\n\nMi pregunta: '+question;
+
+    try{
+      let data;
+      for(let intento=0; intento<3; intento++){
+        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent',{
+          method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':apiKey},
+          body: JSON.stringify({ contents:[{role:'user',parts:[{text:userMsg}]}], systemInstruction:{parts:[{text:sys}]}, generationConfig:{maxOutputTokens:700} })
+        });
+        data = await res.json();
+        if(data.error && data.error.code===503 && intento<2){ await new Promise(r=>setTimeout(r, 1500*(intento+1))); continue; }
+        break;
+      }
+      thinkEl.remove();
+      if(data.error) throw new Error(data.error.code===429 ? 'Se agotó la cuota gratis por ahora — intenta en un rato.' : (data.error.code===503 ? 'Google tiene el modelo saturado — intenta en un minuto.' : (data.error.message||'Error de la API')));
+      const cand = data.candidates && data.candidates[0];
+      const text = (cand && cand.content && cand.content.parts||[]).map(p=>p.text||'').join('').trim();
+      addMsg('bot', text || 'No tengo una respuesta clara con los datos que veo.');
+      historial.push({role:'model', text});
+    }catch(e){ thinkEl.remove(); addMsg('bot', '⚠ ' + e.message); }
+  }
+
+  const composerInput = document.getElementById('composer-input');
+  const sendBtn = document.getElementById('send-btn');
+  function send(){ const v = composerInput.value; composerInput.value=''; composerInput.style.height='auto'; ask(v); }
+  sendBtn.addEventListener('click', send);
+  composerInput.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } });
+  composerInput.addEventListener('input', ()=>{ composerInput.style.height='auto'; composerInput.style.height=Math.min(120, composerInput.scrollHeight)+'px'; });
+  document.querySelectorAll('.sug').forEach(s=> s.addEventListener('click', ()=> ask(s.textContent)));
+
+  // ===== Fondo: esfera de partículas que respira, decorativa =====
+  (function(){
+    const canvas = document.getElementById('orb-canvas');
+    const ctx = canvas.getContext('2d');
+    let W,H;
+    function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight; } resize(); addEventListener('resize',resize);
+    const N = 140;
+    const pts = Array.from({length:N}, (_,i)=>{
+      const phi = Math.acos(1 - 2*(i+0.5)/N), theta = Math.PI*(1+Math.sqrt(5))*i;
+      return { phi, theta };
+    });
+    function tick(t){
+      ctx.clearRect(0,0,W,H);
+      const cx = W/2, cy = H*0.38, r = Math.min(W,H)*0.26;
+      const rot = t*0.00018;
+      pts.forEach(p=>{
+        const theta = p.theta + rot;
+        const x3 = Math.sin(p.phi)*Math.cos(theta), y3 = Math.cos(p.phi), z3 = Math.sin(p.phi)*Math.sin(theta);
+        const scale = (z3+2)/3;
+        const x = cx + x3*r*scale, y = cy + y3*r*scale;
+        const a = 0.15 + scale*0.35;
+        ctx.beginPath(); ctx.arc(x,y, 1+scale*1.8, 0, 7);
+        ctx.fillStyle = `rgba(140,124,240,${a})`; ctx.fill();
+      });
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
+</script>
+
+<script>
+  function playIrisIn(){ gsap.to('#veil-iris', { scale:0, duration:0.65, delay:0.05, ease:'power3.inOut' }); }
+  if(document.readyState === 'complete'){ playIrisIn(); } else { window.addEventListener('load', playIrisIn); }
+  document.querySelectorAll('a[href$=".html"]').forEach(link=>{
+    link.addEventListener('click', function(e){
+      if(this.target === '_blank') return;
+      const href = this.getAttribute('href');
+      e.preventDefault();
+      gsap.to('#veil-iris', { scale:80, duration:0.5, ease:'power3.inOut', onComplete:()=>{ window.location.href = href; } });
+    });
+  });
+</script>
+</body>
+</html>
