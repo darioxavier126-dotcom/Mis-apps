@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="sync.js"></script>
 <style>
   :root{
     --paper:#F7F3EC; --paper-hi:#FFFDF9; --ink:#1C1A17; --ink-dim:#7A736A; --line:rgba(28,26,23,0.09);
@@ -431,11 +432,11 @@
   }
   function setHorario(momentId, time){
     const h = getHorarios(); h[momentId] = time;
-    try{ localStorage.setItem('sustancias_horarios', JSON.stringify(h)); }catch(e){}
+    try{ localStorage.setItem('sustancias_horarios', JSON.stringify(h)); }catch(e){} if(window.jarvisSync) jarvisSync.push('sustancias_horarios');
   }
   function timeToDecimal(t){ const [h,m] = t.split(':').map(Number); return h + m/60; }
   function loadEntry(date){ try{ return JSON.parse(localStorage.getItem('sustancias:'+date)||'null') || {}; }catch(e){ return {}; } }
-  function saveEntry(date, entry){ try{ localStorage.setItem('sustancias:'+date, JSON.stringify(entry)); }catch(e){} }
+  function saveEntry(date, entry){ try{ localStorage.setItem('sustancias:'+date, JSON.stringify(entry)); }catch(e){} if(window.jarvisSync) jarvisSync.pushPrefix('sustancias:','sustancias'); }
   function allDates(){
     let keys=[];
     try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.indexOf('sustancias:')===0) keys.push(k.slice(11)); } }catch(e){}
@@ -818,6 +819,10 @@
     }).join('');
   }
   renderInventario();
+  if(window.jarvisSync){
+    jarvisSync.pull('sustancias_horarios');
+    jarvisSync.pullPrefix('sustancias:','sustancias').then(ok=>{ if(ok) location.reload(); });
+  }
 
   // ===== Acordeón de referencia =====
   document.querySelectorAll('.acc-head').forEach(h=> h.addEventListener('click', ()=> h.closest('.acc').classList.toggle('open')));

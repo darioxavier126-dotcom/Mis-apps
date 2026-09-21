@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="sync.js"></script>
 <style>
   :root{
     --paper:#D8CCA8; --paper-dark:#C9BC93; --paper2:#CBBD8E;
@@ -258,7 +259,7 @@
   dateInput.value = new Date().toISOString().split('T')[0];
 
   function loadEntries(){ try{ return JSON.parse(localStorage.getItem('errorlog')||'[]'); } catch(e){ return []; } }
-  function saveEntries(entries){ try{ localStorage.setItem('errorlog', JSON.stringify(entries)); }catch(e){} render(); }
+  function saveEntries(entries){ try{ localStorage.setItem('errorlog', JSON.stringify(entries)); }catch(e){} if(window.jarvisSync) jarvisSync.push('errorlog'); render(); }
 
   function showToast(){
     const el = document.getElementById('toast');
@@ -323,6 +324,7 @@
   }
 
   render();
+  if(window.jarvisSync) jarvisSync.pull('errorlog').then(ok=>{ if(ok) render(); });
 </script>
 <script>
   // ===== Recortes de papel cayendo y girando en 3D (silueta plana, no puntos) =====

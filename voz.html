@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="sync.js"></script>
 <style>
   :root{
     --bg:#0B0E16; --panel:#121724; --line:rgba(150,180,230,0.13);
@@ -264,9 +265,9 @@
   // ===== Datos =====
   function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function loadPerfil(){ try{ return localStorage.getItem('voz_perfil')||''; }catch(e){ return ''; } }
-  function savePerfil(p){ try{ localStorage.setItem('voz_perfil', p); }catch(e){} renderVoice(); }
+  function savePerfil(p){ try{ localStorage.setItem('voz_perfil', p); }catch(e){} if(window.jarvisSync) jarvisSync.push('voz_perfil'); renderVoice(); }
   function loadPieces(){ try{ return JSON.parse(localStorage.getItem('voz_textos')||'[]'); }catch(e){ return []; } }
-  function savePieces(l){ try{ localStorage.setItem('voz_textos', JSON.stringify(l)); }catch(e){} renderLib(); }
+  function savePieces(l){ try{ localStorage.setItem('voz_textos', JSON.stringify(l)); }catch(e){} if(window.jarvisSync) jarvisSync.push('voz_textos'); renderLib(); }
 
   function showToast(text){
     if(text) document.getElementById('toast-text').textContent = text;
@@ -414,6 +415,7 @@
 
   renderVoice();
   renderLib();
+  if(window.jarvisSync){ jarvisSync.pull('voz_perfil').then(ok=>{ if(ok) renderVoice(); }); jarvisSync.pull('voz_textos').then(ok=>{ if(ok) renderLib(); }); }
 </script>
 
 <script>

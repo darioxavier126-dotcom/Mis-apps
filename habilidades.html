@@ -211,6 +211,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="sync.js"></script>
 <script>
   // ===== Transición page-veil =====
   window.addEventListener('load', ()=> gsap.to('#page-veil', {opacity:0, duration:0.6, onComplete:()=>{document.getElementById('page-veil').style.display='none';}}));
@@ -278,7 +279,7 @@
 
   // ===== Datos =====
   function load(){ try{ return JSON.parse(localStorage.getItem('skillmap')||'[]'); }catch(e){ return []; } }
-  function save(list){ try{ localStorage.setItem('skillmap', JSON.stringify(list)); }catch(e){} render(); }
+  function save(list){ try{ localStorage.setItem('skillmap', JSON.stringify(list)); }catch(e){} if(window.jarvisSync) jarvisSync.push('skillmap'); render(); }
 
   function showToast(){
     const el = document.getElementById('toast');
@@ -383,6 +384,7 @@
     });
   }
   render();
+  if(window.jarvisSync) jarvisSync.pull('skillmap').then(ok=>{ if(ok) render(); });
 </script>
 <div class="signature">Darío Calle</div>
 </body>

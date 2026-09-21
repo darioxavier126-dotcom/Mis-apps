@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="sync.js"></script>
 <style>
   :root{
     --bg:#0B0C14; --panel:#151824; --line:rgba(140,160,255,0.14);
@@ -128,6 +129,13 @@
   })();
 
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // ===== Traer lo último que Jarvis (agente en la nube) haya escrito, antes de responder =====
+  if(window.jarvisSync){
+    ['goals','errorlog','biaslog','skillmap','brain','biblioteca','sparring','tendencias','tendencias_temas','inversiones','inversiones_history','pizarra','pizarra_materias','voz_perfil','voz_textos','sustancias_horarios'].forEach(k=> jarvisSync.pull(k));
+    jarvisSync.pullPrefix('habit:','habit');
+    jarvisSync.pullPrefix('sustancias:','sustancias');
+  }
 
   // ===== Reunir todos los datos del sistema =====
   function lsJSON(k, def){ try{ return JSON.parse(localStorage.getItem(k)||'null') ?? def; }catch(e){ return def; } }

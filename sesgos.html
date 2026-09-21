@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="sync.js"></script>
 <style>
   :root{
     --bg:#0A0812; --panel:#140F22; --line:#2A2244;
@@ -369,7 +370,7 @@
   }
 
   function loadEntries(){ try{ return JSON.parse(localStorage.getItem('biaslog')||'[]'); } catch(e){ return []; } }
-  function saveEntries(entries){ try{ localStorage.setItem('biaslog', JSON.stringify(entries)); }catch(e){} render(); }
+  function saveEntries(entries){ try{ localStorage.setItem('biaslog', JSON.stringify(entries)); }catch(e){} if(window.jarvisSync) jarvisSync.push('biaslog'); render(); }
 
   function showToast(){
     const el = document.getElementById('toast');
@@ -426,6 +427,7 @@
   }
 
   render();
+  if(window.jarvisSync) jarvisSync.pull('biaslog').then(ok=>{ if(ok) render(); });
 </script>
 <script>
   // ===== Transición entre páginas (sin flash blanco) =====

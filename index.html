@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="sync.js"></script>
 <style>
   :root{
     --cream:#F6F1E4; --paper-hi:#FFFCF6; --navy:#16233F; --gold:#B58A46; --gold-soft:#E4C989;
@@ -413,11 +414,12 @@
       return v === null ? null : { key, value: v };
     },
     async set(key, value){
-      try{ localStorage.setItem(key, value); return { key, value }; }
+      try{ localStorage.setItem(key, value); if(window.jarvisSync) jarvisSync.pushPrefix('habit:','habit'); return { key, value }; }
       catch(err){ console.error(err); return null; }
     },
     async delete(key){
       localStorage.removeItem(key);
+      if(window.jarvisSync) jarvisSync.pushPrefix('habit:','habit');
       return { key, deleted: true };
     },
     async list(prefix){
@@ -758,6 +760,7 @@
 
   loadToday();
   loadHistory();
+  if(window.jarvisSync) jarvisSync.pullPrefix('habit:','habit').then(ok=>{ if(ok){ loadToday(); loadHistory(); } });
 </script>
 <script>
   // ===== Cintas de aurora ondulando en 3D (silueta de tela, no partículas) =====

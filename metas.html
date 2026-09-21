@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="sync.js"></script>
 <style>
   :root{
     --bg:#0A0A1A; --panel:#141328; --line:rgba(180,170,255,0.14);
@@ -200,7 +201,7 @@
   function colorForYears(horizon){ const n = parseInt(horizon)||1; return n<=2 ? 'var(--h1y)' : (n<=6 ? 'var(--h3y)' : 'var(--h5y)'); }
 
   function loadGoals(){ try{ return JSON.parse(localStorage.getItem('goals')||'[]'); } catch(e){ return []; } }
-  function saveGoals(goals){ try{ localStorage.setItem('goals', JSON.stringify(goals)); }catch(e){} render(); }
+  function saveGoals(goals){ try{ localStorage.setItem('goals', JSON.stringify(goals)); }catch(e){} if(window.jarvisSync) jarvisSync.push('goals'); render(); }
 
   document.getElementById('add-goal').addEventListener('click', addGoal);
   document.getElementById('g-title').addEventListener('keydown', e=>{ if(e.key==='Enter') addGoal(); });
@@ -295,6 +296,7 @@
     });
   }
   render();
+  if(window.jarvisSync) jarvisSync.pull('goals').then(ok=>{ if(ok) render(); });
 
   // ===== Fondo: constelación que viaja hacia adelante — la lista nunca se mueve =====
   const canvas = document.getElementById('sky');

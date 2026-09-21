@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Domine:wght@500;700&family=Nunito:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="sync.js"></script>
 <style>
   :root{
     --bg:#0A2027; --ink:#EAF6F2; --ink-dim:#7FA3A0; --coral:#FF8B6B; --coral-hi:#FFA98D; --peach:#FFE4C7; --cyan:#5FE0D0;
@@ -197,11 +198,11 @@
 
   // ===== Datos =====
   function load(){ try{ return JSON.parse(localStorage.getItem('tendencias')||'[]'); }catch(e){ return []; } }
-  function save(list){ try{ localStorage.setItem('tendencias', JSON.stringify(list)); }catch(e){} }
+  function save(list){ try{ localStorage.setItem('tendencias', JSON.stringify(list)); }catch(e){} if(window.jarvisSync) jarvisSync.push('tendencias'); }
 
   const DEFAULT_TEMAS = ['IA y automatización','Freelance / Upwork','Negocios internacionales','Ecuador','Mercados y dólar'];
   function loadTemas(){ try{ const t=JSON.parse(localStorage.getItem('tendencias_temas')||'null'); return Array.isArray(t)&&t.length?t:DEFAULT_TEMAS.slice(); }catch(e){ return DEFAULT_TEMAS.slice(); } }
-  function saveTemas(t){ try{ localStorage.setItem('tendencias_temas', JSON.stringify(t)); }catch(e){} renderTemas(); }
+  function saveTemas(t){ try{ localStorage.setItem('tendencias_temas', JSON.stringify(t)); }catch(e){} if(window.jarvisSync) jarvisSync.push('tendencias_temas'); renderTemas(); }
   let temas = loadTemas();
 
   function renderTemas(){
@@ -339,6 +340,7 @@
   document.getElementById('prev-btn').addEventListener('click', ()=> goTo(current-1));
   document.getElementById('next-btn').addEventListener('click', ()=> goTo(current+1));
   render();
+  if(window.jarvisSync){ jarvisSync.pull('tendencias').then(ok=>{ if(ok) render(); }); jarvisSync.pull('tendencias_temas').then(ok=>{ if(ok) renderTemas(); }); }
 
   // ===== Fondo: globo 3D girando, decorativo, nunca interactivo =====
   const canvas = document.getElementById('globe');

@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Space+Mono:wght@400;700&family=Petit+Formal+Script&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="sync.js"></script>
 <style>
   :root{
     --bg:#173229; --panel:#1E4235; --line:rgba(255,255,255,0.12);
@@ -115,14 +116,14 @@
 
   <div class="eyebrow">Grabador de clases</div>
   <h1>Pizarra</h1>
-  <p class="sub">Graba la clase con la app de Notas de voz de siempre, y sube ese archivo aquí — la IA transcribe, resume y saca los puntos clave y citas textuales.</p>
+  <p class="sub">Graba la clase con Notas de Voz. Luego, en esa grabación toca Compartir → Guardar en Archivos (si no haces esto, el iPhone no te la deja elegir aquí). Después toca abajo y selecciónala desde Archivos.</p>
 
   <section>
     <h2>Nueva clase</h2>
     <div class="dropzone" id="dropzone">
       <div class="icon">🎙️</div>
       <p id="dropzone-text">Toca para subir el audio (.m4a, .mp3 — hasta ~3 horas)</p>
-      <input type="file" id="audio-input" accept="audio/*">
+      <input type="file" id="audio-input" accept="audio/*,.m4a,.mp3,.wav,.aac,.caf,.mp4,audio/x-m4a,audio/mp4">
     </div>
     <div class="field">
       <label>Materia</label>
@@ -174,7 +175,7 @@
 
   // ===== Materias =====
   function loadMaterias(){ try{ return JSON.parse(localStorage.getItem('pizarra_materias')||'null') || ['General']; }catch(e){ return ['General']; } }
-  function saveMaterias(m){ try{ localStorage.setItem('pizarra_materias', JSON.stringify(m)); }catch(e){} }
+  function saveMaterias(m){ try{ localStorage.setItem('pizarra_materias', JSON.stringify(m)); }catch(e){} if(window.jarvisSync) jarvisSync.push('pizarra_materias'); }
   let materias = loadMaterias();
   let materiaActiva = materias[0];
   let filtroActivo = 'Todas';
@@ -208,7 +209,7 @@
 
   // ===== Datos de clases =====
   function loadClases(){ try{ return JSON.parse(localStorage.getItem('pizarra')||'[]'); }catch(e){ return []; } }
-  function saveClases(list){ try{ localStorage.setItem('pizarra', JSON.stringify(list)); }catch(e){} }
+  function saveClases(list){ try{ localStorage.setItem('pizarra', JSON.stringify(list)); }catch(e){} if(window.jarvisSync) jarvisSync.push('pizarra'); }
   let openId = null;
 
   function deleteClase(id){ saveClases(loadClases().filter(c=>c.id!==id)); render(); }
@@ -251,6 +252,7 @@
     document.querySelectorAll('[data-del]').forEach(x=> x.addEventListener('click', e=>{ e.stopPropagation(); deleteClase(x.dataset.del); }));
   }
   render();
+  if(window.jarvisSync){ jarvisSync.pull('pizarra').then(ok=>{ if(ok) render(); }); jarvisSync.pull('pizarra_materias').then(ok=>{ if(ok){ materias=loadMaterias(); materiaActiva=materias[0]; renderMaterias(); } }); }
 
   // ===== IA: subir el archivo a Gemini (Files API) y pedir el resumen =====
   const GEMINI_MODEL = 'gemini-3.6-flash';

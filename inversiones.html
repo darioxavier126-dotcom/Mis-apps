@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Roboto+Mono:wght@400;500;600;700&family=Petit+Formal+Script&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="sync.js"></script>
 <style>
   :root{
     --bg:#080B14; --panel:#0F1420; --cell:#131A29; --line:rgba(255,255,255,0.09);
@@ -243,9 +244,9 @@
 
   // ===== Datos =====
   function load(){ try{ return JSON.parse(localStorage.getItem('inversiones')||'null') || [ {id:'bitcoin',symbol:'BTC',name:'Bitcoin',type:'cripto',alertAbove:null,alertBelow:null} ]; }catch(e){ return [{id:'bitcoin',symbol:'BTC',name:'Bitcoin',type:'cripto',alertAbove:null,alertBelow:null}]; } }
-  function save(list){ try{ localStorage.setItem('inversiones', JSON.stringify(list)); }catch(e){} }
+  function save(list){ try{ localStorage.setItem('inversiones', JSON.stringify(list)); }catch(e){} if(window.jarvisSync) jarvisSync.push('inversiones'); }
   function loadHistory(){ try{ return JSON.parse(localStorage.getItem('inversiones_history')||'{}'); }catch(e){ return {}; } }
-  function saveHistory(h){ try{ localStorage.setItem('inversiones_history', JSON.stringify(h)); }catch(e){} }
+  function saveHistory(h){ try{ localStorage.setItem('inversiones_history', JSON.stringify(h)); }catch(e){} if(window.jarvisSync) jarvisSync.push('inversiones_history'); }
   let assets = load();
   let prices = {};
   let history = loadHistory(); // id -> [precio, precio, ...] (últimas ~200 lecturas, cada 30s)
@@ -443,6 +444,7 @@
   render();
   fetchPrices();
   setInterval(fetchPrices, 30000);
+  if(window.jarvisSync){ jarvisSync.pull('inversiones').then(ok=>{ if(ok) render(); }); jarvisSync.pull('inversiones_history'); }
 
   // ===== Lluvia de mercado: números/flechas del propio tablero flotando en diagonal de fondo =====
   function spawnDrop(){
