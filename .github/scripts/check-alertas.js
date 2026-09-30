@@ -14,11 +14,27 @@ async function main() {
   const stockAssets = assets.filter(a => a.type === 'accion');
   const prices = {}; // id -> usd
 
+  // CoinGecko a veces bloquea/limita las IPs compartidas de GitHub Actions.
+  // Binance no requiere clave y sirve de respaldo cuando eso pasa.
+  const BINANCE_SYMBOLS = { bitcoin: 'BTCUSDT', ethereum: 'ETHUSDT', solana: 'SOLUSDT' };
   if (cryptoAssets.length) {
-    const ids = cryptoAssets.map(a => a.id).join(',');
-    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-    const data = await res.json();
-    cryptoAssets.forEach(a => { if (data[a.id]) prices[a.id] = data[a.id].usd; });
+    try {
+      const ids = cryptoAssets.map(a => a.id).join(',');
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+      if (!res.ok) throw new Error('CoinGecko HTTP ' + res.status);
+      const data = await res.json();
+      cryptoAssets.forEach(a => { if (data[a.id]) prices[a.id] = data[a.id].usd; });
+    } catch (e) {
+      console.error('CoinGecko falló, probando Binance:', e.message);
+    }
+    const faltantes = cryptoAssets.filter(a => !prices[a.id] && BINANCE_SYMBOLS[a.id]);
+    await Promise.all(faltantes.map(async a => {
+      try {
+        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${BINANCE_SYMBOLS[a.id]}`);
+        const d = await res.json();
+        if (d.price) prices[a.id] = parseFloat(d.price);
+      } catch (e) { console.error('Binance también falló para', a.id, e.message); }
+    }));
   }
   const finnhubKey = process.env.FINNHUB_API_KEY;
   if (stockAssets.length && finnhubKey) {
