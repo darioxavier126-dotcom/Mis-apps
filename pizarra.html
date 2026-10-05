@@ -15,6 +15,7 @@
     --chalk:#EDE9DC; --chalk-dim:#8FA89B; --yellow:#F0D264; --pink:#F09EB0; --blue:#8AC4E8;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  [hidden]{display:none !important;}
   html,body{height:100%;}
   body{background:var(--bg); color:var(--chalk); font-family:'Space Mono',monospace; min-height:100vh; position:relative; overflow-x:hidden;}
   #dust{position:fixed; inset:0; z-index:0; pointer-events:none;}
@@ -32,17 +33,37 @@
 
   .eyebrow{font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:var(--yellow);}
   h1{font-family:'Kalam',cursive; font-weight:700; font-size:42px; margin-top:8px; transform:rotate(-0.6deg);}
-  .sub{color:var(--chalk-dim); font-size:13px; line-height:1.6; margin-top:12px; max-width:480px;}
+  .sub{color:var(--chalk-dim); font-size:13px; line-height:1.6; margin-top:12px; max-width:520px;}
 
   section{margin-top:34px;}
   h2{font-family:'Kalam',cursive; font-weight:700; font-size:21px; margin-bottom:14px; color:var(--blue); transform:rotate(-0.4deg);}
 
   .dropzone{border:2px dashed rgba(237,233,220,0.35); border-radius:6px; padding:30px 20px; text-align:center; cursor:pointer;}
-  .dropzone:hover{border-color:var(--yellow);}
+  .dropzone:hover, .dropzone.drag{border-color:var(--yellow);}
   .dropzone .icon{font-size:28px;}
   .dropzone p{margin-top:10px; font-size:12.5px; color:var(--chalk-dim);}
   .dropzone.has-file{border-style:solid; border-color:var(--yellow);}
   #audio-input{display:none;}
+
+  #queue{margin-top:12px; display:flex; flex-direction:column; gap:7px;}
+  .qrow{border:1px solid var(--line); border-radius:6px; background:rgba(0,0,0,0.2); padding:9px 11px; font-size:12px;}
+  .qtop{display:flex; align-items:center; gap:10px;}
+  .qn{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .qs{color:var(--chalk-dim); font-size:10.5px; white-space:nowrap; max-width:55%; overflow:hidden; text-overflow:ellipsis;}
+  .qrow.up .qs, .qrow.ai .qs, .qrow.tr .qs, .qrow.study .qs{color:var(--yellow);}
+  .qrow.done .qs{color:#8FE0A8;}
+  .qrow.err{border-color:#F5735B;}
+  .qrow.err .qtop{flex-wrap:wrap;}
+  .qrow.err .qn{flex-basis:70%;}
+  .qrow.err .qs{color:#F5735B; white-space:normal; max-width:100%; order:3; flex-basis:100%;}
+  .qx{cursor:pointer; color:var(--chalk-dim); font-size:16px; padding:0 4px;}
+  .qx:hover{color:#F5735B;}
+  .qbar{height:3px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; margin-top:6px;}
+  .qbar i{display:block; height:100%; background:var(--yellow);}
+
+  .opts{margin-top:14px; display:flex; flex-direction:column; gap:9px;}
+  .chk{display:flex; gap:9px; align-items:flex-start; font-size:12px; color:var(--chalk-dim); line-height:1.5; cursor:pointer;}
+  .chk input{margin-top:2px; accent-color:var(--yellow); width:16px; height:16px; flex-shrink:0;}
 
   .field{margin-top:14px;}
   .field label{display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--chalk-dim); margin-bottom:6px;}
@@ -57,25 +78,42 @@
   .save-row{display:flex; justify-content:center; margin-top:16px;}
   .btn{background:var(--yellow); color:#173229; border:none; padding:13px 28px; border-radius:6px; font-family:'Space Mono',monospace; font-weight:700; font-size:12.5px; cursor:pointer;}
   .btn:disabled{opacity:0.5; cursor:default;}
+  .btn.mini{padding:8px 13px; font-size:11px; text-decoration:none; display:inline-block;}
+  .btn.ghost{background:transparent; color:var(--yellow); border:1px solid var(--yellow);}
+  .prog{height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; margin-top:14px;}
+  .prog i{display:block; height:100%; width:0; background:var(--blue); transition:width 0.4s;}
   .status-line{font-size:11px; color:var(--chalk-dim); text-align:center; margin-top:12px; line-height:1.5;}
 
   .filter-row{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px;}
   .filter-chip{font-size:11px; padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:rgba(0,0,0,0.18); color:var(--chalk-dim); cursor:pointer;}
   .filter-chip.active{background:var(--blue); color:#173229; border-color:var(--blue); font-weight:700;}
 
-  .card{border:1px solid var(--line); border-radius:8px; background:rgba(0,0,0,0.18); padding:18px; margin-bottom:14px; position:relative; cursor:pointer;}
+  .card{border:1px solid var(--line); border-radius:8px; background:rgba(0,0,0,0.18); padding:18px; margin-bottom:14px; position:relative;}
   .card::before{content:''; position:absolute; top:10px; left:-1px; bottom:10px; width:3px; background:var(--pink); border-radius:2px;}
-  .card-del{position:absolute; top:14px; right:14px; color:var(--chalk-dim); font-size:15px; cursor:pointer;}
+  .card-head{cursor:pointer;}
+  .card-del{position:absolute; top:12px; right:14px; color:var(--chalk-dim); font-size:18px; cursor:pointer; padding:2px 6px; z-index:2;}
   .card-del:hover{color:#F5735B;}
-  .card-title{font-family:'Kalam',cursive; font-size:19px; font-weight:700; padding-right:20px;}
-  .card-meta{font-size:10.5px; color:var(--chalk-dim); margin-top:4px;}
-  .card-body{max-height:0; overflow:hidden; transition:max-height 0.4s ease;}
-  .card.open .card-body{max-height:900px; margin-top:14px;}
-  .card-sec{font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--yellow); margin-top:14px; margin-bottom:6px;}
-  .card-txt{font-size:13px; line-height:1.6; color:var(--chalk); white-space:pre-wrap;}
+  .card-title{font-family:'Kalam',cursive; font-size:19px; font-weight:700; padding-right:26px;}
+  .card-meta{font-size:10.5px; color:var(--chalk-dim); margin-top:4px; line-height:1.5;}
+  .badges{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px;}
+  .badge{font-size:10px; padding:3px 8px; border-radius:999px; border:1px solid var(--line); color:var(--chalk-dim);}
+  .card-body{display:none;}
+  .card.open .card-body{display:block; margin-top:14px; animation:rise 0.3s ease;}
+  @keyframes rise{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+  .acts{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px;}
+  .card-sec{font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--yellow); margin-top:16px; margin-bottom:6px;}
+  .card-txt{font-size:13px; line-height:1.65; color:var(--chalk); white-space:pre-wrap;}
   .card ul{margin:0; padding-left:18px;}
-  .card li{margin-bottom:5px; font-size:13px; line-height:1.5;}
-  .quote{font-style:italic; color:var(--blue); border-left:2px solid var(--blue); padding-left:10px; margin-top:6px; font-size:12.5px;}
+  .card li{margin-bottom:5px; font-size:13px; line-height:1.55;}
+  .quote{font-style:italic; color:var(--blue); border-left:2px solid var(--blue); padding-left:10px; margin-top:6px; font-size:12.5px; line-height:1.55;}
+  .tag{font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; color:#173229; background:var(--pink); padding:2px 6px; border-radius:3px; margin-right:6px; white-space:nowrap;}
+  details.sec{border:1px solid var(--line); border-radius:6px; margin-top:8px; background:rgba(0,0,0,0.15);}
+  details.sec summary{cursor:pointer; padding:10px 12px; font-family:'Kalam',cursive; font-size:16px; font-weight:700; list-style:none; display:flex; gap:10px; align-items:baseline;}
+  details.sec summary::-webkit-details-marker{display:none;}
+  details.sec summary .tm{font-family:'Space Mono',monospace; font-size:10px; color:var(--chalk-dim); font-weight:400; margin-left:auto; white-space:nowrap;}
+  details.sec[open] summary{color:var(--yellow);}
+  .sec-in{padding:0 12px 12px;}
+  pre.tr{white-space:pre-wrap; word-break:break-word; font-family:'Space Mono',monospace; font-size:11.5px; line-height:1.65; max-height:360px; overflow:auto; background:rgba(0,0,0,0.25); padding:12px; border-radius:6px; color:var(--chalk);}
 
   .empty{color:var(--chalk-dim); font-size:12.5px; text-align:center; padding:26px 0; line-height:1.6;}
 
@@ -84,12 +122,29 @@
   button, a, input, select{touch-action:manipulation;}
   h1,h2,label{overflow-wrap:normal; word-break:keep-all; hyphens:none;}
 
+  /* ===== Presentación a pantalla completa ===== */
+  .pres{position:fixed; inset:0; z-index:9990; background:radial-gradient(ellipse at 50% 0%, #1f4a3b, #10241C 70%); display:flex; flex-direction:column;}
+  .pres-x{position:absolute; top:calc(12px + env(safe-area-inset-top)); right:16px; width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:rgba(0,0,0,0.25); color:var(--chalk); font-size:20px; cursor:pointer; z-index:2;}
+  .pres-stage{flex:1; display:flex; flex-direction:column; justify-content:center; padding:64px 28px 16px; max-width:780px; margin:0 auto; width:100%; overflow-y:auto;}
+  .pres-kick{font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--yellow);}
+  .pres-title{font-family:'Kalam',cursive; font-weight:700; font-size:clamp(30px,7vw,54px); line-height:1.12; margin-top:12px; transform:rotate(-0.6deg);}
+  .pres-sub{color:var(--chalk-dim); line-height:1.7; margin-top:18px; max-width:600px;}
+  .pres-ul{list-style:none; margin-top:22px; display:flex; flex-direction:column; gap:14px; padding:0;}
+  .pres-ul li{font-size:clamp(15px,3.8vw,21px); line-height:1.45; padding-left:26px; position:relative; margin:0;}
+  .pres-ul li::before{content:'✦'; position:absolute; left:0; color:var(--yellow);}
+  .pres-line{height:3px; background:rgba(255,255,255,0.08);}
+  .pres-line i{display:block; height:100%; width:0; background:var(--yellow); transition:width 0.35s ease;}
+  .pres-bar{display:flex; align-items:center; justify-content:center; gap:18px; padding:14px 18px calc(18px + env(safe-area-inset-bottom));}
+  .pres-bar button{width:46px; height:46px; border-radius:50%; border:1px solid var(--yellow); background:transparent; color:var(--yellow); font-size:22px; cursor:pointer;}
+  .pres-bar button:disabled{opacity:0.25; cursor:default;}
+  #pres-count{font-size:12px; color:var(--chalk-dim); min-width:64px; text-align:center;}
+
   .signature{position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:15;
     font-family:'Petit Formal Script',cursive; font-size:17px; opacity:0.4; pointer-events:none; letter-spacing:0.02em; white-space:nowrap; color:var(--chalk-dim);}
   .toast{position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:9998;
-    background:rgba(240,210,100,0.16); border:1px solid var(--yellow); color:var(--yellow);
+    background:rgba(240,210,100,0.16); border:1px solid var(--yellow); color:var(--yellow); backdrop-filter:blur(6px);
     font-family:'Space Mono',monospace; font-size:12px; padding:10px 18px; border-radius:3px;
-    opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px; max-width:90vw;}
+    opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px; max-width:90vw; line-height:1.45;}
 
   @media (max-width:480px){ h1{font-size:32px;} }
 </style>
@@ -112,18 +167,24 @@
   <div class="nav1">
     <a href="hub.html">◇ Inicio</a>
     <a href="pizarra.html" class="current">Pizarra</a>
+    <a href="recreo.html">Recreo ◆</a>
   </div>
 
   <div class="eyebrow">Grabador de clases</div>
   <h1>Pizarra</h1>
-  <p class="sub">Graba la clase con Notas de Voz. Luego, en esa grabación toca Compartir → Guardar en Archivos (si no haces esto, el iPhone no te la deja elegir aquí). Después toca abajo y selecciónala desde Archivos.</p>
+  <p class="sub">Graba la clase con Notas de Voz. Antes de subirla, en la grabación toca Compartir → Guardar en Archivos (si no, el iPhone no te deja elegirla aquí). Puedes subir varias a la vez: la IA las escucha completas, las parte por temas y arma resumen, mini-presentación, transcripción y minijuegos.</p>
 
   <section>
     <h2>Nueva clase</h2>
     <div class="dropzone" id="dropzone">
       <div class="icon">🎙️</div>
-      <p id="dropzone-text">Toca para subir el audio (.m4a, .mp3 — hasta ~3 horas)</p>
-      <input type="file" id="audio-input" accept="audio/*,.m4a,.mp3,.wav,.aac,.caf,.mp4,audio/x-m4a,audio/mp4">
+      <p id="dropzone-text"></p>
+    </div>
+    <input type="file" id="audio-input" multiple accept="audio/*,.m4a,.mp3,.wav,.aac,.mp4,.ogg,.flac,.aiff,audio/x-m4a,audio/mp4">
+    <div id="queue"></div>
+    <div class="opts">
+      <label class="chk"><input type="checkbox" id="opt-join"><span>Son partes de una misma clase — unirlas en una sola (se ordenan por nombre)</span></label>
+      <label class="chk"><input type="checkbox" id="opt-tr" checked><span>Incluir transcripción completa (tarda más; queda guardada solo en este dispositivo)</span></label>
     </div>
     <div class="field">
       <label>Materia</label>
@@ -131,27 +192,41 @@
       <div class="materias" id="materias-list"></div>
     </div>
     <div class="save-row"><button class="btn" id="process-btn" disabled>Procesar clase</button></div>
+    <div class="prog" id="prog" hidden><i></i></div>
     <div class="status-line" id="status-line"></div>
   </section>
 
   <section>
     <h2>Tus clases</h2>
     <div class="filter-row" id="filter-row"></div>
+    <div class="acts" id="md-bar" style="margin-bottom:14px" hidden><button class="btn mini ghost" id="md-all"></button></div>
     <div id="clases-list"></div>
     <div class="empty" id="empty-state" style="display:none;">Aún no has procesado ninguna clase.</div>
   </section>
+</div>
+
+<div class="pres" id="pres" hidden>
+  <button class="pres-x" id="pres-x" aria-label="Cerrar">×</button>
+  <div class="pres-stage" id="pres-stage"></div>
+  <div class="pres-line"><i id="pres-fill"></i></div>
+  <div class="pres-bar">
+    <button id="pres-prev" aria-label="Anterior">‹</button>
+    <span id="pres-count"></span>
+    <button id="pres-next" aria-label="Siguiente">›</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
 <div class="signature">Darío Calle</div>
 
 <script>
+  const $ = id => document.getElementById(id);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const arr = x => Array.isArray(x) ? x : [];
+
   // ===== PIN =====
   (function(){
-    const gate = document.getElementById('pin-gate');
-    const submit = document.getElementById('pin-submit');
-    const input = document.getElementById('pin-input');
-    const err = document.getElementById('pin-error');
+    const gate = $('pin-gate'), submit = $('pin-submit'), input = $('pin-input'), err = $('pin-error');
     try{ if(localStorage.getItem('habit_unlocked') === 'yes'){ gate.style.display = 'none'; } }catch(e){}
     function tryPin(){
       if(input.value === '3751'){ try{ localStorage.setItem('habit_unlocked','yes'); }catch(e){} gate.style.display = 'none'; }
@@ -162,16 +237,17 @@
   })();
 
   function showToast(msg){
-    const t = document.getElementById('toast');
-    document.getElementById('toast-msg').textContent = msg;
+    const t = $('toast');
+    $('toast-msg').textContent = msg;
     gsap.killTweensOf(t);
     gsap.timeline()
       .set(t, { opacity:1, y:-14 })
       .to(t, { y:0, duration:0.35, ease:'back.out(2)' })
-      .to(t, { opacity:1, duration:1.6 })
+      .to(t, { opacity:1, duration:2.6 })
       .to(t, { opacity:0, y:-14, duration:0.35, ease:'power2.in' });
   }
-  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  const fmtMB = n => n >= 1073741824 ? (n/1073741824).toFixed(1)+' GB' : Math.max(0.1, n/1048576).toFixed(n >= 10485760 ? 0 : 1)+' MB';
 
   // ===== Materias =====
   function loadMaterias(){ try{ return JSON.parse(localStorage.getItem('pizarra_materias')||'null') || ['General']; }catch(e){ return ['General']; } }
@@ -181,172 +257,542 @@
   let filtroActivo = 'Todas';
 
   function renderMaterias(){
-    document.getElementById('materias-list').innerHTML = materias.map(m=>
+    $('materias-list').innerHTML = materias.map(m=>
       `<span class="materia-chip ${m===materiaActiva?'active':''}" data-m="${escapeHtml(m)}">${escapeHtml(m)}</span>`
     ).join('');
     document.querySelectorAll('.materia-chip').forEach(c=> c.addEventListener('click', ()=>{ materiaActiva = c.dataset.m; renderMaterias(); }));
   }
-  document.getElementById('add-materia').addEventListener('click', ()=>{
-    const v = document.getElementById('new-materia').value.trim();
+  $('add-materia').addEventListener('click', ()=>{
+    const v = $('new-materia').value.trim();
     if(!v) return;
     if(!materias.includes(v)) materias.push(v);
-    saveMaterias(materias); materiaActiva = v; document.getElementById('new-materia').value='';
+    saveMaterias(materias); materiaActiva = v; $('new-materia').value='';
     renderMaterias(); renderFilters();
   });
   renderMaterias();
 
-  // ===== Subir audio =====
-  let selectedFile = null;
-  document.getElementById('dropzone').addEventListener('click', ()=> document.getElementById('audio-input').click());
-  document.getElementById('audio-input').addEventListener('change', (e)=>{
-    selectedFile = e.target.files[0];
-    if(selectedFile){
-      document.getElementById('dropzone').classList.add('has-file');
-      document.getElementById('dropzone-text').textContent = '✓ ' + selectedFile.name;
-      document.getElementById('process-btn').disabled = false;
-    }
-  });
-
   // ===== Datos de clases =====
   function loadClases(){ try{ return JSON.parse(localStorage.getItem('pizarra')||'[]'); }catch(e){ return []; } }
-  function saveClases(list){ try{ localStorage.setItem('pizarra', JSON.stringify(list)); }catch(e){} if(window.jarvisSync) jarvisSync.push('pizarra'); }
-  let openId = null;
+  function saveClases(list){
+    try{ localStorage.setItem('pizarra', JSON.stringify(list)); }
+    catch(e){ showToast('⚠ Almacenamiento lleno — borra clases viejas para guardar más'); return false; }
+    if(window.jarvisSync) jarvisSync.push('pizarra');
+    return true;
+  }
+  function updateClase(id, patch){
+    const list = loadClases(); const c = list.find(x=>x.id===id);
+    if(c){ Object.assign(c, patch); saveClases(list); render(); }
+  }
+  let openId = null, trOpenId = null, studyBusy = false;
+  const trCache = {};
 
-  function deleteClase(id){ saveClases(loadClases().filter(c=>c.id!==id)); render(); }
+  // Transcripciones: pesan mucho para localStorage, van a IndexedDB (solo este dispositivo)
+  function idb(){ return new Promise((res,rej)=>{ const r = indexedDB.open('pizarra_db',1); r.onupgradeneeded = ()=> r.result.createObjectStore('tr'); r.onsuccess = ()=> res(r.result); r.onerror = ()=> rej(r.error); }); }
+  async function trPut(id, text){ try{ const d = await idb(); await new Promise((res,rej)=>{ const t = d.transaction('tr','readwrite'); t.objectStore('tr').put(text,id); t.oncomplete = res; t.onerror = ()=> rej(t.error); }); return true; }catch(e){ return false; } }
+  async function trGet(id){ try{ const d = await idb(); return await new Promise((res,rej)=>{ const q = d.transaction('tr').objectStore('tr').get(id); q.onsuccess = ()=> res(q.result||''); q.onerror = ()=> rej(q.error); }); }catch(e){ return ''; } }
+  async function trDel(id){ try{ const d = await idb(); d.transaction('tr','readwrite').objectStore('tr').delete(id); }catch(e){} }
 
+  // ===== Render de la lista =====
   function renderFilters(){
     const list = loadClases();
     const usadas = ['Todas', ...new Set(list.map(c=>c.materia))];
-    document.getElementById('filter-row').innerHTML = usadas.map(m=>
+    $('filter-row').innerHTML = usadas.map(m=>
       `<span class="filter-chip ${filtroActivo===m?'active':''}" data-f="${escapeHtml(m)}">${escapeHtml(m)}</span>`
     ).join('');
     document.querySelectorAll('.filter-chip').forEach(c=> c.addEventListener('click', ()=>{ filtroActivo = c.dataset.f; render(); }));
   }
+  const ul = a => arr(a).length ? '<ul>'+arr(a).map(x=>'<li>'+escapeHtml(x)+'</li>').join('')+'</ul>' : '';
+  const sec = (t, html) => html ? `<div class="card-sec">${t}</div>${html}` : '';
 
+  function bodyHTML(c){
+    const S = arr(c.secciones), nPlay = arr(c.quiz).length + arr(c.flashcards).length;
+    let h = '<div class="acts">';
+    if(S.length) h += `<button class="btn mini" data-act="pres" data-id="${c.id}">▶ Presentar clase</button>`;
+    if(nPlay) h += `<a class="btn mini ghost" href="recreo.html?clase=${encodeURIComponent(c.id)}">Jugar ◆</a>`;
+    h += `<button class="btn mini ghost" data-act="study" data-id="${c.id}">${nPlay?'Regenerar':'Generar'} minijuegos</button>`;
+    if(c.tr) h += `<button class="btn mini ghost" data-act="tr" data-id="${c.id}">${trOpenId===c.id?'Ocultar':'Ver'} transcripción</button>`;
+    h += `<button class="btn mini ghost" data-act="md" data-id="${c.id}">Descargar .md</button>`;
+    h += '</div>';
+    if(trOpenId === c.id){
+      const t = trCache[c.id];
+      h += `<div class="card-sec">Transcripción</div><div class="acts"><button class="btn mini ghost" data-act="trcopy" data-id="${c.id}">Copiar todo</button></div>`
+        + `<pre class="tr">${escapeHtml(t===undefined ? 'Cargando…' : (t || '(no está guardada en este dispositivo — se guarda donde se procesó la clase)'))}</pre>`;
+    }
+    h += sec('Resumen', `<div class="card-txt">${escapeHtml(c.resumen)}</div>`);
+    if(S.length){
+      h += '<div class="card-sec">Secciones de la clase</div>' + S.map((s,i)=>
+        `<details class="sec"><summary><span>${i+1}. ${escapeHtml(s.titulo)}</span><span class="tm">${escapeHtml(s.inicio)}${s.fin?'–'+escapeHtml(s.fin):''}</span></summary>`
+        + `<div class="sec-in"><div class="card-txt">${escapeHtml(s.resumen)}</div>${ul(s.puntos)}`
+        + `<div class="acts" style="margin-top:10px"><button class="btn mini ghost" data-act="pres" data-id="${c.id}" data-i="${i}">▶ Presentar esta sección</button></div></div></details>`).join('');
+    }
+    h += sec('Puntos clave', ul(c.puntos));
+    h += sec('Glosario', arr(c.glosario).length ? '<ul>'+arr(c.glosario).map(g=>`<li><b>${escapeHtml(g.termino)}</b>: ${escapeHtml(g.definicion)}</li>`).join('')+'</ul>' : '');
+    h += sec('Datos importantes', ul(c.datos));
+    h += sec('Ejemplos y casos', ul(c.ejemplos));
+    h += sec('Fuera de la clase (tareas, avisos, fechas)', arr(c.fuera).length ? '<ul>'+arr(c.fuera).map(f=>`<li><span class="tag">${escapeHtml(f.tipo||'aviso')}</span>${escapeHtml(f.texto)}${f.fecha?' — <b>'+escapeHtml(f.fecha)+'</b>':''}</li>`).join('')+'</ul>' : '');
+    const citas = arr(c.citas).length ? arr(c.citas) : (c.cita ? [c.cita] : []);
+    h += sec('Citas textuales', citas.map(q=>`<div class="quote">"${escapeHtml(q)}"</div>`).join(''));
+    h += sec('Para profundizar', ul(c.abiertas));
+    return h;
+  }
+  function cardHTML(c){
+    const open = openId === c.id, S = arr(c.secciones);
+    const badges = [];
+    if(S.length) badges.push(S.length+' secciones');
+    if(arr(c.quiz).length) badges.push(arr(c.quiz).length+' preguntas');
+    if(arr(c.flashcards).length) badges.push(arr(c.flashcards).length+' tarjetas');
+    if(c.tr) badges.push('transcrita');
+    return `<div class="card ${open?'open':''}" data-id="${c.id}">
+      <span class="card-del" data-act="del" data-id="${c.id}">×</span>
+      <div class="card-head">
+        <div class="card-title">${escapeHtml(c.titulo)}</div>
+        <div class="card-meta">${escapeHtml(c.materia)} · ${escapeHtml(c.archivo)} · ${new Date(c.fecha).toLocaleDateString('es-EC')}${c.duracion?' · '+escapeHtml(c.duracion):''}</div>
+        ${badges.length ? '<div class="badges">'+badges.map(b=>'<span class="badge">'+b+'</span>').join('')+'</div>' : ''}
+      </div>
+      <div class="card-body">${open ? bodyHTML(c) : ''}</div>
+    </div>`;
+  }
   function render(){
     renderFilters();
     let list = loadClases();
     if(filtroActivo !== 'Todas') list = list.filter(c=>c.materia===filtroActivo);
-    document.getElementById('empty-state').style.display = list.length ? 'none' : 'block';
-    document.getElementById('clases-list').innerHTML = list.map(c=>{
-      const isOpen = openId===c.id;
-      return `
-      <div class="card ${isOpen?'open':''}" data-id="${c.id}">
-        <span class="card-del" data-del="${c.id}">×</span>
-        <div class="card-title">${escapeHtml(c.titulo)}</div>
-        <div class="card-meta">${escapeHtml(c.materia)} · ${escapeHtml(c.archivo)} · ${new Date(c.fecha).toLocaleDateString('es-EC')}</div>
-        <div class="card-body">
-          <div class="card-sec">Resumen</div>
-          <div class="card-txt">${escapeHtml(c.resumen)}</div>
-          ${c.puntos && c.puntos.length ? `<div class="card-sec">Puntos clave</div><ul>${c.puntos.map(p=>`<li>${escapeHtml(p)}</li>`).join('')}</ul>` : ''}
-          ${c.cita ? `<div class="card-sec">Cita textual</div><div class="quote">"${escapeHtml(c.cita)}"</div>` : ''}
-        </div>
-      </div>`;
-    }).join('');
-    document.querySelectorAll('.card').forEach(el=>{
-      el.addEventListener('click', (e)=>{
-        if(e.target.closest('[data-del]')) return;
-        openId = openId===el.dataset.id ? null : el.dataset.id; render();
-      });
-    });
-    document.querySelectorAll('[data-del]').forEach(x=> x.addEventListener('click', e=>{ e.stopPropagation(); deleteClase(x.dataset.del); }));
+    $('empty-state').style.display = list.length ? 'none' : 'block';
+    $('md-bar').hidden = !list.length;
+    $('md-all').textContent = filtroActivo === 'Todas' ? 'Descargar todas (.md)' : 'Descargar «'+filtroActivo+'» (.md)';
+    $('clases-list').innerHTML = list.map(cardHTML).join('');
   }
-  render();
-  if(window.jarvisSync){ jarvisSync.pull('pizarra').then(ok=>{ if(ok) render(); }); jarvisSync.pull('pizarra_materias').then(ok=>{ if(ok){ materias=loadMaterias(); materiaActiva=materias[0]; renderMaterias(); } }); }
 
-  // ===== IA: subir el archivo a Gemini (Files API) y pedir el resumen =====
+  $('clases-list').addEventListener('click', e=>{
+    const a = e.target.closest('[data-act]');
+    if(a){ e.stopPropagation(); return act(a.dataset.act, a.dataset.id, a.dataset.i); }
+    if(e.target.closest('a')) return;
+    const head = e.target.closest('.card-head');
+    if(head){ const id = head.closest('.card').dataset.id; openId = openId===id ? null : id; render(); }
+  });
+
+  async function act(kind, id, i){
+    const c = loadClases().find(x=>x.id===id); if(!c) return;
+    if(kind === 'del'){
+      if(!confirm('¿Borrar "'+c.titulo+'" con todo su material?')) return;
+      trDel(id); saveClases(loadClases().filter(x=>x.id!==id)); if(openId===id) openId = null; render();
+    }
+    else if(kind === 'pres'){ present(c, i===undefined ? null : +i); }
+    else if(kind === 'tr'){
+      trOpenId = trOpenId===id ? null : id;
+      if(trOpenId && trCache[id]===undefined){ render(); trCache[id] = await trGet(id); }
+      render();
+    }
+    else if(kind === 'md'){
+      downloadMD(slug(c.titulo)+'.md', await buildMD([c]));
+      showToast('Descargado: '+slug(c.titulo)+'.md');
+    }
+    else if(kind === 'trcopy'){
+      try{ await navigator.clipboard.writeText(trCache[id]||''); showToast('Transcripción copiada'); }catch(e){ showToast('No se pudo copiar'); }
+    }
+    else if(kind === 'study'){
+      if(studyBusy) return;
+      const key = getApiKey(); if(!key) return;
+      studyBusy = true; showToast('Armando minijuegos… (~1 min)');
+      try{ const st = await genStudy(key, c); updateClase(id, st); showToast('Listo: '+st.quiz.length+' preguntas y '+st.flashcards.length+' tarjetas'); }
+      catch(e){ showToast('Error: '+e.message); }
+      finally{ studyBusy = false; }
+    }
+  }
+
+  // ===== Exportar a .md (para pasárselo a otra persona y que lo use con cualquier IA) =====
+  const oneLine = s => String(s==null?'':s).replace(/\s*\n+\s*/g, ' ').trim();
+  const slug = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').toLowerCase().slice(0,60) || 'clase';
+  const MD_HEAD = `# Material de clase — para estudiar con una IA
+
+> **Instrucciones para la IA que lea este documento**
+> - Este archivo trae el material completo de una o más clases: resumen, secciones con sus puntos clave, glosario, datos, tareas y fechas, preguntas de práctica con su clave de respuestas y, a veces, la transcripción literal.
+> - Usa SOLO este material como fuente. Si algo no está aquí, dilo en vez de inventarlo.
+> - Antes de explicar nada, pregúntale a la persona: su nivel en el tema, cómo aprende mejor (ejemplos, esquemas, resúmenes cortos, preguntas), cuánto tiempo tiene y para qué lo necesita (examen, tarea, curiosidad). Adapta el ritmo, el lenguaje y el formato a esa persona.
+> - Ofrécele: repasar sección por sección, hacerle el quiz de una pregunta a la vez (NO reveles la respuesta antes de que conteste), tarjetas de repaso, un plan de estudio con las fechas de examen o tareas que aparezcan, y re-explicar con otros ejemplos lo que falle.
+> - La "Clave de respuestas" de cada clase es solo para ti: no la muestres hasta que la persona haya respondido.
+> - Al final del archivo hay un comentario "RECREO-DATA" con datos para una app de minijuegos: ignóralo.`;
+  function claseMD(c, tr){
+    const S = arr(c.secciones), L = [], ab = 'ABCD';
+    const bl = a => arr(a).map(x=>'- '+oneLine(x)).join('\n');
+    L.push('# '+oneLine(c.titulo));
+    L.push('**Materia:** '+oneLine(c.materia)+' · **Fecha:** '+new Date(c.fecha).toLocaleDateString('es-EC')+(c.duracion ? ' · **Duración:** '+oneLine(c.duracion) : ''));
+    if(c.resumen) L.push('## Resumen\n'+c.resumen);
+    if(S.length) L.push('## Secciones de la clase\n'+S.map((s,i)=>`### ${i+1}. ${oneLine(s.titulo)}${s.inicio ? ' ('+s.inicio+(s.fin ? '–'+s.fin : '')+')' : ''}\n${s.resumen||''}\n${bl(s.puntos)}`).join('\n\n'));
+    if(arr(c.puntos).length) L.push('## Puntos clave\n'+bl(c.puntos));
+    if(arr(c.glosario).length) L.push('## Glosario\n'+arr(c.glosario).map(g=>`- **${oneLine(g.termino)}**: ${oneLine(g.definicion)}`).join('\n'));
+    if(arr(c.datos).length) L.push('## Datos importantes\n'+bl(c.datos));
+    if(arr(c.ejemplos).length) L.push('## Ejemplos y casos\n'+bl(c.ejemplos));
+    if(arr(c.fuera).length) L.push('## Fuera de la clase (tareas, avisos, fechas)\n'+arr(c.fuera).map(f=>`- [${oneLine(f.tipo||'aviso')}] ${oneLine(f.texto)}${f.fecha ? ' — '+oneLine(f.fecha) : ''}`).join('\n'));
+    const citas = arr(c.citas).length ? arr(c.citas) : (c.cita ? [c.cita] : []);
+    if(citas.length) L.push('## Citas textuales\n'+citas.map(q=>'> '+oneLine(q)).join('\n'));
+    if(arr(c.abiertas).length) L.push('## Para profundizar\n'+bl(c.abiertas));
+    const Q = arr(c.quiz);
+    if(Q.length){
+      L.push('## Preguntas de práctica\n'+Q.map((q,i)=>`${i+1}. ${oneLine(q.pregunta)}\n`+arr(q.opciones).map((o,j)=>`   ${ab[j]}) ${oneLine(o)}`).join('\n')).join('\n\n'));
+      L.push('## Clave de respuestas (solo para la IA: no revelar antes de que la persona responda)\n'+Q.map((q,i)=>`${i+1}. ${ab[q.correcta]}${q.explicacion ? ' — '+oneLine(q.explicacion) : ''}`).join('\n'));
+    }
+    if(arr(c.flashcards).length) L.push('## Tarjetas de repaso\n'+arr(c.flashcards).map(f=>`- **${oneLine(f.frente)}** → ${oneLine(f.reverso)}`).join('\n'));
+    if(tr) L.push('## Transcripción literal\n'+tr);
+    return L.join('\n\n');
+  }
+  async function buildMD(list){
+    const out = [MD_HEAD];
+    for(const c of list) out.push(claseMD(c, c.tr ? await trGet(c.id) : ''));
+    // Datos para importar en Recreo. Dentro de un comentario HTML no puede haber "--": se escapa (JSON.parse lo restaura).
+    const data = list.map(c=>({id:c.id, titulo:c.titulo, materia:c.materia, quiz:arr(c.quiz), flashcards:arr(c.flashcards), glosario:arr(c.glosario)}))
+      .filter(d=> d.quiz.length || d.flashcards.length || d.glosario.length);
+    const tail = data.length ? '\n\n<!-- RECREO-DATA\n'+JSON.stringify(data).replace(/--/g, '-\\u002d')+'\n-->' : '';
+    return out.join('\n\n---\n\n')+tail+'\n';
+  }
+  function downloadMD(name, text){
+    const url = URL.createObjectURL(new Blob([text], {type:'text/markdown;charset=utf-8'}));
+    const a = document.createElement('a'); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 4000);
+  }
+  $('md-all').addEventListener('click', async ()=>{
+    let list = loadClases();
+    if(filtroActivo !== 'Todas') list = list.filter(c=>c.materia === filtroActivo);
+    if(!list.length) return;
+    const name = 'clases-'+slug(filtroActivo === 'Todas' ? 'todas' : filtroActivo)+'.md';
+    downloadMD(name, await buildMD(list.slice().reverse()));
+    showToast('Descargado: '+name+' ('+list.length+' clase'+(list.length>1?'s':'')+')');
+  });
+
+  // ===== Presentación =====
+  let slides = [], si = 0;
+  function buildSlides(c, only){
+    const S = arr(c.secciones), out = [];
+    if(only === null){
+      out.push({kick:c.materia, title:c.titulo, sub:c.duracion||''});
+      if(c.resumen) out.push({kick:'En pocas palabras', title:'La clase completa', sub:c.resumen});
+    }
+    (only === null ? S : [S[only]]).forEach((s,k)=>{
+      const n = (only === null ? k : only) + 1;
+      out.push({kick:'Sección '+n+(s.inicio?' · '+s.inicio:''), title:s.titulo, sub:s.resumen});
+      const D = arr(s.diapositivas).length ? s.diapositivas : [{titulo:'Puntos clave', puntos:s.puntos}];
+      D.forEach(d=> out.push({kick:s.titulo, title:d.titulo, bullets:arr(d.puntos)}));
+    });
+    if(only === null && arr(c.puntos).length) out.push({kick:'Para llevarte', title:'Lo esencial', bullets:c.puntos.slice(0,8)});
+    return out;
+  }
+  function present(c, only){
+    slides = buildSlides(c, only);
+    if(!slides.length){ showToast('Esta clase no tiene secciones para presentar'); return; }
+    si = 0; $('pres').hidden = false; document.body.style.overflow = 'hidden'; drawSlide();
+  }
+  function closePres(){ $('pres').hidden = true; document.body.style.overflow = ''; }
+  function drawSlide(){
+    const s = slides[si], st = $('pres-stage');
+    let h = `<div class="pres-kick">${escapeHtml(s.kick)}</div><div class="pres-title">${escapeHtml(s.title)}</div>`;
+    if(s.sub) h += `<p class="pres-sub" style="font-size:${s.sub.length>500?14:s.sub.length>220?16:18}px">${escapeHtml(s.sub)}</p>`;
+    if(s.bullets) h += '<ul class="pres-ul">'+s.bullets.map(b=>'<li>'+escapeHtml(b)+'</li>').join('')+'</ul>';
+    st.innerHTML = h; st.scrollTop = 0;
+    gsap.fromTo(st.querySelector('.pres-title'), {opacity:0, y:18}, {opacity:1, y:0, duration:0.45, ease:'power2.out'});
+    gsap.from(st.querySelectorAll('.pres-ul li, .pres-sub, .pres-kick'), {opacity:0, y:12, duration:0.4, stagger:0.12, delay:0.15, ease:'power2.out'});
+    $('pres-count').textContent = (si+1)+' / '+slides.length;
+    $('pres-fill').style.width = ((si+1)/slides.length*100)+'%';
+    $('pres-prev').disabled = si === 0; $('pres-next').disabled = si === slides.length-1;
+  }
+  const slideGo = d => { const n = si + d; if(n>=0 && n<slides.length){ si = n; drawSlide(); } };
+  $('pres-x').addEventListener('click', closePres);
+  $('pres-prev').addEventListener('click', ()=> slideGo(-1));
+  $('pres-next').addEventListener('click', ()=> slideGo(1));
+  document.addEventListener('keydown', e=>{
+    if($('pres').hidden) return;
+    if(e.key==='ArrowRight' || e.key===' ') slideGo(1);
+    else if(e.key==='ArrowLeft') slideGo(-1);
+    else if(e.key==='Escape') closePres();
+  });
+  (function(){ let x0 = null;
+    $('pres').addEventListener('touchstart', e=>{ x0 = e.touches[0].clientX; }, {passive:true});
+    $('pres').addEventListener('touchend', e=>{ if(x0===null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if(Math.abs(dx) > 55) slideGo(dx<0 ? 1 : -1); }, {passive:true});
+  })();
+
+  // ===== Cola de archivos =====
+  const MIME_EXT = {m4a:'audio/mp4', mp4:'audio/mp4', mp3:'audio/mpeg', mpeg:'audio/mpeg', wav:'audio/wav', aac:'audio/aac', ogg:'audio/ogg', oga:'audio/ogg', opus:'audio/ogg', flac:'audio/flac', aif:'audio/aiff', aiff:'audio/aiff'};
+  const extOf = f => (f.name.split('.').pop() || '').toLowerCase();
+  // iOS reporta .m4a como audio/x-m4a (Gemini no lo reconoce): se normaliza por extensión
+  const mimeOf = f => MIME_EXT[extOf(f)] || (((f.type||'').startsWith('audio/') && !/m4a/.test(f.type)) ? f.type : 'audio/mp4');
+  const isAudio = f => (f.type||'').startsWith('audio/') || !!MIME_EXT[extOf(f)];
+  const DZ_TEXT = 'Toca para elegir audios (.m4a, .mp3, .wav…) — varios a la vez, hasta ~2 GB cada uno';
+  const STATE_TXT = {wait:'en cola', up:'subiendo', ai:'analizando', tr:'transcribiendo', study:'armando minijuegos', done:'listo ✓', err:'error'};
+  let queue = [], running = false;
+
+  function addFiles(list){
+    let skipped = 0;
+    Array.from(list).forEach(f=>{
+      if(!isAudio(f)){ skipped++; return; }
+      if(queue.some(q=> q.file.name===f.name && q.file.size===f.size)) return;
+      queue.push({file:f, state:'wait', pct:0, msg:''});
+    });
+    if(skipped) showToast(skipped+' archivo(s) no son audio y se omitieron');
+    renderQueue();
+  }
+  function renderQueue(){
+    $('queue').innerHTML = queue.map((q,i)=>
+      `<div class="qrow ${q.state}"><div class="qtop"><span class="qn">${escapeHtml(q.file.name)}</span><span class="qs">${fmtMB(q.file.size)} · ${escapeHtml(q.msg || STATE_TXT[q.state])}</span>${running?'':`<span class="qx" data-rm="${i}">×</span>`}</div>`
+      + (q.state==='up' ? `<div class="qbar"><i style="width:${Math.round(q.pct*100)}%"></i></div>` : '') + '</div>').join('');
+    const n = queue.length, join = $('opt-join').checked && n > 1;
+    $('process-btn').disabled = running || !n;
+    $('process-btn').textContent = running ? 'Procesando…' : (join ? 'Procesar 1 clase ('+n+' partes)' : (n > 1 ? 'Procesar '+n+' clases' : 'Procesar clase'));
+    $('dropzone').classList.toggle('has-file', n > 0);
+    $('dropzone-text').textContent = n ? '✓ '+n+' archivo'+(n>1?'s':'')+' — toca para agregar más' : DZ_TEXT;
+  }
+  const dz = $('dropzone');
+  dz.addEventListener('click', ()=>{ if(!running) $('audio-input').click(); });
+  $('audio-input').addEventListener('change', e=>{ addFiles(e.target.files); e.target.value = ''; });
+  ['dragenter','dragover'].forEach(ev=> dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(ev=> dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.remove('drag'); }));
+  dz.addEventListener('drop', e=>{ if(!running) addFiles(e.dataTransfer.files); });
+  $('queue').addEventListener('click', e=>{ const x = e.target.closest('[data-rm]'); if(x && !running){ queue.splice(+x.dataset.rm, 1); renderQueue(); } });
+  $('opt-join').addEventListener('change', renderQueue);
+  renderQueue();
+
+  // ===== IA: Gemini (subida en bloques + respuesta en streaming) =====
+  const API = 'https://generativelanguage.googleapis.com';
   const GEMINI_MODEL = 'gemini-3.6-flash';
+  const CHUNK = 8 * 1024 * 1024; // múltiplo de 256 KB, como pide la API resumable
   function getApiKey(){
     try{ let k = localStorage.getItem('gemini_api_key'); if(k) return k; }catch(e){}
     const k = prompt('Pega tu clave de API de Google AI Studio (aistudio.google.com → Get API key). Gratis.\nSe guarda solo en este dispositivo.');
     if(k){ try{ localStorage.setItem('gemini_api_key', k.trim()); }catch(e){} return k.trim(); }
     return null;
   }
-
-  async function uploadToGemini(apiKey, file, statusEl){
-    statusEl.textContent = 'Subiendo audio (' + Math.round(file.size/1024/1024) + ' MB)…';
-    const startRes = await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files?key='+apiKey, {
-      method:'POST',
-      headers:{
-        'X-Goog-Upload-Protocol':'resumable', 'X-Goog-Upload-Command':'start',
-        'X-Goog-Upload-Header-Content-Length': file.size, 'X-Goog-Upload-Header-Content-Type': file.type||'audio/mpeg',
-        'Content-Type':'application/json'
-      },
-      body: JSON.stringify({ file:{ display_name: file.name } })
-    });
-    if(!startRes.ok) throw new Error('No se pudo iniciar la subida a Gemini');
-    const uploadUrl = startRes.headers.get('X-Goog-Upload-URL');
-    if(!uploadUrl) throw new Error('Google no devolvió una URL de subida');
-
-    const uploadRes = await fetch(uploadUrl, {
-      method:'POST',
-      headers:{ 'Content-Length': file.size, 'X-Goog-Upload-Offset':'0', 'X-Goog-Upload-Command':'upload, finalize' },
-      body: file
-    });
-    const fileInfo = await uploadRes.json();
-    if(!uploadRes.ok || !fileInfo.file) throw new Error('No se pudo terminar la subida a Gemini');
-    return fileInfo.file; // {uri, mimeType, name, state}
+  async function apiErr(res, fallback){
+    try{ const j = await res.json(); return (j.error && j.error.message) || fallback; }catch(e){ return fallback+' (HTTP '+res.status+')'; }
   }
 
-  async function waitForActive(apiKey, name, statusEl){
-    for(let i=0;i<20;i++){
-      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/'+name+'?key='+apiKey);
-      const data = await res.json();
-      if(data.state === 'ACTIVE') return data;
-      if(data.state === 'FAILED') throw new Error('Google no pudo procesar el audio');
-      statusEl.textContent = 'Google está preparando el audio…';
-      await new Promise(r=>setTimeout(r, 3000));
-    }
-    throw new Error('El audio tardó demasiado en procesarse');
-  }
-
-  document.getElementById('process-btn').addEventListener('click', async ()=>{
-    if(!selectedFile) return;
-    const apiKey = getApiKey(); if(!apiKey) return;
-    const btn = document.getElementById('process-btn'); const statusEl = document.getElementById('status-line');
-    btn.disabled = true;
-    try{
-      const uploaded = await uploadToGemini(apiKey, selectedFile, statusEl);
-      const fileData = uploaded.state==='ACTIVE' ? uploaded : await waitForActive(apiKey, uploaded.name, statusEl);
-
-      statusEl.textContent = 'Escuchando y resumiendo la clase… (puede tardar varios minutos en clases largas)';
-      const sys = 'Eres un asistente que resume clases universitarias grabadas en audio. Responde SOLO con un JSON, sin texto alrededor, con esta forma exacta: {"titulo":"tema principal de la clase en pocas palabras","resumen":"resumen de 4-6 frases","puntos":["punto clave 1","punto clave 2","..."],"cita":"una frase textual literal dicha en la clase, o vacío si no hay ninguna clara"}';
-      let data;
-      for(let intento=0; intento<3; intento++){
-        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent?key='+apiKey, {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            contents:[{ role:'user', parts:[ {file_data:{mime_type:fileData.mimeType, file_uri:fileData.uri}}, {text:'Resume esta clase grabada.'} ] }],
-            systemInstruction:{parts:[{text:sys}]},
-            generationConfig:{maxOutputTokens:1500}
-          })
-        });
-        data = await res.json();
-        if(data.error && data.error.code===503 && intento<2){ await new Promise(r=>setTimeout(r, 2000*(intento+1))); continue; }
-        break;
+  // ponytail: si un bloque llega pero se pierde la respuesta, el reintento choca con el offset y falla; la verificación de tamaño final evita guardar archivos corruptos
+  async function uploadFile(key, f, onPct){
+    if(!f.size) throw new Error('"'+f.name+'" está vacío');
+    const start = await fetch(`${API}/upload/v1beta/files?key=${key}`, {
+      method:'POST',
+      headers:{'X-Goog-Upload-Protocol':'resumable','X-Goog-Upload-Command':'start','X-Goog-Upload-Header-Content-Length':String(f.size),'X-Goog-Upload-Header-Content-Type':mimeOf(f),'Content-Type':'application/json'},
+      body: JSON.stringify({file:{display_name:f.name}})
+    });
+    if(!start.ok) throw new Error(await apiErr(start, 'No se pudo iniciar la subida'));
+    const url = start.headers.get('X-Goog-Upload-URL');
+    if(!url) throw new Error('Google no devolvió una URL de subida');
+    let off = 0, info = null;
+    while(off < f.size){
+      const end = Math.min(off + CHUNK, f.size), last = end >= f.size;
+      for(let t = 0; ; t++){
+        try{
+          const r = await fetch(url, {method:'POST', headers:{'X-Goog-Upload-Offset':String(off),'X-Goog-Upload-Command': last ? 'upload, finalize' : 'upload'}, body: f.slice(off, end)});
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          if(last) info = await r.json();
+          break;
+        }catch(e){
+          if(t >= 3) throw new Error('Se cortó la subida de "'+f.name+'" ('+e.message+')');
+          await sleep(1500 * (t+1));
+        }
       }
-      if(data.error) throw new Error(data.error.code===503 ? 'Google tiene el modelo saturado — intenta de nuevo en un minuto.' : (data.error.message||'Error de la API'));
-      const cand = data.candidates && data.candidates[0];
-      const text = (cand && cand.content && cand.content.parts||[]).map(p=>p.text||'').join('').trim();
-      let parsed; try{ parsed = JSON.parse(text); }catch(e){ const m=text.match(/\{[\s\S]*\}/); parsed = m?JSON.parse(m[0]):null; }
-      if(!parsed) throw new Error('No se pudo leer el resumen generado');
+      off = end; onPct(off / f.size);
+    }
+    const fi = info && info.file;
+    if(!fi) throw new Error('Google no confirmó la subida');
+    if(fi.sizeBytes && Number(fi.sizeBytes) !== f.size) throw new Error('El audio llegó incompleto ('+fi.sizeBytes+' de '+f.size+' bytes). Reintenta.');
+    return fi;
+  }
+  async function waitActive(key, fi, onMsg){
+    let cur = fi;
+    for(let i = 0; i < 150 && cur.state !== 'ACTIVE'; i++){
+      if(cur.state === 'FAILED') throw new Error('Google no pudo procesar el audio');
+      onMsg('Google prepara el audio…');
+      await sleep(3000);
+      cur = await (await fetch(`${API}/v1beta/${cur.name}?key=${key}`)).json();
+    }
+    if(cur.state !== 'ACTIVE') throw new Error('El audio tardó demasiado en procesarse');
+    return cur;
+  }
+  // Streaming: llegan datos todo el rato (Safari corta las respuestas largas que se quedan mudas) y se ve el avance
+  async function genStream(key, body, onChars){
+    let lastErr;
+    for(let n = 0; n < 3; n++){
+      try{
+        const res = await fetch(`${API}/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${key}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+        if(!res.ok){
+          const e = new Error(await apiErr(res, 'Error de la API'));
+          e.retry = res.status === 503 || res.status === 429 || res.status >= 500;
+          throw e;
+        }
+        const reader = res.body.getReader(), dec = new TextDecoder();
+        let buf = '', text = '', finish = '';
+        for(;;){
+          const {done, value} = await reader.read();
+          if(done) break;
+          buf += dec.decode(value, {stream:true});
+          let nl;
+          while((nl = buf.indexOf('\n')) >= 0){
+            const line = buf.slice(0, nl).trim(); buf = buf.slice(nl+1);
+            if(!line.startsWith('data:')) continue;
+            const payload = line.slice(5).trim();
+            if(!payload || payload === '[DONE]') continue;
+            let j; try{ j = JSON.parse(payload); }catch(e){ continue; }
+            if(j.error){ const e = new Error(j.error.message || 'Error de la API'); e.retry = j.error.code === 503; throw e; }
+            const c = j.candidates && j.candidates[0];
+            if(c){
+              arr(c.content && c.content.parts).forEach(p=>{ if(p.text && !p.thought) text += p.text; });
+              if(c.finishReason) finish = c.finishReason;
+            }
+          }
+          if(onChars) onChars(text.length);
+        }
+        return {text, finish};
+      }catch(e){
+        lastErr = e;
+        const net = e instanceof TypeError; // "Load failed" / "Failed to fetch"
+        if(n < 2 && (e.retry || net)) await sleep(2500 * (n+1)); else throw net ? new Error('Se cortó la conexión con Google. Reintenta (no bloquees la pantalla mientras procesa).') : e;
+      }
+    }
+    throw lastErr;
+  }
+  function parseJSON(t){
+    try{ return JSON.parse(t); }catch(e){ const m = t.match(/\{[\s\S]*\}/); if(m){ try{ return JSON.parse(m[0]); }catch(e2){} } return null; }
+  }
 
-      const list = loadClases();
-      list.unshift({ id: Date.now().toString(), titulo: parsed.titulo||selectedFile.name, materia: materiaActiva, archivo: selectedFile.name, fecha: new Date().toISOString(), resumen: parsed.resumen||'', puntos: parsed.puntos||[], cita: parsed.cita||'' });
-      saveClases(list);
-      showToast('✓ Clase procesada: ' + (parsed.titulo||selectedFile.name));
-      statusEl.textContent = '';
-      selectedFile = null;
-      document.getElementById('audio-input').value = '';
-      document.getElementById('dropzone').classList.remove('has-file');
-      document.getElementById('dropzone-text').textContent = 'Toca para subir el audio (.m4a, .mp3 — hasta ~3 horas)';
-      render();
-    }catch(e){ statusEl.textContent = ''; showToast('Error: ' + e.message); }
-    finally{ btn.disabled = false; }
-  });
+  const SYS_A = `Eres un asistente de estudio experto que analiza grabaciones de clases universitarias en español. Escucha TODA la grabación de principio a fin y devuelve SOLO un JSON válido con esta forma exacta:
+{
+ "titulo": "tema principal de la clase, corto",
+ "duracion": "duración aproximada, ej. 1h 25m",
+ "resumen": "resumen completo de 8 a 14 frases que cuente la clase de principio a fin",
+ "secciones": [ { "titulo": "nombre del bloque o tema", "inicio": "mm:ss", "fin": "mm:ss", "resumen": "3 a 5 frases", "puntos": ["4 a 8 puntos clave concretos de este bloque"], "diapositivas": [ { "titulo": "título de la diapositiva", "puntos": ["2 a 5 viñetas cortas"] } ] } ],
+ "puntos_clave": ["15 a 30 ideas clave de toda la clase, concretas y que se entiendan solas"],
+ "glosario": [ { "termino": "", "definicion": "definición corta, tal como se explicó" } ],
+ "datos_importantes": ["fechas, cifras, nombres, fórmulas, autores, leyes o casos mencionados"],
+ "ejemplos": ["ejemplos o casos que el profesor usó para explicar"],
+ "fuera_de_clase": [ { "tipo": "tarea | examen | lectura | aviso | logistica", "texto": "", "fecha": "si se menciona, si no vacío" } ],
+ "citas": ["hasta 5 frases textuales memorables dichas en clase"],
+ "para_profundizar": ["dudas que quedaron abiertas, temas pendientes o que valdría la pena investigar"]
+}
+Reglas: abre una sección nueva por CADA cambio de tema (no agrupes todo en pocas secciones); cada sección lleva de 2 a 4 diapositivas escritas como una mini presentación; no inventes nada que no se haya dicho; si una parte es ininteligible, omítela; todo en español.`;
+  const SYS_T = 'Transcribe literalmente, en español, toda la grabación. Inserta una marca [mm:ss] al inicio de cada párrafo o cada ~2 minutos. No resumas ni omitas nada. Devuelve solo el texto de la transcripción.';
+  const SYS_B = `Eres un creador de material de estudio. Con el análisis de una clase (JSON) crea SOLO un JSON válido: {"quiz":[{"pregunta":"","opciones":["","","",""],"correcta":0,"explicacion":"1 frase","seccion":"título de la sección a la que pertenece"}],"flashcards":[{"frente":"concepto o pregunta corta","reverso":"respuesta breve"}]}
+Reglas: 16 a 24 preguntas de opción múltiple con exactamente 4 opciones y una sola correcta (índice 0-3, varía su posición), que cubran TODAS las secciones y mezclen dificultad (recordar, entender, aplicar); distractores plausibles; nada de "todas las anteriores". De 20 a 36 flashcards (conceptos del glosario, datos clave, fórmulas, causas y efectos). Basa todo únicamente en el contenido dado. Español.`;
+
+  function normA(a){
+    a.secciones = arr(a.secciones).map(s=>({titulo:s.titulo||'Sección', inicio:s.inicio||'', fin:s.fin||'', resumen:s.resumen||'', puntos:arr(s.puntos), diapositivas:arr(s.diapositivas).map(d=>({titulo:d.titulo||'', puntos:arr(d.puntos)}))}));
+    ['puntos_clave','glosario','datos_importantes','ejemplos','fuera_de_clase','citas','para_profundizar'].forEach(k=> a[k] = arr(a[k]));
+    a.glosario = a.glosario.filter(g=> g && g.termino && g.definicion);
+    a.resumen = a.resumen || '';
+    return a;
+  }
+  async function genStudy(key, c){
+    const src = {titulo:c.titulo, resumen:c.resumen, secciones:arr(c.secciones).map(s=>({titulo:s.titulo, resumen:s.resumen, puntos:s.puntos})), puntos_clave:c.puntos, glosario:c.glosario, datos_importantes:c.datos};
+    const r = await genStream(key, {
+      contents:[{role:'user', parts:[{text:'Material de la clase:\n'+JSON.stringify(src)}]}],
+      systemInstruction:{parts:[{text:SYS_B}]},
+      generationConfig:{maxOutputTokens:16000, responseMimeType:'application/json'}
+    });
+    const j = parseJSON(r.text);
+    if(!j) throw new Error('No se pudo leer el material de estudio');
+    const quiz = arr(j.quiz).filter(q=> q && q.pregunta && Array.isArray(q.opciones) && q.opciones.length === 4 && Number.isInteger(q.correcta) && q.correcta >= 0 && q.correcta < 4);
+    const flashcards = arr(j.flashcards).filter(f=> f && f.frente && f.reverso);
+    if(!quiz.length && !flashcards.length) throw new Error('El material de estudio salió vacío');
+    return {quiz, flashcards};
+  }
+
+  async function processGroup(key, g, materia, wantTr, setProg){
+    const setAll = (st, msg)=>{ g.forEach(q=>{ q.state = st; q.msg = msg || ''; }); renderQueue(); };
+    const infos = [];
+    for(let i = 0; i < g.length; i++){
+      const q = g[i]; q.state = 'up'; q.pct = 0; q.msg = ''; renderQueue();
+      const fi = await uploadFile(key, q.file, p=>{ q.pct = p; setProg((i + p) / g.length * 0.35); renderQueue(); });
+      infos.push(await waitActive(key, fi, m=>{ q.msg = m; renderQueue(); }));
+    }
+    const parts = infos.map(fd=>({file_data:{mime_type:fd.mimeType, file_uri:fd.uri}}));
+    const joined = g.length > 1;
+
+    setAll('ai', 'escuchando la clase…'); setProg(0.4);
+    const ta = await genStream(key, {
+      contents:[{role:'user', parts: parts.concat([{text: joined ? 'Estas '+g.length+' grabaciones son partes CONSECUTIVAS de UNA misma clase, en orden. Analízalas como una sola clase (tiempos acumulados).' : 'Analiza esta clase grabada.'}])}],
+      systemInstruction:{parts:[{text:SYS_A}]},
+      generationConfig:{maxOutputTokens:30000, responseMimeType:'application/json'}
+    }, n=>{ g.forEach(q=> q.msg = 'escribiendo análisis… '+Math.round(n/1000)+'k'); renderQueue(); });
+    let A = parseJSON(ta.text);
+    if(!A) throw new Error(ta.finish === 'MAX_TOKENS' ? 'La clase es tan larga que el análisis quedó cortado. Súbela en partes.' : 'No se pudo leer el análisis generado');
+    A = normA(A);
+
+    const names = g.map(q=>q.file.name);
+    const clase = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,5), v:2,
+      titulo: A.titulo || names[0], materia, archivo: names.join(' + '), fecha: new Date().toISOString(),
+      duracion: A.duracion || '', resumen: A.resumen, secciones: A.secciones, puntos: A.puntos_clave,
+      glosario: A.glosario, datos: A.datos_importantes, ejemplos: A.ejemplos, fuera: A.fuera_de_clase,
+      citas: A.citas, cita: A.citas[0] || '', abiertas: A.para_profundizar, quiz: [], flashcards: [], tr: false
+    };
+    // se guarda ya: si falla la transcripción o los minijuegos, el análisis no se pierde
+    const list = loadClases(); list.unshift(clase); saveClases(list); render();
+    const warns = [];
+
+    if(wantTr){
+      setAll('tr', 'transcribiendo…'); setProg(0.65);
+      try{
+        const tt = await genStream(key, {
+          contents:[{role:'user', parts: parts.concat([{text:'Transcribe toda la grabación.'}])}],
+          systemInstruction:{parts:[{text:SYS_T}]},
+          generationConfig:{maxOutputTokens:60000}
+        }, n=>{ g.forEach(q=> q.msg = 'transcribiendo… '+Math.round(n/1000)+'k car.'); renderQueue(); });
+        let txt = tt.text.trim();
+        if(tt.finish === 'MAX_TOKENS') txt += '\n\n[… la transcripción se cortó por el límite de longitud]';
+        if(txt && await trPut(clase.id, txt)) updateClase(clase.id, {tr:true}); else warns.push('sin transcripción');
+      }catch(e){ warns.push('sin transcripción ('+e.message+')'); }
+    }
+
+    setAll('study', 'armando minijuegos…'); setProg(0.9);
+    try{ updateClase(clase.id, await genStudy(key, clase)); }
+    catch(e){ warns.push('sin minijuegos ('+e.message+')'); }
+    return warns;
+  }
+
+  let wl = null;
+  async function lockOn(){ try{ if(navigator.wakeLock) wl = await navigator.wakeLock.request('screen'); }catch(e){} }
+  function lockOff(){ try{ if(wl) wl.release(); }catch(e){} wl = null; }
+  document.addEventListener('visibilitychange', ()=>{ if(running && document.visibilityState === 'visible') lockOn(); });
+
+  async function processQueue(){
+    if(running || !queue.length) return;
+    const key = getApiKey(); if(!key) return;
+    queue.forEach(q=>{ if(q.state === 'err'){ q.state = 'wait'; q.msg = ''; } });
+    running = true; lockOn(); renderQueue();
+    $('prog').hidden = false;
+    $('status-line').textContent = 'Procesando… no cierres ni bloquees la pantalla hasta que termine.';
+    const materia = materiaActiva, wantTr = $('opt-tr').checked;
+    let groups;
+    if($('opt-join').checked && queue.length > 1){
+      queue.sort((a,b)=> a.file.name.localeCompare(b.file.name, undefined, {numeric:true}));
+      groups = [queue.slice()];
+    } else groups = queue.map(q=>[q]);
+
+    let ok = 0, bad = 0; const warnAll = [];
+    for(let gi = 0; gi < groups.length; gi++){
+      const g = groups[gi];
+      const setProg = f=>{ $('prog').firstElementChild.style.width = Math.round((gi + f) / groups.length * 100) + '%'; };
+      try{
+        const w = await processGroup(key, g, materia, wantTr, setProg);
+        g.forEach(q=>{ q.state = 'done'; q.msg = ''; });
+        warnAll.push(...w); ok++;
+      }catch(e){ g.forEach(q=>{ q.state = 'err'; q.msg = e.message; }); bad++; }
+      setProg(1); renderQueue();
+    }
+    queue = queue.filter(q=> q.state !== 'done');
+    running = false; lockOff(); renderQueue();
+    $('prog').hidden = true; $('prog').firstElementChild.style.width = '0';
+    $('status-line').textContent = bad ? 'Algunos archivos fallaron (se quedaron en la lista) — toca Procesar para reintentarlos.' : '';
+    render();
+    showToast(ok ? ('✓ '+ok+' clase'+(ok>1?'s':'')+' lista'+(ok>1?'s':'')+(bad?' · '+bad+' con error':'')+(warnAll.length?' · '+warnAll[0]:'')) : 'No se pudo procesar — revisa el error en la lista');
+  }
+  $('process-btn').addEventListener('click', processQueue);
+
+  render();
+  if(window.jarvisSync){
+    jarvisSync.pull('pizarra').then(ok=>{ if(ok) render(); });
+    jarvisSync.pull('pizarra_materias').then(ok=>{ if(ok){ materias = loadMaterias(); materiaActiva = materias[0]; renderMaterias(); } });
+  }
 
   // Polvo de tiza flotando — decorativo, sutil, nunca interactivo
-  const dustCanvas = document.getElementById('dust'), dctx = dustCanvas.getContext('2d');
+  const dustCanvas = $('dust'), dctx = dustCanvas.getContext('2d');
   function resizeDust(){ dustCanvas.width=innerWidth; dustCanvas.height=innerHeight; } resizeDust(); addEventListener('resize',resizeDust);
   const N=90, parts = Array.from({length:N}, ()=>({x:Math.random()*innerWidth, y:Math.random()*innerHeight, r:Math.random()*2.4+0.8, s:Math.random()*0.4+0.12, o:Math.random()*0.5+0.2}));
   function tickDust(){
